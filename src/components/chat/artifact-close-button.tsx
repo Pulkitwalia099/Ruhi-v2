@@ -2,6 +2,13 @@ import { memo } from "react";
 import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
 import { CrossIcon } from "./icons";
 
+// -----------------------------------------
+// src/components/chat/artifact-close-button.tsx
+//
+// function PureArtifactCloseButton()    L12
+// export const ArtifactCloseButton      L36
+// -----------------------------------------
+
 function PureArtifactCloseButton() {
   const { setArtifact } = useArtifact();
 

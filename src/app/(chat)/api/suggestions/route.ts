@@ -6,7 +6,7 @@ import { ChatbotError } from "@/lib/errors";
 // ----------------------------------
 // src/app/(chat)/api/suggestions/route.ts
 //
-// export async function GET()    L11
+// export async function GET()    L12
 // ----------------------------------
 
 export async function GET(request: Request) {

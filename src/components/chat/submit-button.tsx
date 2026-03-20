@@ -1,3 +1,11 @@
+// -------------------------------------
+// src/components/chat/submit-button.tsx
+//
+// export function SubmitButton()    L17
+// children                          L21
+// isSuccessful                      L22
+// -------------------------------------
+
 "use client";
 
 import { useFormStatus } from "react-dom";

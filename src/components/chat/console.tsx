@@ -12,6 +12,22 @@ import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { CrossSmallIcon, TerminalWindowIcon } from "./icons";
 
+// ---------------------------------------
+// src/components/chat/console.tsx
+//
+// export type ConsoleOutputContent    L31
+// type                                L32
+// value                               L33
+// export type ConsoleOutput           L36
+// id                                  L37
+// status                              L38
+// contents                            L39
+// type ConsoleProps                   L42
+// consoleOutputs                      L43
+// setConsoleOutputs                   L44
+// export function Console()           L47
+// ---------------------------------------
+
 export type ConsoleOutputContent = {
   type: "text" | "image";
   value: string;

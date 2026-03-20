@@ -1,3 +1,13 @@
+// --------------------------------
+// src/components/chat/chat-header.tsx
+//
+// function PureChatHeader()    L21
+// chatId                       L26
+// selectedVisibilityType       L27
+// isReadonly                   L28
+// export const ChatHeader      L80
+// --------------------------------
+
 "use client";
 
 import { PanelLeftIcon } from "lucide-react";

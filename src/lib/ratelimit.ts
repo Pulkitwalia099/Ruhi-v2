@@ -4,6 +4,16 @@ import { isProductionEnvironment } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { ChatbotError } from "@/lib/errors";
 
+// -----------------------------------------------
+// src/lib/ratelimit.ts
+//
+// const MAX_MESSAGES                          L17
+// const TTL_SECONDS                           L18
+// let client                                  L20
+// function getClient()                        L22
+// export async function checkIpRateLimit()    L33
+// -----------------------------------------------
+
 const MAX_MESSAGES = 10;
 const TTL_SECONDS = 60 * 60;
 

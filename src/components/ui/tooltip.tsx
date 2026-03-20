@@ -1,3 +1,12 @@
+// ---------------------------------
+// src/components/ui/tooltip.tsx
+//
+// function TooltipProvider()    L17
+// function Tooltip()            L30
+// function TooltipTrigger()     L36
+// function TooltipContent()     L42
+// ---------------------------------
+
 "use client"
 
 import * as React from "react"

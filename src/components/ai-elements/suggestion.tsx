@@ -1,3 +1,14 @@
+// -----------------------------------
+// src/components/ai-elements/suggestion.tsx
+//
+// export type SuggestionsProps    L24
+// export const Suggestions        L26
+// export type SuggestionProps     L39
+// suggestion                      L40
+// onClick                         L41
+// export const Suggestion         L44
+// -----------------------------------
+
 "use client";
 
 import type { ComponentProps } from "react";

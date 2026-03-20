@@ -1,3 +1,20 @@
+// --------------------------------------
+// src/components/chat/sheet-editor.tsx
+//
+// type SheetEditorProps              L28
+// content                            L29
+// saveContent                        L30
+// currentVersionIndex                L31
+// isCurrentVersion                   L32
+// status                             L33
+// const MIN_ROWS                     L36
+// const MIN_COLS                     L37
+// const PureSpreadsheetEditor        L39
+// rowIdx                             L69
+// function areEqual()               L148
+// export const SpreadsheetEditor    L158
+// --------------------------------------
+
 "use client";
 
 import { useTheme } from "next-themes";

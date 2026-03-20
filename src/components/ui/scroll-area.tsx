@@ -1,3 +1,10 @@
+// ----------------------------
+// src/components/ui/scroll-area.tsx
+//
+// function ScrollArea()    L15
+// function ScrollBar()     L38
+// ----------------------------
+
 "use client"
 
 import * as React from "react"

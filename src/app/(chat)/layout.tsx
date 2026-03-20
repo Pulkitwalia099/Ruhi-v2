@@ -9,6 +9,15 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { auth } from "@/lib/auth";
 
+// ---------------------------------------
+// src/app/(chat)/layout.tsx
+//
+// export default function Layout()    L21
+// children                            L21
+// async function SidebarShell()       L37
+// children                            L37
+// ---------------------------------------
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>

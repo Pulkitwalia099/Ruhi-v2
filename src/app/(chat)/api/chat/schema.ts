@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+// -----------------------------------------
+// src/app/(chat)/api/chat/schema.ts
+//
+// const textPartSchema                  L15
+// const filePartSchema                  L20
+// const partSchema                      L27
+// const userMessageSchema               L29
+// const toolApprovalMessageSchema       L35
+// export const postRequestBodySchema    L41
+// export type PostRequestBody           L49
+// -----------------------------------------
+
 const textPartSchema = z.object({
   type: z.enum(["text"]),
   text: z.string().min(1).max(2000),

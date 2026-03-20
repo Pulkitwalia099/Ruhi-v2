@@ -5,6 +5,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
 
+// -------------------------------------------
+// src/app/layout.tsx
+//
+// export const metadata                   L22
+// export const viewport                   L28
+// const geist                             L32
+// const geistMono                         L38
+// const LIGHT_THEME_COLOR                 L44
+// const DARK_THEME_COLOR                  L45
+// const THEME_COLOR_SCRIPT                L46
+// export default function RootLayout()    L64
+// children                                L67
+// -------------------------------------------
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
   title: "Next.js Chatbot Template",

@@ -1,3 +1,20 @@
+// -----------------------------------
+// src/components/ui/sheet.tsx
+//
+// function Sheet()                L27
+// function SheetTrigger()         L31
+// function SheetClose()           L37
+// function SheetPortal()          L43
+// function SheetOverlay()         L49
+// function SheetContent()         L65
+// side                            L72
+// showCloseButton                 L73
+// function SheetHeader()         L106
+// function SheetFooter()         L116
+// function SheetTitle()          L126
+// function SheetDescription()    L139
+// -----------------------------------
+
 "use client"
 
 import * as React from "react"

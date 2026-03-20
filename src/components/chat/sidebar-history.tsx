@@ -1,20 +1,21 @@
 // -----------------------------------------------------
 // src/components/chat/sidebar-history.tsx
 //
-// type GroupedChats                                 L51
-// today                                             L52
-// yesterday                                         L53
-// lastWeek                                          L54
-// lastMonth                                         L55
-// older                                             L56
-// export type ChatHistory                           L59
-// chats                                             L60
-// hasMore                                           L61
-// const PAGE_SIZE                                   L64
-// const groupChatsByDate                            L66
-// export function getChatHistoryPaginationKey()     L99
-// export function SidebarHistory()                 L120
-// user                                             L120
+// type User                                         L28
+// type GroupedChats                                 L55
+// today                                             L56
+// yesterday                                         L57
+// lastWeek                                          L58
+// lastMonth                                         L59
+// older                                             L60
+// export type ChatHistory                           L63
+// chats                                             L64
+// hasMore                                           L65
+// const PAGE_SIZE                                   L68
+// const groupChatsByDate                            L70
+// export function getChatHistoryPaginationKey()    L103
+// export function SidebarHistory()                 L124
+// user                                             L124
 // -----------------------------------------------------
 
 "use client";

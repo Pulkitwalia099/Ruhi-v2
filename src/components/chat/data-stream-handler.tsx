@@ -1,3 +1,9 @@
+// ------------------------------------------
+// src/components/chat/data-stream-handler.tsx
+//
+// export function DataStreamHandler()    L17
+// ------------------------------------------
+
 "use client";
 
 import { useEffect } from "react";

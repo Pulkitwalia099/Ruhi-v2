@@ -1,3 +1,9 @@
+// --------------------------------
+// src/components/chat/preview.tsx
+//
+// export function Preview()    L13
+// --------------------------------
+
 "use client";
 
 import { useRouter } from "next/navigation";

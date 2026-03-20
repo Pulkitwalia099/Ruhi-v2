@@ -3,6 +3,38 @@
 import { diff_match_patch } from "diff-match-patch";
 import { Fragment, Node } from "prosemirror-model";
 
+// -----------------------------------------------
+// src/lib/editor/diff.js
+//
+// export const DiffType                       L38
+// export const patchDocumentNode              L44
+// const matchNodes                           L128
+// const findMatchNode                        L163
+// const patchRemainNodes                     L172
+// export const patchTextNodes                L254
+// const tokenizeSentences                    L298
+// const sentencesToChars                     L303
+// export const computeChildEqualityFactor    L337
+// export const assertNodeTypeEqual           L341
+// export const ensureArray                   L347
+// export const isNodeEqual                   L351
+// export const normalizeNodeContent          L407
+// export const getNodeProperty               L430
+// export const getNodeAttribute              L437
+// export const getNodeAttributes             L440
+// export const getNodeMarks                  L442
+// export const getNodeChildren               L444
+// export const getNodeText                   L446
+// export const isTextNode                    L448
+// export const matchNodeType                 L450
+// export const createNewNode                 L454
+// export const createDiffNode                L466
+// function mapDocumentNode()                 L478
+// export const createDiffMark                L489
+// export const createTextNode                L499
+// export const diffEditor                    L503
+// -----------------------------------------------
+
 export const DiffType = {
   Unchanged: 0,
   Deleted: -1,

@@ -1,3 +1,65 @@
+// ---------------------------------------
+// src/components/ui/sidebar.tsx
+//
+// const SIDEBAR_COOKIE_NAME           L89
+// const SIDEBAR_COOKIE_MAX_AGE        L90
+// const SIDEBAR_WIDTH                 L91
+// const SIDEBAR_WIDTH_MOBILE          L92
+// const SIDEBAR_WIDTH_ICON            L93
+// const SIDEBAR_KEYBOARD_SHORTCUT     L94
+// type SidebarContextProps            L96
+// state                               L97
+// open                                L98
+// setOpen                             L99
+// openMobile                         L100
+// setOpenMobile                      L101
+// isMobile                           L102
+// toggleSidebar                      L103
+// const SidebarContext               L106
+// function useSidebar()              L108
+// function SidebarProvider()         L117
+// defaultOpen                        L126
+// open                               L127
+// onOpenChange                       L128
+// function Sidebar()                 L206
+// side                               L215
+// variant                            L216
+// collapsible                        L217
+// function SidebarTrigger()          L303
+// function SidebarRail()             L329
+// function SidebarInset()            L375
+// function SidebarInput()            L388
+// function SidebarHeader()           L402
+// function SidebarFooter()           L416
+// function SidebarSeparator()        L427
+// function SidebarContent()          L441
+// function SidebarGroup()            L455
+// function SidebarGroupLabel()       L466
+// asChild                            L470
+// function SidebarGroupAction()      L486
+// asChild                            L490
+// function SidebarGroupContent()     L506
+// function SidebarMenu()             L520
+// function SidebarMenuItem()         L531
+// const sidebarMenuButtonVariants    L542
+// function SidebarMenuButton()       L564
+// asChild                            L573
+// isActive                           L574
+// tooltip                            L575
+// function SidebarMenuAction()       L614
+// asChild                            L620
+// showOnHover                        L621
+// function SidebarMenuBadge()        L640
+// function SidebarMenuSkeleton()     L657
+// showIcon                           L662
+// function SidebarMenuSub()          L694
+// function SidebarMenuSubItem()      L708
+// function SidebarMenuSubButton()    L722
+// asChild                            L729
+// size                               L730
+// isActive                           L731
+// ---------------------------------------
+
 "use client"
 
 import * as React from "react"

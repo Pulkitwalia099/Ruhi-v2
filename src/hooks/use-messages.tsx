@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
 
+// ------------------------------------
+// src/hooks/use-messages.tsx
+//
+// export function useMessages()    L13
+// status                           L16
+// ------------------------------------
+
 export function useMessages({
   status,
 }: {

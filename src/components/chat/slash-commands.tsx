@@ -1,3 +1,21 @@
+// -----------------------------------------
+// src/components/chat/slash-commands.tsx
+//
+// export type SlashCommand              L33
+// name                                  L34
+// description                           L35
+// icon                                  L36
+// action                                L37
+// shortcut                              L38
+// export const slashCommands            L41
+// type SlashCommandMenuProps            L86
+// query                                 L87
+// onSelect                              L88
+// onClose                               L89
+// selectedIndex                         L90
+// export function SlashCommandMenu()    L93
+// -----------------------------------------
+
 "use client";
 
 import {

@@ -1,6 +1,19 @@
 import cn from "classnames";
 import { LoaderIcon } from "./icons";
 
+// ------------------------------------
+// src/components/chat/image-editor.tsx
+//
+// type ImageEditorProps            L17
+// title                            L18
+// content                          L19
+// isCurrentVersion                 L20
+// currentVersionIndex              L21
+// status                           L22
+// isInline                         L23
+// export function ImageEditor()    L26
+// ------------------------------------
+
 type ImageEditorProps = {
   title: string;
   content: string;

@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+// ------------------------------------------
+// src/hooks/use-scroll-to-bottom.tsx
+//
+// export function onViewportEnter()      L11
+// export function onViewportLeave()      L11
+// export function useScrollToBottom()    L11
+// ------------------------------------------
+
 export function useScrollToBottom() {
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);

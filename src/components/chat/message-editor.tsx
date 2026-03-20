@@ -1,3 +1,13 @@
+// --------------------------------------------------
+// src/components/chat/message-editor.tsx
+//
+// export async function submitEditedMessage()    L17
+// message                                        L23
+// text                                           L24
+// setMessages                                    L25
+// regenerate                                     L26
+// --------------------------------------------------
+
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";

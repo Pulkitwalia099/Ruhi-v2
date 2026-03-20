@@ -3,12 +3,11 @@ import { env } from "./env";
 // --------------------------------------------
 // src/lib/constants.ts
 //
-// export const isProductionEnvironment     L14
-// export const isDevelopmentEnvironment    L15
-// export const isTestEnvironment           L16
-// export const guestRegex                  L22
-// export const DUMMY_PASSWORD              L24
-// export const suggestions                 L26
+// export const isProductionEnvironment     L13
+// export const isDevelopmentEnvironment    L14
+// export const isTestEnvironment           L15
+// export const guestRegex                  L19
+// export const suggestions                 L21
 // --------------------------------------------
 
 export const isProductionEnvironment = env.NODE_ENV === "production";

@@ -1,3 +1,17 @@
+// -------------------------------------------
+// src/components/chat/visibility-selector.tsx
+//
+// export type VisibilityType              L34
+// const visibilities                      L36
+// id                                      L37
+// label                                   L38
+// description                             L39
+// icon                                    L40
+// export function VisibilitySelector()    L56
+// chatId                                  L61
+// selectedVisibilityType                  L62
+// -------------------------------------------
+
 "use client";
 
 import { type ReactNode, useMemo, useState } from "react";

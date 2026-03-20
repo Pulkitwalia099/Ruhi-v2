@@ -4,6 +4,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 
+// -----------------------------------
+// src/app/(chat)/api/files/upload/route.ts
+//
+// const FileSchema                L14
+// export async function POST()    L25
+// -----------------------------------
+
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)

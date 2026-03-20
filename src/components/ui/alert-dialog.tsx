@@ -1,3 +1,21 @@
+// -----------------------------------------
+// src/components/ui/alert-dialog.tsx
+//
+// function AlertDialog()                L27
+// function AlertDialogTrigger()         L33
+// function AlertDialogPortal()          L41
+// function AlertDialogOverlay()         L49
+// function AlertDialogContent()         L65
+// size                                  L70
+// function AlertDialogHeader()          L88
+// function AlertDialogFooter()         L104
+// function AlertDialogMedia()          L120
+// function AlertDialogTitle()          L136
+// function AlertDialogDescription()    L152
+// function AlertDialogAction()         L168
+// function AlertDialogCancel()         L186
+// -----------------------------------------
+
 "use client"
 
 import * as React from "react"

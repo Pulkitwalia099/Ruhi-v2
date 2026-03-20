@@ -1,3 +1,11 @@
+// ------------------------------------
+// src/components/ui/collapsible.tsx
+//
+// function Collapsible()           L13
+// function CollapsibleTrigger()    L19
+// function CollapsibleContent()    L30
+// ------------------------------------
+
 "use client"
 
 import { Collapsible as CollapsiblePrimitive } from "radix-ui"

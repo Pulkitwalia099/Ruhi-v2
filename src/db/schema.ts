@@ -14,23 +14,26 @@ import {
 // ---------------------------------
 // src/db/schema.ts
 //
-// export const user             L36
-// export type User              L48
-// export const session          L50
-// export const account          L63
-// export const verification     L81
-// export const chat             L90
-// export type Chat             L102
-// export const message         L104
-// export type DBMessage        L115
-// export const vote            L117
-// export type Vote             L133
-// export const document        L135
-// export type Document         L154
-// export const suggestion      L156
-// export type Suggestion       L180
-// export const stream          L182
-// export type Stream           L198
+// export const user             L39
+// export type User              L51
+// export const session          L53
+// export type Session           L66
+// export const account          L68
+// export type Account           L86
+// export const verification     L88
+// export type Verification      L97
+// export const chat             L99
+// export type Chat             L111
+// export const message         L113
+// export type DBMessage        L124
+// export const vote            L126
+// export type Vote             L142
+// export const document        L144
+// export type Document         L163
+// export const suggestion      L165
+// export type Suggestion       L189
+// export const stream          L191
+// export type Stream           L207
 // ---------------------------------
 
 export const user = pgTable("users", {

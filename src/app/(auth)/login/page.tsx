@@ -1,3 +1,9 @@
+// -------------------------------------
+// src/app/(auth)/login/page.tsx
+//
+// export default function Page()    L18
+// -------------------------------------
+
 "use client";
 
 import Link from "next/link";

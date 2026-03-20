@@ -1,3 +1,47 @@
+// ----------------------------------------------
+// src/components/ai-elements/message.tsx
+//
+// export type MessageProps                   L78
+// from                                       L79
+// export const Message                       L82
+// export type MessageContentProps            L93
+// export const MessageContent                L95
+// export type MessageActionsProps           L111
+// export const MessageActions               L113
+// export type MessageActionProps            L123
+// tooltip                                   L124
+// label                                     L125
+// export const MessageAction                L128
+// interface MessageBranchContextType        L159
+//   currentBranch                           L160
+//   totalBranches                           L161
+//   goToPrevious                            L162
+//   goToNext                                L163
+//   branches                                L164
+//   setBranches                             L165
+// const MessageBranchContext                L168
+// const useMessageBranch                    L172
+// export type MessageBranchProps            L184
+// defaultBranch                             L185
+// onBranchChange                            L186
+// export const MessageBranch                L189
+// export type MessageBranchContentProps     L240
+// export const MessageBranchContent         L242
+// export type MessageBranchSelectorProps    L273
+// export const MessageBranchSelector        L275
+// export type MessageBranchPreviousProps    L298
+// export const MessageBranchPrevious        L300
+// export type MessageBranchNextProps        L321
+// export const MessageBranchNext            L323
+// export type MessageBranchPageProps        L344
+// export const MessageBranchPage            L346
+// export type MessageResponseProps          L365
+// const streamdownPlugins                   L367
+// export const MessageResponse              L369
+// export type MessageToolbarProps           L385
+// export const MessageToolbar               L387
+// ----------------------------------------------
+
 "use client";
 
 import type { UIMessage } from "ai";

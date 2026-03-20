@@ -1,3 +1,14 @@
+// --------------------------------------
+// src/hooks/use-auto-resume.ts
+//
+// export type UseAutoResumeParams    L19
+// autoResume                         L20
+// initialMessages                    L21
+// resumeStream                       L22
+// setMessages                        L23
+// export function useAutoResume()    L26
+// --------------------------------------
+
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";

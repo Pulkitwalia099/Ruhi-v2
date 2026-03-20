@@ -9,6 +9,12 @@ import {
 import { Button } from "../ui/button";
 import { SidebarLeftIcon } from "./icons";
 
+// --------------------------------------
+// src/components/chat/sidebar-toggle.tsx
+//
+// export function SidebarToggle()    L18
+// --------------------------------------
+
 export function SidebarToggle({
   className,
 }: ComponentProps<typeof SidebarTrigger>) {

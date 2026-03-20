@@ -5,6 +5,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { artifactDefinitions, type UIArtifact } from "./artifact";
 import type { ArtifactActionContext } from "./create-artifact";
 
+// --------------------------------------
+// src/components/chat/artifact-actions.tsx
+//
+// type ArtifactActionsProps          L23
+// artifact                           L24
+// handleVersionChange                L25
+// currentVersionIndex                L26
+// isCurrentVersion                   L27
+// mode                               L28
+// metadata                           L29
+// setMetadata                        L30
+// function PureArtifactActions()     L33
+// export const ArtifactActions      L113
+// --------------------------------------
+
 type ArtifactActionsProps = {
   artifact: UIArtifact;
   handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;

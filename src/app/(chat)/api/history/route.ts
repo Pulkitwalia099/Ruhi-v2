@@ -7,8 +7,8 @@ import { ChatbotError } from "@/lib/errors";
 // -------------------------------------
 // src/app/(chat)/api/history/route.ts
 //
-// export async function GET()       L13
-// export async function DELETE()    L46
+// export async function GET()       L14
+// export async function DELETE()    L47
 // -------------------------------------
 
 export async function GET(request: NextRequest) {

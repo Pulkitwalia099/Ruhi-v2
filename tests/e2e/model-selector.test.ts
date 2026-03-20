@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+// ------------------------------
+// tests/e2e/model-selector.test.ts
+//
+// const MODEL_BUTTON_REGEX    L9
+// ------------------------------
+
 const MODEL_BUTTON_REGEX = /Kimi|Codestral|Mistral|DeepSeek|GPT|Grok/i;
 
 test.describe("Model Selector", () => {

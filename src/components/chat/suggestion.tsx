@@ -1,3 +1,12 @@
+// ------------------------------------
+// src/components/chat/suggestion.tsx
+//
+// export const SuggestionDialog    L18
+// suggestion                       L23
+// onApply                          L24
+// onClose                          L25
+// ------------------------------------
+
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

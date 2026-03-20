@@ -1,3 +1,19 @@
+// -----------------------------------------
+// src/components/ui/select.tsx
+//
+// function Select()                     L25
+// function SelectGroup()                L31
+// function SelectValue()                L44
+// function SelectTrigger()              L50
+// size                                  L56
+// function SelectContent()              L76
+// function SelectLabel()               L109
+// function SelectItem()                L122
+// function SelectSeparator()           L146
+// function SelectScrollUpButton()      L162
+// function SelectScrollDownButton()    L181
+// -----------------------------------------
+
 "use client"
 
 import * as React from "react"

@@ -1,5 +1,11 @@
 import { motion } from "framer-motion";
 
+// ---------------------------
+// src/components/chat/greeting.tsx
+//
+// export const Greeting    L9
+// ---------------------------
+
 export const Greeting = () => {
   return (
     <div className="flex flex-col items-center px-4" key="overview">

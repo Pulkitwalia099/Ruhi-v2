@@ -5,19 +5,14 @@ import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
 import { nanoid } from "nanoid";
 import { db } from "@/db/queries";
-import {
-  account,
-  session,
-  user,
-  verification,
-} from "@/db/schema";
+import { account, session, user, verification } from "@/db/schema";
 import { env } from "./env";
 
 // --------------------------
 // src/lib/auth.ts
 //
-// export const auth      L18
-// export type Session    L58
+// export const auth      L23
+// export type Session    L63
 // --------------------------
 
 export const auth = betterAuth({

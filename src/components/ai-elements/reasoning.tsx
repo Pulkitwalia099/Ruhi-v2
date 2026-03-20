@@ -1,3 +1,32 @@
+// -----------------------------------------
+// src/components/ai-elements/reasoning.tsx
+//
+// interface ReasoningContextValue       L59
+//   isStreaming                         L60
+//   isOpen                              L61
+//   setIsOpen                           L62
+//   duration                            L63
+// const ReasoningContext                L66
+// export const useReasoning             L68
+// export type ReasoningProps            L76
+// isStreaming                           L77
+// open                                  L78
+// defaultOpen                           L79
+// onOpenChange                          L80
+// duration                              L81
+// const AUTO_CLOSE_DELAY                L84
+// const MS_IN_S                         L85
+// export const Reasoning                L87
+// export type ReasoningTriggerProps    L180
+// getThinkingMessage                   L183
+// const defaultGetThinkingMessage      L186
+// export const ReasoningTrigger        L196
+// export type ReasoningContentProps    L229
+// children                             L230
+// const streamdownPlugins              L233
+// export const ReasoningContent        L235
+// -----------------------------------------
+
 "use client";
 
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";

@@ -1,3 +1,11 @@
+// ----------------------------------
+// src/components/ui/hover-card.tsx
+//
+// function HoverCard()           L16
+// function HoverCardTrigger()    L22
+// function HoverCardContent()    L30
+// ----------------------------------
+
 "use client"
 
 import * as React from "react"

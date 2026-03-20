@@ -30,6 +30,81 @@ import {
   vote,
 } from "./schema";
 
+// --------------------------------------------------------------------
+// src/db/queries.ts
+//
+// const client                                                    L108
+// export const db                                                 L109
+// export async function saveChat()                                L111
+// id                                                              L117
+// userId                                                          L118
+// title                                                           L119
+// visibility                                                      L120
+// export async function deleteChatById()                          L135
+// id                                                              L135
+// export async function deleteAllChatsByUserId()                  L154
+// userId                                                          L154
+// export async function getChatsByUserId()                        L185
+// id                                                              L191
+// limit                                                           L192
+// startingAfter                                                   L193
+// endingBefore                                                    L194
+// export async function getChatById()                             L261
+// id                                                              L261
+// messages                                                        L274
+// export async function saveMessages()                            L274
+// export async function updateMessage()                           L282
+// id                                                              L286
+// parts                                                           L287
+// export async function getMessagesByChatId()                     L296
+// id                                                              L296
+// export async function voteMessage()                             L311
+// chatId                                                          L316
+// messageId                                                       L317
+// type                                                            L318
+// export async function getVotesByChatId()                        L342
+// id                                                              L342
+// export async function saveDocument()                            L353
+// id                                                              L360
+// title                                                           L361
+// kind                                                            L362
+// content                                                         L363
+// userId                                                          L364
+// export async function updateDocumentContent()                   L383
+// id                                                              L387
+// content                                                         L388
+// export async function getDocumentsById()                        L419
+// id                                                              L419
+// export async function getDocumentById()                         L436
+// id                                                              L436
+// export async function deleteDocumentsByIdAfterTimestamp()       L453
+// id                                                              L457
+// timestamp                                                       L458
+// export async function saveSuggestions()                         L482
+// suggestions                                                     L485
+// export async function getSuggestionsByDocumentId()              L497
+// documentId                                                      L500
+// export async function getMessageById()                          L515
+// id                                                              L515
+// export async function deleteMessagesByChatIdAfterTimestamp()    L526
+// chatId                                                          L530
+// timestamp                                                       L531
+// export async function updateChatVisibilityById()                L566
+// chatId                                                          L570
+// visibility                                                      L571
+// export async function updateChatTitleById()                     L583
+// chatId                                                          L587
+// title                                                           L588
+// export async function getMessageCountByUserId()                 L597
+// id                                                              L601
+// differenceInHours                                               L602
+// export async function createStreamId()                          L631
+// streamId                                                        L635
+// chatId                                                          L636
+// chatId                                                          L650
+// export async function getStreamIdsByChatId()                    L650
+// --------------------------------------------------------------------
+
 const client = postgres(env.DATABASE_URL!);
 export const db = drizzle(client);
 

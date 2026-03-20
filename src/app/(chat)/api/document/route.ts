@@ -13,10 +13,10 @@ import { ChatbotError } from "@/lib/errors";
 // --------------------------------------
 // src/app/(chat)/api/document/route.ts
 //
-// const documentSchema               L21
-// export async function GET()        L28
-// export async function POST()       L60
-// export async function DELETE()    L121
+// const documentSchema               L22
+// export async function GET()        L29
+// export async function POST()       L61
+// export async function DELETE()    L122
 // --------------------------------------
 
 const documentSchema = z.object({

@@ -1,3 +1,20 @@
+// ------------------------------------
+// src/components/ui/dialog.tsx
+//
+// function Dialog()                L27
+// function DialogTrigger()         L33
+// function DialogPortal()          L39
+// function DialogClose()           L45
+// function DialogOverlay()         L51
+// function DialogContent()         L67
+// showCloseButton                  L73
+// function DialogHeader()         L105
+// function DialogFooter()         L115
+// showCloseButton                 L121
+// function DialogTitle()          L142
+// function DialogDescription()    L155
+// ------------------------------------
+
 "use client"
 
 import * as React from "react"

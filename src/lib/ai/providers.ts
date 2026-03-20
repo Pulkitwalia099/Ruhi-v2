@@ -6,6 +6,19 @@ import { isTestEnvironment } from "../constants";
 import { env } from "../env";
 import { titleModel } from "./models";
 
+// -----------------------------------------
+// src/lib/ai/providers.ts
+//
+// const openai                          L22
+// const anthropic                       L26
+// const google                          L30
+// const providers                       L34
+// function resolveModel()               L43
+// export const myProvider               L53
+// export function getLanguageModel()    L65
+// export function getTitleModel()       L72
+// -----------------------------------------
+
 const openai = createOpenAI({
   apiKey: env.OPENAI_API_KEY,
 });

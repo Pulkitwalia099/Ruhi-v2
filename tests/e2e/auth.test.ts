@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// tests/e2e/auth.test.ts
+//
+
 test.describe("Authentication Pages", () => {
   test("login page renders correctly", async ({ page }) => {
     await page.goto("/login");

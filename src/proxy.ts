@@ -2,6 +2,13 @@ import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 
+// ------------------------------------
+// src/proxy.ts
+//
+// export async function proxy()    L12
+// export const config              L38
+// ------------------------------------
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 

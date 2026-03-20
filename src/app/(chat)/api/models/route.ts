@@ -1,5 +1,11 @@
 import { getCapabilities } from "@/lib/ai/models";
 
+// ---------------------------------
+// src/app/(chat)/api/models/route.ts
+//
+// export async function GET()    L9
+// ---------------------------------
+
 export async function GET() {
   const capabilities = getCapabilities();
 

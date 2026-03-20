@@ -1,5 +1,21 @@
 import type { LanguageModel } from "ai";
 
+// ---------------------------------------
+// src/lib/ai/models.mock.ts
+//
+// const mockResponses                 L19
+// const mockUsage                     L25
+// function getResponseForPrompt()     L30
+// const createMockModel               L47
+// prompt                              L54
+// prompt                              L60
+// async start()                       L66
+// const createMockTitleModel          L92
+// start()                            L110
+// export const chatModel             L138
+// export const titleModel            L139
+// ---------------------------------------
+
 const mockResponses: Record<string, string> = {
   default: "This is a mock response for testing.",
   weather: "The weather in San Francisco is sunny and 72°F.",

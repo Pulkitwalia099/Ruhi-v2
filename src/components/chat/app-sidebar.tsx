@@ -1,3 +1,11 @@
+// -----------------------------------
+// src/components/chat/app-sidebar.tsx
+//
+// type User                       L21
+// export function AppSidebar()    L58
+// user                            L58
+// -----------------------------------
+
 "use client";
 
 import {

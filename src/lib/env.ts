@@ -3,9 +3,10 @@ import { z } from "zod";
 // -----------------------
 // src/lib/env.ts
 //
-// const envSchema     L11
-// export const env    L46
-// export type Env     L50
+// const isServer      L12
+// const envSchema     L14
+// export const env    L50
+// export type Env     L54
 // -----------------------
 
 const isServer = typeof window === "undefined";

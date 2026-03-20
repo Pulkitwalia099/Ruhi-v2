@@ -1,3 +1,72 @@
+// ---------------------------------------------------------
+// src/components/ai-elements/code-block.tsx
+//
+// const isItalic                                       L105
+// const isBold                                         L109
+// const isUnderline                                    L110
+// interface KeyedToken                                 L116
+//   token                                              L117
+//   key                                                L118
+// interface KeyedLine                                  L120
+//   tokens                                             L121
+//   key                                                L122
+// const addKeysToTokens                                L125
+// const TokenSpan                                      L135
+// token                                                L135
+// const LineSpan                                       L154
+// keyedLine                                            L158
+// showLineNumbers                                      L159
+// type CodeBlockProps                                  L171
+// code                                                 L172
+// language                                             L173
+// showLineNumbers                                      L174
+// interface TokenizedCode                              L177
+//   tokens                                             L178
+//   fg                                                 L179
+//   bg                                                 L180
+// interface CodeBlockContextType                       L183
+//   code                                               L184
+// const CodeBlockContext                               L188
+// const highlighterCache                               L193
+// const tokensCache                                    L199
+// const subscribers                                    L202
+// const getTokensCacheKey                              L204
+// const getHighlighter                                 L210
+// const createRawTokens                                L228
+// export const highlightCode                           L244
+// const LINE_NUMBER_CLASSES                            L309
+// const CodeBlockBody                                  L322
+// tokenized                                            L328
+// showLineNumbers                                      L329
+// className                                            L330
+// export const CodeBlockContainer                      L378
+// language                                             L383
+// export const CodeBlockHeader                         L399
+// export const CodeBlockTitle                          L415
+// export const CodeBlockFilename                       L425
+// export const CodeBlockActions                        L435
+// export const CodeBlockContent                        L448
+// code                                                 L453
+// language                                             L454
+// showLineNumbers                                      L455
+// export const CodeBlock                               L490
+// export type CodeBlockCopyButtonProps                 L514
+// onCopy                                               L515
+// onError                                              L516
+// timeout                                              L517
+// export const CodeBlockCopyButton                     L520
+// export type CodeBlockLanguageSelectorProps           L575
+// export const CodeBlockLanguageSelector               L577
+// export type CodeBlockLanguageSelectorTriggerProps    L581
+// export const CodeBlockLanguageSelectorTrigger        L585
+// export type CodeBlockLanguageSelectorValueProps      L599
+// export const CodeBlockLanguageSelectorValue          L603
+// export type CodeBlockLanguageSelectorContentProps    L607
+// export const CodeBlockLanguageSelectorContent        L611
+// export type CodeBlockLanguageSelectorItemProps       L618
+// export const CodeBlockLanguageSelectorItem           L622
+// ---------------------------------------------------------
+
 "use client";
 
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";

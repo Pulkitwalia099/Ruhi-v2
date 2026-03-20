@@ -1,3 +1,33 @@
+// ------------------------------------
+// src/components/ai-elements/tool.tsx
+//
+// export type ToolProps            L55
+// export const Tool                L57
+// export type ToolPart             L64
+// export type ToolHeaderProps      L66
+// title                            L67
+// className                        L68
+// state                            L70
+// toolName                         L70
+// type                             L70
+// type                             L72
+// state                            L73
+// toolName                         L74
+// const statusLabels               L78
+// const statusIcons                L88
+// export const getStatusBadge      L98
+// export const ToolHeader         L105
+// export type ToolContentProps    L134
+// export const ToolContent        L136
+// export type ToolInputProps      L146
+// input                           L147
+// export const ToolInput          L150
+// export type ToolOutputProps     L161
+// output                          L162
+// errorText                       L163
+// export const ToolOutput         L166
+// ------------------------------------
+
 "use client";
 
 import type { DynamicToolUIPart, ToolUIPart } from "ai";

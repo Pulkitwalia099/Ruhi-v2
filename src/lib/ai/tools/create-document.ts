@@ -8,6 +8,16 @@ import type { Session } from "@/lib/auth";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
 
+// ----------------------------------
+// src/lib/ai/tools/create-document.ts
+//
+// type CreateDocumentProps       L21
+// session                        L22
+// dataStream                     L23
+// modelId                        L24
+// export const createDocument    L27
+// ----------------------------------
+
 type CreateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;

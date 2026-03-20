@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// tests/e2e/chat.test.ts
+//
+
 test.describe("Chat Page", () => {
   test("home page loads with input field", async ({ page }) => {
     await page.goto("/");

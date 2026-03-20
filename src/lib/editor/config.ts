@@ -8,6 +8,17 @@ import type { MutableRefObject } from "react";
 
 import { buildContentFromDocument } from "./functions";
 
+// -------------------------------------
+// src/lib/editor/config.ts
+//
+// export const documentSchema       L22
+// export function headingRule()     L27
+// export const handleTransaction    L35
+// transaction                       L40
+// editorRef                         L41
+// onSaveContent                     L42
+// -------------------------------------
+
 export const documentSchema = new Schema({
   nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
   marks: schema.spec.marks,

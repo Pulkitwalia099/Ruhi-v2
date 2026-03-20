@@ -1,3 +1,19 @@
+// ----------------------------------------
+// src/components/ai-elements/shimmer.tsx
+//
+// type MotionHTMLProps                 L26
+// const motionComponentCache           L29
+// const getMotionComponent             L34
+// export interface TextShimmerProps    L43
+//   children                           L44
+//   as                                 L45
+//   className                          L46
+//   duration                           L47
+//   spread                             L48
+// const ShimmerComponent               L51
+// export const Shimmer                 L94
+// ----------------------------------------
+
 "use client";
 
 import type { MotionProps } from "motion/react";

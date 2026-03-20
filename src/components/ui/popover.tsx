@@ -1,3 +1,12 @@
+// --------------------------------
+// src/components/ui/popover.tsx
+//
+// function PopoverRoot()       L15
+// function PopoverTrigger()    L19
+// function PopoverAnchor()     L23
+// function PopoverContent()    L27
+// --------------------------------
+
 "use client";
 
 import { Popover } from "radix-ui";

@@ -18,6 +18,39 @@ import {
 import type { Popover as PopoverPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
+// -----------------------------------------------
+// src/components/ai-elements/model-selector.tsx
+//
+// export type ModelSelectorProps              L54
+// export const ModelSelector                  L56
+// export type ModelSelectorTriggerProps       L60
+// export const ModelSelectorTrigger           L62
+// export type ModelSelectorContentProps       L66
+// title                                       L67
+// export const ModelSelectorContent           L70
+// export type ModelSelectorInputProps         L92
+// export const ModelSelectorInput             L94
+// export type ModelSelectorListProps         L101
+// export const ModelSelectorList             L103
+// export type ModelSelectorEmptyProps        L107
+// export const ModelSelectorEmpty            L109
+// export type ModelSelectorGroupProps        L113
+// export const ModelSelectorGroup            L115
+// export type ModelSelectorItemProps         L119
+// export const ModelSelectorItem             L121
+// export type ModelSelectorShortcutProps     L125
+// export const ModelSelectorShortcut         L127
+// export type ModelSelectorSeparatorProps    L131
+// export const ModelSelectorSeparator        L135
+// export type ModelSelectorLogoProps         L139
+// provider                                   L143
+// export const ModelSelectorLogo             L204
+// export type ModelSelectorLogoGroupProps    L219
+// export const ModelSelectorLogoGroup        L221
+// export type ModelSelectorNameProps         L234
+// export const ModelSelectorName             L236
+// -----------------------------------------------
+
 export type ModelSelectorProps = React.ComponentProps<typeof PopoverPrimitive.Root>;
 
 export const ModelSelector = (props: ModelSelectorProps) => (

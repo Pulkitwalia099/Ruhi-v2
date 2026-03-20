@@ -4,6 +4,32 @@ import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "./artifact";
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "./icons";
 
+// -----------------------------------------
+// src/components/chat/document.tsx
+//
+// const getActionText                   L33
+// type DocumentToolResultProps          L51
+// type                                  L52
+// id                                    L53
+// kind                                  L53
+// result                                L53
+// title                                 L53
+// isReadonly                            L54
+// function PureDocumentToolResult()     L57
+// export const DocumentToolResult      L112
+// type DocumentToolCallProps           L114
+// type                                 L115
+// args                                 L116
+// kind                                 L117
+// title                                L117
+// description                          L118
+// id                                   L118
+// documentId                           L119
+// isReadonly                           L120
+// function PureDocumentToolCall()      L123
+// export const DocumentToolCall        L187
+// -----------------------------------------
+
 const getActionText = (
   type: "create" | "update" | "request-suggestions",
   tense: "present" | "past"

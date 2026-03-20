@@ -10,6 +10,13 @@ import {
 } from "@/components/chat/icons";
 import { SpreadsheetEditor } from "@/components/chat/sheet-editor";
 
+// ---------------------------------
+// src/artifacts/sheet/client.tsx
+//
+// type Metadata                 L20
+// export const sheetArtifact    L22
+// ---------------------------------
+
 type Metadata = Record<string, never>;
 
 export const sheetArtifact = new Artifact<"sheet", Metadata>({

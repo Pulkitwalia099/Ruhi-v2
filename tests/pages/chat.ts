@@ -1,5 +1,26 @@
 import type { Page } from "@playwright/test";
 
+// -------------------------------------
+// tests/pages/chat.ts
+//
+// const MODEL_BUTTON_REGEX          L24
+// export class ChatPage             L26
+//   page                            L27
+//   constructor()                   L29
+//   async goto()                    L33
+//   async createNewChat()           L37
+//   getInput()                      L42
+//   async typeMessage()             L46
+//   async sendMessage()             L51
+//   async sendUserMessage()         L55
+//   getSendButton()                 L60
+//   getStopButton()                 L64
+//   async clickSuggestedAction()    L68
+//   async openModelSelector()       L75
+//   async selectModel()             L83
+//   async searchModels()            L88
+// -------------------------------------
+
 const MODEL_BUTTON_REGEX = /Kimi|Codestral|Mistral|DeepSeek|GPT|Grok/i;
 
 export class ChatPage {

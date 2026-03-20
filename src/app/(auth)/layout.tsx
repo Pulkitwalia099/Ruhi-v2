@@ -4,6 +4,13 @@ import { Toaster } from "sonner";
 import { SparklesIcon, VercelIcon } from "@/components/chat/icons";
 import { Preview } from "@/components/chat/preview";
 
+// -------------------------------------------
+// src/app/(auth)/layout.tsx
+//
+// export default function AuthLayout()    L14
+// children                                L17
+// -------------------------------------------
+
 export default function AuthLayout({
   children,
 }: {

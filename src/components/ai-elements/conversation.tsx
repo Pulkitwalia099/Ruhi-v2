@@ -1,3 +1,29 @@
+// -------------------------------------------------
+// src/components/ai-elements/conversation.tsx
+//
+// export type ConversationProps                 L37
+// export const Conversation                     L39
+// export type ConversationContentProps          L49
+// export const ConversationContent              L53
+// export type ConversationEmptyStateProps       L63
+// title                                         L64
+// description                                   L65
+// icon                                          L66
+// export const ConversationEmptyState           L69
+// export type ConversationScrollButtonProps     L98
+// export const ConversationScrollButton        L100
+// export interface ConversationMessage         L129
+//   role                                       L130
+//   content                                    L131
+// export type ConversationDownloadProps        L134
+// messages                                     L138
+// filename                                     L139
+// formatMessage                                L140
+// const defaultFormatMessage                   L143
+// export const messagesToMarkdown              L149
+// export const ConversationDownload            L157
+// -------------------------------------------------
+
 "use client";
 
 import type { ComponentProps } from "react";

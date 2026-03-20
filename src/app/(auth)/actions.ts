@@ -1,3 +1,15 @@
+// --------------------------------------
+// src/app/(auth)/actions.ts
+//
+// const authFormSchema               L19
+// export type LoginActionState       L24
+// status                             L25
+// export const login                 L28
+// export type RegisterActionState    L56
+// status                             L57
+// export const register              L66
+// --------------------------------------
+
 "use server";
 
 import { headers } from "next/headers";

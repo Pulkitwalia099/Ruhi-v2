@@ -1,3 +1,9 @@
+// --------------------------------------
+// src/components/theme-provider.tsx
+//
+// export function ThemeProvider()    L12
+// --------------------------------------
+
 "use client";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";

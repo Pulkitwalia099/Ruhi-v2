@@ -3,6 +3,13 @@ import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
 
+// ---------------------------------------
+// src/artifacts/code/server.ts
+//
+// function stripFences()              L13
+// export const codeDocumentHandler    L20
+// ---------------------------------------
+
 function stripFences(code: string): string {
   return code
     .replace(/^```[\w]*\n?/, "")

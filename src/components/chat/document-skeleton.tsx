@@ -1,3 +1,11 @@
+// ------------------------------------------
+// src/components/chat/document-skeleton.tsx
+//
+// export const DocumentSkeleton          L13
+// artifactKind                           L16
+// export const InlineDocumentSkeleton    L36
+// ------------------------------------------
+
 "use client";
 
 import type { ArtifactKind } from "./artifact";

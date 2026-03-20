@@ -3,6 +3,12 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+// -----------------------
+// src/db/migrate.ts
+//
+// const runMigrate    L16
+// -----------------------
+
 config({
   path: ".env.local",
 });

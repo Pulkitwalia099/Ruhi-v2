@@ -1,3 +1,9 @@
+// ----------------------------------
+// src/components/chat/shell.tsx
+//
+// export function ChatShell()    L35
+// ----------------------------------
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";

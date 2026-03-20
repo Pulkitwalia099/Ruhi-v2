@@ -1,3 +1,43 @@
+// -------------------------------------------
+// src/components/chat/multimodal-input.tsx
+//
+// function setCookie()                   L105
+// function PureMultimodalInput()         L111
+// chatId                                 L130
+// input                                  L131
+// setInput                               L132
+// status                                 L133
+// stop                                   L134
+// attachments                            L135
+// setAttachments                         L136
+// messages                               L137
+// setMessages                            L138
+// sendMessage                            L139
+// className                              L142
+// selectedVisibilityType                 L143
+// selectedModelId                        L144
+// onModelChange                          L145
+// editingMessage                         L146
+// onCancelEdit                           L147
+// isLoading                              L148
+// export const MultimodalInput           L595
+// function PureAttachmentsButton()       L627
+// fileInputRef                           L632
+// status                                 L633
+// selectedModelId                        L634
+// const AttachmentsButton                L667
+// function PureModelSelectorCompact()    L669
+// selectedModelId                        L673
+// onModelChange                          L674
+// curated                                L720
+// model                                  L720
+// const ModelSelectorCompact             L832
+// function PureStopButton()              L834
+// stop                                   L838
+// setMessages                            L839
+// const StopButton                       L856
+// -------------------------------------------
+
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";

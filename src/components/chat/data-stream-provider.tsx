@@ -1,3 +1,15 @@
+// -------------------------------------------
+// src/components/chat/data-stream-provider.tsx
+//
+// type DataStreamContextValue             L20
+// dataStream                              L21
+// setDataStream                           L22
+// const DataStreamContext                 L27
+// export function DataStreamProvider()    L29
+// children                                L32
+// export function useDataStream()         L47
+// -------------------------------------------
+
 "use client";
 
 import type { DataUIPart } from "ai";

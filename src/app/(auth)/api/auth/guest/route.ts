@@ -3,6 +3,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 
+// ----------------------------------
+// src/app/(auth)/api/auth/guest/route.ts
+//
+// export async function GET()    L12
+// ----------------------------------
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawRedirect = searchParams.get("redirectUrl") || "/";

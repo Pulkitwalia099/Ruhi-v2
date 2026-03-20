@@ -7,9 +7,9 @@ import { ChatbotError } from "@/lib/errors";
 // ------------------------------------
 // src/app/(chat)/api/vote/route.ts
 //
-// const voteSchema                 L14
-// export async function GET()      L20
-// export async function PATCH()    L52
+// const voteSchema                 L15
+// export async function GET()      L21
+// export async function PATCH()    L53
 // ------------------------------------
 
 const voteSchema = z.object({

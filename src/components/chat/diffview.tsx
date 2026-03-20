@@ -15,6 +15,18 @@ import { renderToString } from "react-dom/server";
 import { MessageResponse } from "@/components/ai-elements/message";
 import { DiffType, diffEditor } from "@/lib/editor/diff";
 
+// -----------------------------
+// src/components/chat/diffview.tsx
+//
+// const diffSchema          L30
+// toDOM()                   L36
+// function computeDiff()    L57
+// type DiffEditorProps      L61
+// oldContent                L62
+// newContent                L63
+// export const DiffView     L66
+// -----------------------------
+
 const diffSchema = new Schema({
   nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
   marks: OrderedMap.from({

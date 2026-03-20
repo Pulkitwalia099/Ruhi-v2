@@ -1,3 +1,14 @@
+// --------------------------------------
+// src/components/chat/suggested-actions.tsx
+//
+// type SuggestedActionsProps         L22
+// chatId                             L23
+// sendMessage                        L24
+// selectedVisibilityType             L25
+// function PureSuggestedActions()    L28
+// export const SuggestedActions      L77
+// --------------------------------------
+
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";

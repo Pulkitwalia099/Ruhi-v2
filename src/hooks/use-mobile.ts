@@ -1,5 +1,12 @@
 import * as React from "react"
 
+// ------------------------------------
+// src/hooks/use-mobile.ts
+//
+// const MOBILE_BREAKPOINT          L10
+// export function useIsMobile()    L12
+// ------------------------------------
+
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {

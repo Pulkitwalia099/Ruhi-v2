@@ -1,3 +1,21 @@
+// -----------------------------------
+// src/components/ui/command.tsx
+//
+// function Command()              L38
+// function CommandDialog()        L54
+// title                           L62
+// description                     L63
+// className                       L64
+// showCloseButton                 L65
+// function CommandInput()         L86
+// function CommandList()         L109
+// function CommandEmpty()        L125
+// function CommandGroup()        L138
+// function CommandSeparator()    L154
+// function CommandItem()         L167
+// function CommandShortcut()     L186
+// -----------------------------------
+
 "use client"
 
 import * as React from "react"

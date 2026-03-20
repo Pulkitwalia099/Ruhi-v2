@@ -1,3 +1,49 @@
+// ---------------------------------
+// src/components/chat/weather.tsx
+//
+// const SunIcon                 L53
+// size                          L53
+// const MoonIcon               L109
+// size                         L109
+// const CloudIcon              L118
+// size                         L118
+// type WeatherAtLocation       L129
+// latitude                     L130
+// longitude                    L131
+// generationtime_ms            L132
+// utc_offset_seconds           L133
+// timezone                     L134
+// timezone_abbreviation        L135
+// elevation                    L136
+// cityName                     L137
+// current_units                L138
+// time                         L139
+// interval                     L140
+// temperature_2m               L141
+// current                      L143
+// time                         L144
+// interval                     L145
+// temperature_2m               L146
+// hourly_units                 L148
+// time                         L149
+// temperature_2m               L150
+// hourly                       L152
+// time                         L153
+// temperature_2m               L154
+// daily_units                  L156
+// time                         L157
+// sunrise                      L158
+// sunset                       L159
+// daily                        L161
+// time                         L162
+// sunrise                      L163
+// sunset                       L164
+// const SAMPLE                 L168
+// function n()                 L323
+// export function Weather()    L327
+// weatherAtLocation            L330
+// ---------------------------------
+
 "use client";
 
 import cx from "classnames";

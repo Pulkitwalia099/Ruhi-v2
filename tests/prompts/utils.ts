@@ -1,5 +1,12 @@
 import type { LanguageModelV3StreamPart } from "@ai-sdk/provider";
 
+// --------------------------------------------------
+// tests/prompts/utils.ts
+//
+// const mockUsage                                L10
+// export function getResponseChunksByPrompt()    L15
+// --------------------------------------------------
+
 const mockUsage = {
   inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
   outputTokens: { total: 20, text: 20, reasoning: 0 },

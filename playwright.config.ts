@@ -6,6 +6,13 @@ import { defineConfig, devices } from "@playwright/test";
  */
 import { config } from "dotenv";
 
+// --------------------
+// playwright.config.ts
+//
+// const PORT       L21
+// const baseURL    L27
+// --------------------
+
 config({
   path: ".env.local",
 });

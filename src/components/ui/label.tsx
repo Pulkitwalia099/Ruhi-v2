@@ -1,3 +1,9 @@
+// -----------------------
+// src/components/ui/label.tsx
+//
+// function Label()    L14
+// -----------------------
+
 "use client"
 
 import * as React from "react"

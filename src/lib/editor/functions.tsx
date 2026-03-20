@@ -1,3 +1,11 @@
+// --------------------------------------------
+// src/lib/editor/functions.tsx
+//
+// export const buildDocumentFromContent    L21
+// export const buildContentFromDocument    L31
+// export const createDecorations           L35
+// --------------------------------------------
+
 "use client";
 
 import { defaultMarkdownSerializer } from "prosemirror-markdown";

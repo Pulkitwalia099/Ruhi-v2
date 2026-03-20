@@ -3,6 +3,15 @@ import Form from "next/form";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
+// ---------------------------------
+// src/components/chat/auth-form.tsx
+//
+// export function AuthForm()    L15
+// action                        L20
+// children                      L23
+// defaultEmail                  L24
+// ---------------------------------
+
 export function AuthForm({
   action,
   children,

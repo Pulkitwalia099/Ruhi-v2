@@ -1,3 +1,15 @@
+// ------------------------------
+// src/components/chat/toast.tsx
+//
+// const iconsByType          L20
+// export function toast()    L25
+// function Toast()           L31
+// type ToastProps            L83
+// id                         L84
+// type                       L85
+// description                L86
+// ------------------------------
+
 "use client";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";

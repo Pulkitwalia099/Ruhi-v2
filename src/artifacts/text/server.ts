@@ -3,6 +3,12 @@ import { updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
 
+// ---------------------------------------
+// src/artifacts/text/server.ts
+//
+// export const textDocumentHandler    L12
+// ---------------------------------------
+
 export const textDocumentHandler = createDocumentHandler<"text">({
   kind: "text",
   onCreateDocument: async ({ title, dataStream, modelId }) => {

@@ -16,6 +16,16 @@ import {
 } from "@/components/chat/icons";
 import { generateUUID } from "@/lib/utils";
 
+// ----------------------------------------
+// src/artifacts/code/client.tsx
+//
+// const OUTPUT_HANDLERS                L29
+// function detectRequiredHandlers()    L65
+// type Metadata                        L75
+// outputs                              L76
+// export const codeArtifact            L79
+// ----------------------------------------
+
 const OUTPUT_HANDLERS = {
   matplotlib: `
     import io

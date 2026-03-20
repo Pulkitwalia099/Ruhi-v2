@@ -3,6 +3,12 @@ import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
 
+// ----------------------------------------
+// src/artifacts/sheet/server.ts
+//
+// export const sheetDocumentHandler    L12
+// ----------------------------------------
+
 export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   kind: "sheet",
   onCreateDocument: async ({ title, dataStream, modelId }) => {

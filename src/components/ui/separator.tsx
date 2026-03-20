@@ -1,3 +1,9 @@
+// ---------------------------
+// src/components/ui/separator.tsx
+//
+// function Separator()    L14
+// ---------------------------
+
 "use client"
 
 import * as React from "react"

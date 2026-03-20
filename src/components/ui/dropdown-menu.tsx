@@ -1,3 +1,29 @@
+// -------------------------------------------
+// src/components/ui/dropdown-menu.tsx
+//
+// function DropdownMenu()                 L35
+// function DropdownMenuPortal()           L41
+// function DropdownMenuTrigger()          L49
+// function DropdownMenuContent()          L60
+// function DropdownMenuGroup()            L79
+// function DropdownMenuItem()             L87
+// inset                                   L93
+// variant                                 L94
+// function DropdownMenuCheckboxItem()    L110
+// inset                                  L117
+// function DropdownMenuRadioGroup()      L144
+// function DropdownMenuRadioItem()       L155
+// inset                                  L161
+// function DropdownMenuLabel()           L187
+// inset                                  L192
+// function DropdownMenuSeparator()       L207
+// function DropdownMenuShortcut()        L220
+// function DropdownMenuSub()             L236
+// function DropdownMenuSubTrigger()      L242
+// inset                                  L248
+// function DropdownMenuSubContent()      L266
+// -------------------------------------------
+
 "use client"
 
 import * as React from "react"

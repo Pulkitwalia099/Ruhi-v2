@@ -1,3 +1,12 @@
+// ---------------------------------------
+// src/components/chat/sidebar-user-nav.tsx
+//
+// function emailToHue()               L32
+// export function SidebarUserNav()    L40
+// email                               L43
+// user                                L43
+// ---------------------------------------
+
 "use client";
 
 import { ChevronUp } from "lucide-react";

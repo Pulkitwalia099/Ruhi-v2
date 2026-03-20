@@ -1,3 +1,13 @@
+---
+path: README.md
+outline: |
+    ◦ Features                         L29
+    ◦ Model Providers                  L47
+      ▪ AI Gateway Authentication      L51
+    ◦ Deploy Your Own                  L59
+    ◦ Running locally                  L65
+---
+
 <a href="https://chat.vercel.ai/">
   <img alt="Chatbot" src="app/(chat)/opengraph-image.png">
   <h1 align="center">Chatbot</h1>

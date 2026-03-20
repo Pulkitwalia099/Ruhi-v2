@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+// -----------------------------
+// tests/e2e/api.test.ts
+//
+// const CHAT_URL_REGEX      L10
+// const ERROR_TEXT_REGEX    L11
+// -----------------------------
+
 const CHAT_URL_REGEX = /\/chat\/[\w-]+/;
 const ERROR_TEXT_REGEX = /error|failed|trouble/i;
 

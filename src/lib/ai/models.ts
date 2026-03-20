@@ -15,11 +15,11 @@
 // reasoningEffort                       L45
 // capabilities                          L46
 // export const chatModels               L49
-// export function getCapabilities()    L186
-// export const isDemo                  L192
-// export function getActiveModels()    L194
-// export const allowedModelIds         L198
-// export const modelsByProvider        L200
+// export function getCapabilities()    L211
+// export const isDemo                  L217
+// export function getActiveModels()    L219
+// export const allowedModelIds         L223
+// export const modelsByProvider        L225
 // -----------------------------------------
 
 export const DEFAULT_CHAT_MODEL = "openai/gpt-5.2";

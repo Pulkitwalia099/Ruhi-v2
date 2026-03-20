@@ -1,3 +1,135 @@
+// ---------------------------------------------------------
+// src/components/ai-elements/prompt-input.tsx
+//
+// const convertBlobUrlToDataUrl                        L213
+// export interface AttachmentsContext                  L236
+//   files                                              L237
+//   id                                                 L237
+//   add                                                L238
+//   remove                                             L239
+//   clear                                              L240
+//   openFileDialog                                     L241
+//   fileInputRef                                       L242
+// export interface TextInputContext                    L245
+//   value                                              L246
+//   setInput                                           L247
+//   clear                                              L248
+// export interface PromptInputControllerProps          L251
+//   textInput                                          L252
+//   attachments                                        L253
+//   __registerFileInput                                L255
+// const PromptInputController                          L261
+// const ProviderAttachmentsContext                     L264
+// export const usePromptInputController                L268
+// const useOptionalPromptInputController               L279
+// export const useProviderAttachments                  L282
+// const useOptionalProviderAttachments                 L292
+// export type PromptInputProviderProps                 L295
+// initialInput                                         L296
+// export const PromptInputProvider                     L303
+// id                                                   L313
+// const LocalAttachmentsContext                        L427
+// export const usePromptInputAttachments               L429
+// export interface ReferencedSourcesContext            L446
+//   id                                                 L447
+//   sources                                            L447
+//   add                                                L448
+//   remove                                             L449
+//   clear                                              L450
+// export const LocalReferencedSourcesContext           L453
+// export const usePromptInputReferencedSources         L456
+// export type PromptInputActionAddAttachmentsProps     L466
+// label                                                L469
+// export const PromptInputActionAddAttachments         L472
+// export interface PromptInputMessage                  L493
+//   text                                               L494
+//   files                                              L495
+// export type PromptInputProps                         L498
+// accept                                               L503
+// multiple                                             L504
+// globalDrop                                           L506
+// syncHiddenInput                                      L508
+// maxFiles                                             L510
+// maxFileSize                                          L512
+// onError                                              L513
+// code                                                 L514
+// message                                              L515
+// onSubmit                                             L517
+// export const PromptInput                             L523
+// id                                                   L545
+// id                                                   L550
+// id                                                   L622
+// export type PromptInputBodyProps                     L953
+// export const PromptInputBody                         L955
+// export type PromptInputTextareaProps                 L962
+// export const PromptInputTextarea                     L966
+// export type PromptInputHeaderProps                  L1081
+// export const PromptInputHeader                      L1086
+// export type PromptInputFooterProps                  L1097
+// export const PromptInputFooter                      L1102
+// export type PromptInputToolsProps                   L1113
+// export const PromptInputTools                       L1115
+// export type PromptInputButtonTooltip                L1125
+// content                                             L1128
+// shortcut                                            L1129
+// side                                                L1130
+// export type PromptInputButtonProps                  L1133
+// tooltip                                             L1134
+// export const PromptInputButton                      L1137
+// export type PromptInputActionMenuProps              L1179
+// export const PromptInputActionMenu                  L1180
+// export type PromptInputActionMenuTriggerProps       L1184
+// export const PromptInputActionMenuTrigger           L1186
+// export type PromptInputActionMenuContentProps       L1198
+// export const PromptInputActionMenuContent           L1201
+// export type PromptInputActionMenuItemProps          L1208
+// export const PromptInputActionMenuItem              L1211
+// export type PromptInputSubmitProps                  L1221
+// status                                              L1222
+// onStop                                              L1223
+// export const PromptInputSubmit                      L1226
+// export type PromptInputSelectProps                  L1275
+// export const PromptInputSelect                      L1277
+// export type PromptInputSelectTriggerProps           L1281
+// export const PromptInputSelectTrigger               L1285
+// export type PromptInputSelectContentProps           L1299
+// export const PromptInputSelectContent               L1303
+// export type PromptInputSelectItemProps              L1310
+// export const PromptInputSelectItem                  L1312
+// export type PromptInputSelectValueProps             L1319
+// export const PromptInputSelectValue                 L1321
+// export type PromptInputHoverCardProps               L1328
+// export const PromptInputHoverCard                   L1330
+// export type PromptInputHoverCardTriggerProps        L1338
+// export const PromptInputHoverCardTrigger            L1342
+// export type PromptInputHoverCardContentProps        L1346
+// export const PromptInputHoverCardContent            L1350
+// export type PromptInputTabsListProps                L1357
+// export const PromptInputTabsList                    L1359
+// export type PromptInputTabProps                     L1364
+// export const PromptInputTab                         L1366
+// export type PromptInputTabLabelProps                L1371
+// export const PromptInputTabLabel                    L1373
+// export type PromptInputTabBodyProps                 L1388
+// export const PromptInputTabBody                     L1390
+// export type PromptInputTabItemProps                 L1397
+// export const PromptInputTabItem                     L1399
+// export type PromptInputCommandProps                 L1412
+// export const PromptInputCommand                     L1414
+// export type PromptInputCommandInputProps            L1419
+// export const PromptInputCommandInput                L1421
+// export type PromptInputCommandListProps             L1428
+// export const PromptInputCommandList                 L1430
+// export type PromptInputCommandEmptyProps            L1437
+// export const PromptInputCommandEmpty                L1439
+// export type PromptInputCommandGroupProps            L1446
+// export const PromptInputCommandGroup                L1448
+// export type PromptInputCommandItemProps             L1455
+// export const PromptInputCommandItem                 L1457
+// export type PromptInputCommandSeparatorProps        L1464
+// export const PromptInputCommandSeparator            L1468
+// ---------------------------------------------------------
+
 "use client";
 
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai";

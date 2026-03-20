@@ -3,6 +3,18 @@ import { simulateReadableStream } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
 import { getResponseChunksByPrompt } from "../../../tests/prompts/utils";
 
+// ----------------------------------
+// src/lib/ai/models.test.ts
+//
+// const mockUsage                L18
+// const mockFinishReason         L23
+// const mockGenerateResult       L25
+// const titleGenerateResult      L32
+// export const chatModel         L39
+// export const reasoningModel    L50
+// export const titleModel        L61
+// ----------------------------------
+
 const mockUsage = {
   inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
   outputTokens: { total: 20, text: 20, reasoning: 0 },

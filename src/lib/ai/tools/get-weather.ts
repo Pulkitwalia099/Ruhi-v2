@@ -1,6 +1,15 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+// -----------------------------------
+// src/lib/ai/tools/get-weather.ts
+//
+// async function geocodeCity()    L13
+// latitude                        L15
+// longitude                       L15
+// export const getWeather         L41
+// -----------------------------------
+
 async function geocodeCity(
   city: string
 ): Promise<{ latitude: number; longitude: number } | null> {

@@ -1,6 +1,13 @@
 import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
 
+// -----------------------
+// next.config.ts
+//
+// const basePath      L11
+// const nextConfig    L13
+// -----------------------
+
 const basePath = process.env.IS_DEMO === "1" ? "/demo" : "";
 
 const nextConfig: NextConfig = {

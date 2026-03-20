@@ -1,3 +1,11 @@
+// ------------------------------------------
+// src/hooks/use-chat-visibility.ts
+//
+// export function useChatVisibility()    L21
+// chatId                                 L25
+// initialVisibilityType                  L26
+// ------------------------------------------
+
 "use client";
 
 import { useMemo } from "react";

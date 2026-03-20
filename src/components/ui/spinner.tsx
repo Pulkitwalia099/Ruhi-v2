@@ -1,6 +1,12 @@
 import { cn } from "@/lib/utils"
 import { Loader2Icon } from "lucide-react"
 
+// -------------------------
+// src/components/ui/spinner.tsx
+//
+// function Spinner()    L10
+// -------------------------
+
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   return (
     <Loader2Icon role="status" aria-label="Loading" className={cn("size-4 animate-spin", className)} {...props} />

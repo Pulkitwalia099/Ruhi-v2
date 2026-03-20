@@ -1,3 +1,21 @@
+// -----------------------------------------------
+// src/lib/errors.ts
+//
+// export type ErrorType                       L19
+// export type Surface                         L27
+// export type ErrorCode                       L38
+// export type ErrorVisibility                 L40
+// export const visibilityBySurface            L42
+// export class ChatbotError                   L54
+//   type                                      L55
+//   surface                                   L56
+//   statusCode                                L57
+//   constructor()                             L59
+//   toResponse()                              L71
+// export function getMessageByErrorCode()     L94
+// function getStatusCodeByType()             L133
+// -----------------------------------------------
+
 export type ErrorType =
   | "bad_request"
   | "unauthorized"

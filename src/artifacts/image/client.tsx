@@ -3,6 +3,12 @@ import { Artifact } from "@/components/chat/create-artifact";
 import { CopyIcon, RedoIcon, UndoIcon } from "@/components/chat/icons";
 import { ImageEditor } from "@/components/chat/image-editor";
 
+// ---------------------------------
+// src/artifacts/image/client.tsx
+//
+// export const imageArtifact    L12
+// ---------------------------------
+
 export const imageArtifact = new Artifact({
   kind: "image",
   description: "Useful for image generation",

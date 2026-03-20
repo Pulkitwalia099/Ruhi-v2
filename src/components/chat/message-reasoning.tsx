@@ -1,3 +1,12 @@
+// -----------------------------------------
+// src/components/chat/message-reasoning.tsx
+//
+// type MessageReasoningProps            L19
+// isLoading                             L20
+// reasoning                             L21
+// export function MessageReasoning()    L24
+// -----------------------------------------
+
 "use client";
 
 import { useEffect, useState } from "react";

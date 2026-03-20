@@ -1,3 +1,16 @@
+// --------------------------------------
+// src/components/ui/input-group.tsx
+//
+// function InputGroup()              L24
+// const inputGroupAddonVariants      L38
+// function InputGroupAddon()         L59
+// const inputGroupButtonVariants     L81
+// function InputGroupButton()        L98
+// function InputGroupText()         L117
+// function InputGroupInput()        L129
+// function InputGroupTextarea()     L145
+// --------------------------------------
+
 "use client"
 
 import * as React from "react"

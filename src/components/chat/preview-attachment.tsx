@@ -3,6 +3,15 @@ import type { Attachment } from "@/lib/types";
 import { Spinner } from "../ui/spinner";
 import { CrossSmallIcon } from "./icons";
 
+// -------------------------------------
+// src/components/chat/preview-attachment.tsx
+//
+// export const PreviewAttachment    L15
+// attachment                        L20
+// isUploading                       L21
+// onRemove                          L22
+// -------------------------------------
+
 export const PreviewAttachment = ({
   attachment,
   isUploading = false,

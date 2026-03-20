@@ -1,3 +1,45 @@
+// ----------------------------------
+// src/components/chat/toolbar.tsx
+//
+// type ToolProps                 L70
+// description                    L71
+// icon                           L72
+// selectedTool                   L73
+// setSelectedTool                L74
+// isToolbarVisible               L75
+// setIsToolbarVisible            L76
+// isAnimating                    L77
+// sendMessage                    L78
+// onClick                        L79
+// sendMessage                    L82
+// const Tool                     L86
+// const randomArr               L172
+// const ReadingLevelSelector    L174
+// setSelectedTool               L179
+// isAnimating                   L180
+// sendMessage                   L181
+// export const Tools            L285
+// selectedTool                  L292
+// setSelectedTool               L293
+// sendMessage                   L294
+// isAnimating                   L295
+// tools                         L296
+// const createFixErrorTool      L321
+// const PureToolbar             L340
+// isToolbarVisible              L353
+// setIsToolbarVisible           L354
+// status                        L355
+// sendMessage                   L356
+// stop                          L357
+// setMessages                   L358
+// artifactKind                  L359
+// consoleError                  L360
+// documentId                    L361
+// artifactActions               L362
+// onClose                       L363
+// export const Toolbar          L507
+// ----------------------------------
+
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import cx from "classnames";

@@ -1,3 +1,12 @@
+// --------------------------------------------
+// src/hooks/use-artifact.ts
+//
+// export const initialArtifactData         L16
+// type Selector                            L31
+// export function useArtifactSelector()    L33
+// export function useArtifact()            L48
+// --------------------------------------------
+
 "use client";
 
 import { useCallback, useMemo } from "react";

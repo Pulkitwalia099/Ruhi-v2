@@ -1,3 +1,122 @@
+// -----------------------------------------
+// src/components/chat/icons.tsx
+//
+// export const BotIcon                 L120
+// export const UserIcon                L139
+// export const AttachmentIcon          L159
+// export const VercelIcon              L178
+// export const GitIcon                 L197
+// export const BoxIcon                 L223
+// size                                 L223
+// export const HomeIcon                L242
+// size                                 L242
+// export const GPSIcon                 L261
+// size                                 L261
+// export const InvoiceIcon             L282
+// size                                 L282
+// export const LogoOpenAI              L301
+// size                                 L301
+// export const LogoGoogle              L318
+// size                                 L318
+// export const LogoAnthropic           L348
+// export const RouteIcon               L368
+// size                                 L368
+// export const FileIcon                L387
+// size                                 L387
+// export const LoaderIcon              L406
+// size                                 L406
+// export const UploadIcon              L481
+// size                                 L481
+// export const MenuIcon                L501
+// size                                 L501
+// export const PencilEditIcon          L520
+// size                                 L520
+// export const CheckedSquare           L539
+// size                                 L539
+// export const UncheckedSquare         L558
+// size                                 L558
+// export const MoreIcon                L580
+// size                                 L580
+// export const TrashIcon               L599
+// size                                 L599
+// export const InfoIcon                L618
+// size                                 L618
+// export const ArrowUpIcon             L637
+// size                                 L640
+// export const StopIcon                L660
+// size                                 L663
+// export const PaperclipIcon           L682
+// size                                 L685
+// export const MoreHorizontalIcon      L706
+// size                                 L706
+// export const MessageIcon             L725
+// size                                 L725
+// export const CrossIcon               L744
+// size                                 L744
+// export const CrossSmallIcon          L761
+// size                                 L761
+// export const UndoIcon                L778
+// size                                 L778
+// export const RedoIcon                L795
+// size                                 L795
+// export const DeltaIcon               L812
+// size                                 L812
+// export const CpuIcon                 L829
+// size                                 L829
+// export const PenIcon                 L856
+// size                                 L856
+// export const SummarizeIcon           L873
+// size                                 L873
+// export const SidebarLeftIcon         L890
+// size                                 L890
+// export const PlusIcon                L907
+// size                                 L907
+// export const CopyIcon                L924
+// size                                 L924
+// export const ThumbUpIcon             L941
+// size                                 L941
+// export const ThumbDownIcon           L958
+// size                                 L958
+// export const ChevronDownIcon         L975
+// size                                 L975
+// export const SparklesIcon            L992
+// size                                 L992
+// export const CheckCircleFillIcon    L1015
+// size                                L1015
+// export const GlobeIcon              L1034
+// size                                L1034
+// export const LockIcon               L1053
+// size                                L1053
+// export const EyeIcon                L1072
+// size                                L1072
+// export const ShareIcon              L1091
+// size                                L1091
+// export const CodeIcon               L1110
+// size                                L1110
+// export const PlayIcon               L1129
+// size                                L1129
+// export const PythonIcon             L1148
+// size                                L1148
+// export const TerminalWindowIcon     L1169
+// size                                L1169
+// export const TerminalIcon           L1188
+// size                                L1188
+// export const ClockRewind            L1207
+// size                                L1207
+// export const LogsIcon               L1226
+// size                                L1226
+// export const ImageIcon              L1245
+// size                                L1245
+// export const FullscreenIcon         L1264
+// size                                L1264
+// export const DownloadIcon           L1281
+// size                                L1281
+// export const LineChartIcon          L1298
+// size                                L1298
+// export const WarningIcon            L1315
+// size                                L1315
+// -----------------------------------------
+
 export const BotIcon = () => {
   return (
     <svg
