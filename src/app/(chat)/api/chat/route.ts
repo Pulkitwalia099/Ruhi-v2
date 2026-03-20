@@ -44,6 +44,16 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
+// --------------------------------------
+// src/app/(chat)/api/chat/route.ts
+//
+// export const maxDuration           L57
+// function getStreamContext()        L59
+// export async function POST()       L69
+// async consumeSseStream()          L302
+// export async function DELETE()    L333
+// --------------------------------------
+
 export const maxDuration = 60;
 
 function getStreamContext() {
