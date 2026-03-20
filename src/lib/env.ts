@@ -5,8 +5,8 @@ import { z } from "zod";
 //
 // const isServer      L12
 // const envSchema     L14
-// export const env    L50
-// export type Env     L54
+// export const env    L61
+// export type Env     L65
 // -----------------------
 
 const isServer = typeof window === "undefined";
@@ -36,6 +36,17 @@ const envSchema = z.object({
     .optional()
     .transform((val) => val === "1"),
   NEXT_PUBLIC_BASE_PATH: z.string().optional().default(""),
+
+  // --- Bot integrations (optional — set the ones you use) ---
+  DISCORD_BOT_TOKEN: z.string().optional(),
+  DISCORD_PUBLIC_KEY: z.string().optional(),
+  DISCORD_APPLICATION_ID: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 
   // --- Runtime ---
   NODE_ENV: z

@@ -4,21 +4,22 @@ import type { ArtifactKind } from "@/components/chat/artifact";
 // ----------------------------------------------
 // src/lib/ai/prompts.ts
 //
-// export const artifactsPrompt               L24
-// export const regularPrompt                 L67
-// export type RequestHints                   L71
-// latitude                                   L72
-// longitude                                  L73
-// city                                       L74
-// country                                    L75
-// export const getRequestPromptFromHints     L78
-// export const systemPrompt                  L86
-// requestHints                               L90
-// supportsTools                              L91
-// export const codePrompt                   L102
-// export const sheetPrompt                  L116
-// export const updateDocumentPrompt         L126
-// export const titlePrompt                  L141
+// export const artifactsPrompt               L25
+// export const regularPrompt                 L68
+// export type RequestHints                   L72
+// latitude                                   L73
+// longitude                                  L74
+// city                                       L75
+// country                                    L76
+// export const getRequestPromptFromHints     L79
+// export const systemPrompt                  L87
+// requestHints                               L91
+// supportsTools                              L92
+// export const codePrompt                   L103
+// export const sheetPrompt                  L117
+// export const updateDocumentPrompt         L127
+// export const botPrompt                    L142
+// export const titlePrompt                  L151
 // ----------------------------------------------
 
 export const artifactsPrompt = `
@@ -137,6 +138,15 @@ export const updateDocumentPrompt = (
 
 ${currentContent}`;
 };
+
+export const botPrompt = `You are a helpful assistant responding via WhatsApp. Keep responses concise and direct.
+
+When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.
+
+Formatting notes:
+- WhatsApp supports *bold*, _italic_, ~strikethrough~, and \`monospace\`
+- Keep code snippets short — long code blocks are hard to read on mobile
+- Use lists and short paragraphs for readability`;
 
 export const titlePrompt = `Generate a short chat title (2-5 words) summarizing the user's message.
 

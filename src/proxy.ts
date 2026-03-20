@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 // src/proxy.ts
 //
 // export async function proxy()    L12
-// export const config              L38
+// export const config              L42
 // ------------------------------------
 
 export async function proxy(request: NextRequest) {
@@ -16,7 +16,11 @@ export async function proxy(request: NextRequest) {
     return new Response("pong", { status: 200 });
   }
 
-  if (pathname.startsWith("/api/auth")) {
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/webhooks") ||
+    pathname.startsWith("/api/discord")
+  ) {
     return NextResponse.next();
   }
 

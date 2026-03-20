@@ -49,6 +49,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["@chat-adapter/discord"],
   experimental: {
     prefetchInlining: true,
     cachedNavigations: true,
