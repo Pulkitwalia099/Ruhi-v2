@@ -209,9 +209,7 @@ export const chatModels: ChatModel[] = [
 ];
 
 export function getCapabilities(): Record<string, ModelCapabilities> {
-  return Object.fromEntries(
-    chatModels.map((m) => [m.id, m.capabilities])
-  );
+  return Object.fromEntries(chatModels.map((m) => [m.id, m.capabilities]));
 }
 
 import { env } from "../env";

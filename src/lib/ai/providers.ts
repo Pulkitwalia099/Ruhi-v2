@@ -1,6 +1,6 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { customProvider } from "ai";
 import { isTestEnvironment } from "../constants";
 import { env } from "../env";
@@ -18,7 +18,10 @@ const google = createGoogleGenerativeAI({
   apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-const providers: Record<string, (modelId: string) => ReturnType<typeof openai>> = {
+const providers: Record<
+  string,
+  (modelId: string) => ReturnType<typeof openai>
+> = {
   openai: (id) => openai(id),
   anthropic: (id) => anthropic(id),
   google: (id) => google(id),

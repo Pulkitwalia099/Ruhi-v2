@@ -18,8 +18,8 @@ import { ChevronLeftIcon, ChevronRightIcon, DiffIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
-import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/db/schema";
+import { useArtifact } from "@/hooks/use-artifact";
 import { cn, getDocumentTimestampByIndex } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
 
