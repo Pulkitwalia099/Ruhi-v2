@@ -53,7 +53,7 @@ export function createChatAgent({
  * Cycle tools will be added once basic chat is confirmed working.
  */
 export async function runRuhiAgent(
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  messages: Array<{ role: "user" | "assistant"; content: any }>,
   cycleContext?: string,
 ) {
   const result = await generateText({
