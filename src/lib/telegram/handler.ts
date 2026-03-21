@@ -137,18 +137,19 @@ export async function processTelegramUpdate(
 
       const imageBase64 = photoBuffer.toString("base64");
 
-      // Call Gemini Vision directly
+      // Step 1: Gemini does RAW clinical analysis (no personality, just facts)
       const scanSchema = z.object({
         zones: z.object({
-          forehead: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
-          t_zone: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
-          left_cheek: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
-          right_cheek: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
-          chin: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
-          jawline: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          forehead: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
+          t_zone: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
+          left_cheek: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
+          right_cheek: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
+          chin: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
+          jawline: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
         }),
         overall_score: z.number(),
-        summary: z.string(),
+        key_concerns: z.array(z.string()),
+        positives: z.array(z.string()),
       });
 
       const scanResult = await generateText({
@@ -159,22 +160,27 @@ export async function processTelegramUpdate(
           content: [
             {
               type: "text",
-              text: `You are Ruhi, a skincare-obsessed elder sister who analyzes skin with love and honesty. Analyze this selfie across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.
+              text: `You are a clinical dermatology AI. Analyze this selfie objectively across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.
 
-For each zone:
-- condition: what you observe (acne, dryness, oiliness, clear, texture, hyperpigmentation, etc.)
-- severity: score 1-10 where 10 = healthy glowing skin, 1 = needs serious attention
-- notes: friendly Hinglish observation + one actionable tip
+For each zone provide:
+- condition: clinical observation (acne, dryness, oiliness, clear, texture issues, hyperpigmentation, etc.)
+- severity: 1-10 where 10 = perfectly healthy skin, 1 = severe concern
+- clinical_notes: brief clinical assessment
 ${cycleContext}${historyContext}
 
-Provide overall_score (1-10 where 10 = amazing skin) and a warm, encouraging summary in Hinglish. Always note what's going WELL before mentioning concerns. Be specific about zones, not generic.`,
+Also provide:
+- overall_score: 1-10 (10 = excellent skin health)
+- key_concerns: array of top 2-3 issues found
+- positives: array of things that look good
+
+Be precise and clinical. No personality or emotion — just facts.`,
             },
             { type: "image", image: imageBase64 },
           ],
         }],
       });
 
-      // Save scan to DB
+      // Save raw scan to DB
       if (scanResult.output) {
         await insertScan({
           userId: dbUser.id,
@@ -186,26 +192,24 @@ Provide overall_score (1-10 where 10 = amazing skin) and a warm, encouraging sum
         });
       }
 
-      // Format response — Ruhi style, not clinical report
+      // Step 2: Ruhi (Claude) interprets the raw scan in her voice
       let responseText: string;
       if (scanResult.output) {
-        const scan = scanResult.output as z.infer<typeof scanSchema>;
-        responseText = scan.summary;
-        responseText += `\n\n✨ Skin Score: ${scan.overall_score}/10`;
-        responseText += `\n\n🔍 Zone by Zone:`;
-        const zoneNames: Record<string, string> = {
-          forehead: "Forehead",
-          t_zone: "T-Zone",
-          left_cheek: "Left Cheek",
-          right_cheek: "Right Cheek",
-          chin: "Chin",
-          jawline: "Jawline",
-        };
-        for (const [zone, data] of Object.entries(scan.zones)) {
-          const name = zoneNames[zone] || zone;
-          const emoji = data.severity >= 7 ? "💚" : data.severity >= 4 ? "🟡" : "🔴";
-          responseText += `\n${emoji} ${name}: ${data.condition} (${data.severity}/10)\n   → ${data.notes}`;
-        }
+        const scanData = JSON.stringify(scanResult.output, null, 2);
+        const { createAnthropic } = await import("@ai-sdk/anthropic");
+        const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const { buildRuhiSystemPrompt } = await import("@/lib/ai/prompts");
+
+        const interpretation = await generateText({
+          model: anthropic("claude-haiku-4-5-20251001"),
+          system: buildRuhiSystemPrompt(cycleContext),
+          messages: [{
+            role: "user",
+            content: `Here are my skin scan results. Interpret them for me in your style — what's good, what needs attention, and what should I do:\n\n${scanData}`,
+          }],
+        });
+
+        responseText = interpretation.text || "Scan ho gaya, but summary generate nahi ho payi. Thodi der mein try karo.";
       } else {
         responseText = "Sorry yaar, photo analyze nahi ho payi. Clear selfie bhejo with good lighting!";
       }
