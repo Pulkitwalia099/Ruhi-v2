@@ -4,6 +4,7 @@ import { generateText, stepCountIs, ToolLoopAgent } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { buildRuhiSystemPrompt } from "./prompts";
 import { getLanguageModel } from "./providers";
+import { getCycleContext, logCycle, getScanHistory } from "./tools";
 
 // ----------------------------------------
 // src/lib/ai/agent.ts
@@ -41,23 +42,35 @@ export function createChatAgent({
 
 /**
  * Runs the Ruhi agent for Telegram.
- * Uses generateText (non-streaming) with the Ruhi system prompt.
- * For MVP, tools are NOT passed — the agent just chats.
- * Face scan is handled directly in the handler.
- * Cycle tools will be added once basic chat is confirmed working.
+ * Uses generateText with cycle tools (getCycleContext, logCycle, getScanHistory).
+ * Face scan is handled directly in the handler (needs image binary).
+ * userId is injected into the system prompt so the LLM knows what to pass to tools.
  */
 export async function runRuhiAgent(
   messages: Array<{ role: "user" | "assistant"; content: any }>,
-  cycleContext?: string,
+  options?: { userId?: string; cycleContext?: string },
 ) {
   const anthropic = createAnthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
+  let systemPrompt = buildRuhiSystemPrompt(options?.cycleContext);
+
+  // Inject userId so the LLM can pass it to tools
+  if (options?.userId) {
+    systemPrompt += `\n\n## Internal Context\nThe current user's database ID is: ${options.userId}\nAlways use this exact ID when calling tools like getCycleContext, logCycle, or getScanHistory.`;
+  }
+
   const result = await generateText({
     model: anthropic("claude-haiku-4-5-20251001"),
-    system: buildRuhiSystemPrompt(cycleContext),
+    system: systemPrompt,
     messages,
+    tools: {
+      getCycleContext,
+      logCycle,
+      getScanHistory,
+    },
+    stopWhen: stepCountIs(5),
   });
 
   return result;

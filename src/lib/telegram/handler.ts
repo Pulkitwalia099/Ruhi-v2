@@ -216,12 +216,12 @@ export async function processTelegramUpdate(
     // Send typing indicator
     await tg.sendChatAction(chatId);
 
-    // Run Ruhi agent
+    // Run Ruhi agent (with userId for cycle tools)
     let responseText: string;
     try {
-      const result = await runRuhiAgent(aiMessages);
+      const result = await runRuhiAgent(aiMessages, { userId: dbUser.id });
       responseText = result.text || "";
-      console.log("[Ruhi] Agent response length:", responseText.length);
+      console.log("[Ruhi] Agent response length:", responseText.length, "steps:", result.steps?.length);
     } catch (agentError) {
       console.error("[Ruhi] Agent FAILED:", agentError);
       responseText = "";
