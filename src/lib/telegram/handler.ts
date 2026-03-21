@@ -217,23 +217,42 @@ export async function processTelegramUpdate(
 
     // Convert DB messages to AI SDK format
     const aiMessages = recentMessages.map((m) => {
-      const parts = m.parts as Array<{ type: string; text?: string }>;
-      const textContent = parts
-        .filter((p) => p.type === "text" && p.text)
-        .map((p) => p.text!)
-        .join("\n");
+      let textContent = "";
+
+      // Handle different storage formats
+      if (typeof m.parts === "string") {
+        textContent = m.parts;
+      } else if (Array.isArray(m.parts)) {
+        textContent = (m.parts as Array<{ type: string; text?: string }>)
+          .filter((p) => p.type === "text" && p.text)
+          .map((p) => p.text!)
+          .join("\n");
+      } else if (m.parts && typeof m.parts === "object") {
+        // Could be JSON object with text
+        textContent = JSON.stringify(m.parts);
+      }
+
+      // Fallback: if parts parsing failed, try content field
+      if (!textContent && "content" in m && typeof (m as any).content === "string") {
+        textContent = (m as any).content;
+      }
 
       return {
         role: m.role as "user" | "assistant",
-        content: textContent,
+        content: textContent || "...",
       };
     });
+
+    console.log("[Telegram] Sending", aiMessages.length, "messages to agent. Last message:", aiMessages[aiMessages.length - 1]);
 
     // --- Send typing indicator ---
     await tg.sendChatAction(chatId);
 
     // --- Run Ruhi agent ---
     const result = await runRuhiAgent(aiMessages);
+
+    console.log("[Telegram] Agent result text length:", result.text?.length, "steps:", result.steps?.length);
+
     const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
 
     // --- Save assistant response to DB ---
