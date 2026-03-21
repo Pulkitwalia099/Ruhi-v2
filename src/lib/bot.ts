@@ -3,11 +3,7 @@ import { createTelegramAdapter } from "@chat-adapter/telegram";
 import type { Adapter } from "chat";
 import { Chat } from "chat";
 
-import { createChatAgent } from "@/lib/ai/agent";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { botPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { getWeather } from "@/lib/ai/tools/get-weather";
+import { runRuhiAgent } from "@/lib/ai/agent";
 
 // --------------------------------------
 // src/lib/bot.ts — Telegram-only bot
@@ -66,16 +62,15 @@ function createBot() {
 
     history.push({ role: "user", content: message.text });
 
-    const agent = createChatAgent({
-      model: getLanguageModel(DEFAULT_CHAT_MODEL),
-      instructions: botPrompt,
-      tools: { getWeather },
-    });
+    const result = await runRuhiAgent(
+      history.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: [{ type: "text" as const, text: m.content }],
+      })),
+    );
 
-    // Telegram supports streaming via post+edit
-    const result = await agent.stream({ messages: history });
-    await thread.post(result.fullStream);
-    const response = await result.text;
+    const response = result.text;
+    await thread.post(response);
     history.push({ role: "assistant", content: response });
 
     // Cap history to prevent unbounded growth

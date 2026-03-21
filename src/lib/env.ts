@@ -42,6 +42,7 @@ const envSchema = z.object({
   DISCORD_PUBLIC_KEY: z.string().optional(),
   DISCORD_APPLICATION_ID: z.string().optional(),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
