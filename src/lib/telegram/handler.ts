@@ -10,10 +10,10 @@ import {
   getLatestCycle,
   getRecentScans,
   insertScan,
-  getOrCreateConversation,
-  getRecentMessages,
-  saveMessage,
   upsertTelegramUser,
+  saveTelegramMessage,
+  getTelegramHistory,
+  clearTelegramHistory,
 } from "@/db/queries";
 import { TelegramClient } from "./client";
 
@@ -88,13 +88,11 @@ export async function processTelegramUpdate(
       if (handled) return;
     }
 
-    // --- Upsert user and get/create conversation ---
+    // --- Upsert user ---
     const dbUser = await upsertTelegramUser({
       telegramId: BigInt(msg.from.id),
       username: msg.from.username,
     });
-
-    const conversation = await getOrCreateConversation({ userId: dbUser.id });
 
     // --- Build user content (text + optional photo) ---
     let userText = msg.text ?? msg.caption ?? "";
@@ -194,72 +192,49 @@ export async function processTelegramUpdate(
         responseText = "Sorry yaar, photo analyze nahi ho payi. Clear selfie bhejo with good lighting!";
       }
 
-      await saveMessage({ conversationId: conversation.id, role: "user", content: userText || "Sent a selfie for skin analysis" });
-      await saveMessage({ conversationId: conversation.id, role: "assistant", content: responseText });
+      // Save scan conversation to simple telegram_messages table
+      await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText || "Sent a selfie for skin analysis" });
+      await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
       await tg.sendMessage(chatId, responseText);
       return;
     }
 
     // ---- TEXT PATH: Use Ruhi agent ----
 
-    // --- Save user message to DB first ---
-    await saveMessage({
-      conversationId: conversation.id,
-      role: "user",
-      content: userText,
-    });
+    // Save user message (plain text — no JSON parts)
+    await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText });
 
-    // --- Load recent messages for context ---
-    let aiMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
-    try {
-      const recentMessages = await getRecentMessages({
-        conversationId: conversation.id,
-        limit: 20,
-      });
+    // Load conversation history (plain text in, plain text out)
+    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 20 });
+    const aiMessages = history.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content, // plain text — no parsing needed
+    }));
 
-      aiMessages = recentMessages
-        .map((m) => {
-          // parts is stored as [{ type: "text", text: "..." }]
-          let text = "";
-          if (Array.isArray(m.parts)) {
-            for (const p of m.parts as any[]) {
-              if (p && p.type === "text" && p.text) {
-                text += p.text;
-              }
-            }
-          }
-          return {
-            role: m.role as "user" | "assistant",
-            content: text,
-          };
-        })
-        .filter((m) => m.content.length > 0); // Skip empty messages
-    } catch (err) {
-      console.error("[Telegram] Failed to load history, using single message:", err);
-      aiMessages = [{ role: "user", content: userText }];
-    }
+    console.log("[Ruhi] Chat", chatId, "— sending", aiMessages.length, "messages to agent");
 
-    // Fallback if history is empty
-    if (aiMessages.length === 0) {
-      aiMessages = [{ role: "user", content: userText }];
-    }
-
-    // --- Send typing indicator ---
+    // Send typing indicator
     await tg.sendChatAction(chatId);
 
-    // --- Run Ruhi agent ---
-    const result = await runRuhiAgent(aiMessages);
-    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
+    // Run Ruhi agent
+    let responseText: string;
+    try {
+      const result = await runRuhiAgent(aiMessages);
+      responseText = result.text || "";
+      console.log("[Ruhi] Agent response length:", responseText.length);
+    } catch (agentError) {
+      console.error("[Ruhi] Agent FAILED:", agentError);
+      responseText = "";
+    }
 
+    if (!responseText) {
+      responseText = "Sorry yaar, abhi kuch problem ho rahi hai. Thodi der mein dobara try karo?";
+    }
 
-    // --- Save assistant response to DB ---
-    await saveMessage({
-      conversationId: conversation.id,
-      role: "assistant",
-      content: responseText,
-    });
+    // Save assistant response (plain text)
+    await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
 
-    // --- Send response back to Telegram ---
+    // Send response back to Telegram
     await tg.sendMessage(chatId, responseText);
   } catch (error) {
     console.error("[Telegram] Error processing update:", error);
@@ -287,13 +262,15 @@ async function handleCommand(
 
   switch (command) {
     case "/start":
+      // Clear conversation history for a fresh start
+      await clearTelegramHistory({ telegramChatId: chatId });
       await tg.sendMessage(
         chatId,
-        `Hey ${from.first_name}! I'm Ruhi, your personal skincare didi.\n\n` +
-          `Here's what I can do:\n` +
-          `- Answer your skincare questions\n` +
-          `- Analyze your skin from photos (just send me a selfie!)\n` +
-          `- Track your menstrual cycle for better skin advice\n\n` +
+        `Hey ${from.first_name}! Main Ruhi hoon — tumhari personal skincare didi.\n\n` +
+          `Main kya kar sakti hoon:\n` +
+          `- Tumhare skincare questions ka jawab de sakti hoon\n` +
+          `- Tumhari selfie se skin analyze kar sakti hoon (bas photo bhejo!)\n` +
+          `- Tumhara menstrual cycle track karke better advice de sakti hoon\n\n` +
           `Commands:\n` +
           `/scan — Send a photo for skin analysis\n` +
           `/cycle — Log or check your cycle info\n\n` +

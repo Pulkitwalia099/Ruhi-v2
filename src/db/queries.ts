@@ -25,6 +25,7 @@ import {
   message,
   scan,
   stream,
+  telegramMessage,
   user,
   vote,
 } from "./schema";
@@ -739,4 +740,47 @@ export async function saveMessage({
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to save message");
   }
+}
+
+// ---- Telegram Messages (plain text, no JSON parts) ----
+
+export async function saveTelegramMessage({
+  telegramChatId,
+  role,
+  content,
+}: {
+  telegramChatId: number;
+  role: string;
+  content: string;
+}) {
+  const [inserted] = await db
+    .insert(telegramMessage)
+    .values({ telegramChatId, role, content })
+    .returning();
+  return inserted;
+}
+
+export async function getTelegramHistory({
+  telegramChatId,
+  limit = 20,
+}: {
+  telegramChatId: number;
+  limit?: number;
+}) {
+  return db
+    .select()
+    .from(telegramMessage)
+    .where(eq(telegramMessage.telegramChatId, telegramChatId))
+    .orderBy(asc(telegramMessage.createdAt))
+    .limit(limit);
+}
+
+export async function clearTelegramHistory({
+  telegramChatId,
+}: {
+  telegramChatId: number;
+}) {
+  await db
+    .delete(telegramMessage)
+    .where(eq(telegramMessage.telegramChatId, telegramChatId));
 }

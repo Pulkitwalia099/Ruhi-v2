@@ -238,3 +238,15 @@ export const scan = pgTable("scans", {
 });
 
 export type Scan = InferSelectModel<typeof scan>;
+
+// Simple plain-text message table for Telegram conversations.
+// No JSON parts, no complex formats — just text in, text out.
+export const telegramMessage = pgTable("telegram_messages", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  telegramChatId: bigint("telegramChatId", { mode: "number" }).notNull(),
+  role: text("role").notNull(), // "user" or "assistant"
+  content: text("content").notNull(), // plain text, no JSON
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type TelegramMessage = InferSelectModel<typeof telegramMessage>;
