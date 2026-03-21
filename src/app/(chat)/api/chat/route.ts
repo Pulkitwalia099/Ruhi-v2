@@ -30,11 +30,7 @@ import {
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { updateDocument } from "@/lib/ai/tools/update-document";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { ChatbotError } from "@/lib/errors";
@@ -206,13 +202,7 @@ export async function POST(request: Request) {
       activeTools:
         isReasoningModel && !supportsTools
           ? []
-          : [
-              "getWeather",
-              "createDocument",
-              "editDocument",
-              "updateDocument",
-              "requestSuggestions",
-            ],
+          : ["getWeather"],
       providerOptions: {
         ...(modelConfig?.reasoningEffort && {
           openai: { reasoningEffort: modelConfig.reasoningEffort },
@@ -227,22 +217,6 @@ export async function POST(request: Request) {
           ...cfg,
           tools: {
             getWeather,
-            createDocument: createDocument({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
-            editDocument: editDocument({ dataStream, session }),
-            updateDocument: updateDocument({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
           },
         });
 
