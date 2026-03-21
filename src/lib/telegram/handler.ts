@@ -226,9 +226,9 @@ Be precise and clinical. No personality or emotion — just facts.`,
     // Save user message (plain text — no JSON parts)
     await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText });
 
-    // Load conversation history — keep last 6 messages (3 exchanges)
-    // Claude Haiku has limited context — system prompt + tools + history must fit
-    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 6 });
+    // Load conversation history — last 20 messages (10 exchanges)
+    // Alternation fix ensures proper user/assistant ordering
+    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 20 });
 
     // Filter out any error messages that got saved previously
     const aiMessages = history
