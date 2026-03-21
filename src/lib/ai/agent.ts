@@ -47,24 +47,19 @@ export function createChatAgent({
 
 /**
  * Runs the Ruhi agent for Telegram.
- * Uses generateText (non-streaming) with the 4 domain tools
- * and stops after at most 5 tool-call steps.
+ * Uses generateText (non-streaming) with the Ruhi system prompt.
+ * For MVP, tools are NOT passed — the agent just chats.
+ * Face scan is handled directly in the handler.
+ * Cycle tools will be added once basic chat is confirmed working.
  */
 export async function runRuhiAgent(
-  messages: ModelMessage[],
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
   cycleContext?: string,
 ) {
   const result = await generateText({
     model: getLanguageModel(DEFAULT_CHAT_MODEL),
     system: buildRuhiSystemPrompt(cycleContext),
     messages,
-    tools: {
-      getCycleContext,
-      logCycle,
-      analyzeFaceScan,
-      getScanHistory,
-    },
-    stopWhen: stepCountIs(5),
   });
 
   return result;
