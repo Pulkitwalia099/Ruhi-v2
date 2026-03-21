@@ -65,9 +65,8 @@ export async function runRuhiAgent(
     model: anthropic("claude-haiku-4-5-20251001"),
     system: systemPrompt,
     messages,
-    // Tools temporarily disabled — diagnosing empty response bug
-    // tools: { getCycleContext, logCycle, getScanHistory },
-    // stopWhen: stepCountIs(5),
+    tools: { getCycleContext, logCycle, getScanHistory },
+    stopWhen: stepCountIs(5),
   });
 
   return result;

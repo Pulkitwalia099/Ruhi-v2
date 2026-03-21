@@ -265,7 +265,13 @@ Be precise and clinical. No personality or emotion — just facts.`,
       }
     }
 
-    console.log("[Ruhi] After cleanup:", cleanMessages.length, "messages");
+    // Ensure last message is from user (Anthropic requirement)
+    if (cleanMessages.length > 0 && cleanMessages[cleanMessages.length - 1].role !== "user") {
+      // Current user message got merged or lost — add it back
+      cleanMessages.push({ role: "user", content: userText });
+    }
+
+    console.log("[Ruhi] After cleanup:", cleanMessages.length, "messages. First:", cleanMessages[0]?.role, "Last:", cleanMessages[cleanMessages.length - 1]?.role);
 
     // Send typing indicator
     await tg.sendChatAction(chatId);
@@ -281,11 +287,11 @@ Be precise and clinical. No personality or emotion — just facts.`,
     } catch (agentError: any) {
       const errMsg = agentError?.message || String(agentError);
       console.error("[Ruhi] Agent FAILED:", errMsg);
-      responseText = `[DEBUG] Error: ${errMsg.substring(0, 300)}`;
+      responseText = "";
     }
 
     if (!responseText) {
-      responseText = `[DEBUG-EMPTY] Agent returned empty. Messages sent: ${cleanMessages.length}. Last role: ${cleanMessages[cleanMessages.length - 1]?.role}`;
+      responseText = "Sorry yaar, abhi kuch problem ho rahi hai. Thodi der mein dobara try karo?";
     }
 
     // Only save successful responses — never save error messages to DB
@@ -301,7 +307,7 @@ Be precise and clinical. No personality or emotion — just facts.`,
     try {
       await tg.sendMessage(
         chatId,
-        `[DEBUG-OUTER] ${errDetail.substring(0, 300)}`,
+        "Oops! Something went wrong. Please try again in a moment.",
       );
     } catch {
       // If we can't even send an error message, just log it
