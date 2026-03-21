@@ -226,12 +226,17 @@ Be precise and clinical. No personality or emotion — just facts.`,
     // Save user message (plain text — no JSON parts)
     await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText });
 
-    // Load conversation history (plain text in, plain text out)
-    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 20 });
-    const aiMessages = history.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content, // plain text — no parsing needed
-    }));
+    // Load conversation history — keep last 10 messages max (5 exchanges)
+    // This prevents context overflow with Claude Haiku
+    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 10 });
+
+    // Filter out any error messages that got saved previously
+    const aiMessages = history
+      .filter((m) => !m.content.includes("problem ho rahi hai") && !m.content.includes("Something went wrong"))
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
 
     console.log("[Ruhi] Chat", chatId, "— sending", aiMessages.length, "messages to agent");
 
@@ -240,12 +245,14 @@ Be precise and clinical. No personality or emotion — just facts.`,
 
     // Run Ruhi agent (with userId for cycle tools)
     let responseText: string;
+    let agentSucceeded = false;
     try {
       const result = await runRuhiAgent(aiMessages, { userId: dbUser.id });
       responseText = result.text || "";
       console.log("[Ruhi] Agent response length:", responseText.length, "steps:", result.steps?.length);
-    } catch (agentError) {
-      console.error("[Ruhi] Agent FAILED:", agentError);
+      if (responseText) agentSucceeded = true;
+    } catch (agentError: any) {
+      console.error("[Ruhi] Agent FAILED:", agentError?.message || agentError);
       responseText = "";
     }
 
@@ -253,8 +260,10 @@ Be precise and clinical. No personality or emotion — just facts.`,
       responseText = "Sorry yaar, abhi kuch problem ho rahi hai. Thodi der mein dobara try karo?";
     }
 
-    // Save assistant response (plain text)
-    await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
+    // Only save successful responses — never save error messages to DB
+    if (agentSucceeded) {
+      await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
+    }
 
     // Send response back to Telegram
     await tg.sendMessage(chatId, responseText);
