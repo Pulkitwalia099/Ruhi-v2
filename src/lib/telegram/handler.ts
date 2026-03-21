@@ -285,7 +285,7 @@ Be precise and clinical. No personality or emotion — just facts.`,
     }
 
     if (!responseText) {
-      responseText = "Sorry yaar, abhi kuch problem ho rahi hai. Thodi der mein dobara try karo?";
+      responseText = `[DEBUG-EMPTY] Agent returned empty. Messages sent: ${cleanMessages.length}. Last role: ${cleanMessages[cleanMessages.length - 1]?.role}`;
     }
 
     // Only save successful responses — never save error messages to DB
@@ -295,12 +295,13 @@ Be precise and clinical. No personality or emotion — just facts.`,
 
     // Send response back to Telegram
     await tg.sendMessage(chatId, responseText);
-  } catch (error) {
-    console.error("[Telegram] Error processing update:", error);
+  } catch (error: any) {
+    const errDetail = error?.message || String(error);
+    console.error("[Telegram] OUTER ERROR:", errDetail);
     try {
       await tg.sendMessage(
         chatId,
-        "Oops! Something went wrong. Please try again in a moment.",
+        `[DEBUG-OUTER] ${errDetail.substring(0, 300)}`,
       );
     } catch {
       // If we can't even send an error message, just log it
