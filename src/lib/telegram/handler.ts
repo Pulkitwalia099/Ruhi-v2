@@ -238,7 +238,34 @@ Be precise and clinical. No personality or emotion — just facts.`,
         content: m.content,
       }));
 
-    console.log("[Ruhi] Chat", chatId, "— sending", aiMessages.length, "messages to agent");
+    console.log("[Ruhi] Chat", chatId, "— sending", aiMessages.length, "messages. Last:", JSON.stringify(aiMessages[aiMessages.length - 1]?.content?.substring(0, 50)));
+
+    // Validate messages — ensure proper user/assistant alternation
+    const validMessages: typeof aiMessages = [];
+    for (const msg of aiMessages) {
+      if (msg.content && msg.content.trim().length > 0) {
+        validMessages.push(msg);
+      }
+    }
+
+    // Ensure first message is from user (Anthropic requirement)
+    if (validMessages.length > 0 && validMessages[0].role !== "user") {
+      validMessages.shift();
+    }
+
+    // Ensure alternating roles (Anthropic requirement)
+    const cleanMessages: typeof aiMessages = [];
+    for (const msg of validMessages) {
+      const last = cleanMessages[cleanMessages.length - 1];
+      if (last && last.role === msg.role) {
+        // Same role twice — merge content
+        last.content += "\n" + msg.content;
+      } else {
+        cleanMessages.push({ ...msg });
+      }
+    }
+
+    console.log("[Ruhi] After cleanup:", cleanMessages.length, "messages");
 
     // Send typing indicator
     await tg.sendChatAction(chatId);
@@ -247,15 +274,14 @@ Be precise and clinical. No personality or emotion — just facts.`,
     let responseText: string;
     let agentSucceeded = false;
     try {
-      const result = await runRuhiAgent(aiMessages, { userId: dbUser.id });
+      const result = await runRuhiAgent(cleanMessages, { userId: dbUser.id });
       responseText = result.text || "";
-      console.log("[Ruhi] Agent response length:", responseText.length, "steps:", result.steps?.length);
+      console.log("[Ruhi] Agent response length:", responseText.length);
       if (responseText) agentSucceeded = true;
     } catch (agentError: any) {
       const errMsg = agentError?.message || String(agentError);
       console.error("[Ruhi] Agent FAILED:", errMsg);
-      // Temporarily send actual error to user for debugging
-      responseText = `[DEBUG] Agent error: ${errMsg.substring(0, 200)}`;
+      responseText = `[DEBUG] Error: ${errMsg.substring(0, 300)}`;
     }
 
     if (!responseText) {
