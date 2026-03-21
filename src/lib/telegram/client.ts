@@ -21,7 +21,7 @@ export class TelegramClient {
   async sendMessage(chatId: number, text: string) {
     const chunks = this.splitMessage(text, 4096);
     for (const chunk of chunks) {
-      await this.call("sendMessage", { chat_id: chatId, text: chunk });
+      await this.call("sendMessage", { chat_id: chatId, text: chunk, parse_mode: "Markdown" });
     }
   }
 
