@@ -202,23 +202,44 @@ export async function processTelegramUpdate(
 
     // ---- TEXT PATH: Use Ruhi agent ----
 
-    // --- Send typing indicator ---
-    await tg.sendChatAction(chatId);
-
-    // --- Run Ruhi agent with just the current message ---
-    // (Multi-turn history will be added once basic chat is confirmed working)
-    const result = await runRuhiAgent([
-      { role: "user" as const, content: userText },
-    ]);
-
-    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
-
-    // --- Save both messages to DB ---
+    // --- Save user message to DB ---
     await saveMessage({
       conversationId: conversation.id,
       role: "user",
       content: userText,
     });
+
+    // --- Load recent messages for multi-turn context ---
+    const recentMessages = await getRecentMessages({
+      conversationId: conversation.id,
+      limit: 20,
+    });
+
+    // Convert DB messages to simple {role, content} format
+    const aiMessages = recentMessages.map((m) => {
+      let textContent = "";
+      try {
+        if (Array.isArray(m.parts)) {
+          textContent = (m.parts as Array<{ type: string; text?: string }>)
+            .filter((p) => p.type === "text" && p.text)
+            .map((p) => p.text!)
+            .join("\n");
+        }
+      } catch {
+        // fallback
+      }
+      return {
+        role: m.role as "user" | "assistant",
+        content: textContent || "...",
+      };
+    });
+
+    // --- Send typing indicator ---
+    await tg.sendChatAction(chatId);
+
+    // --- Run Ruhi agent ---
+    const result = await runRuhiAgent(aiMessages);
+    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
 
 
     // --- Save assistant response to DB ---
