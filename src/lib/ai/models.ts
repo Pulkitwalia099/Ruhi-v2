@@ -6,7 +6,7 @@
 // -----------------------------------------
 
 export const DEFAULT_CHAT_MODEL = "anthropic/claude-haiku-4-5-20251001";
-export const VISION_MODEL = "google/gemini-2.5-flash-preview-05-20";
+export const VISION_MODEL = "google/gemini-2.5-flash";
 
 export const titleModel = {
   id: "anthropic/claude-haiku-4-5-20251001",
@@ -39,7 +39,7 @@ export const chatModels: ChatModel[] = [
     capabilities: { tools: true, vision: true, reasoning: true },
   },
   {
-    id: "google/gemini-2.5-flash-preview-05-20",
+    id: "google/gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
     provider: "google",
     description: "Fast multimodal model — vision tasks",
