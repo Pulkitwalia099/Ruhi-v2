@@ -159,7 +159,15 @@ export async function processTelegramUpdate(
           content: [
             {
               type: "text",
-              text: `You are a dermatology-trained skin analysis AI. Analyze this selfie for skin conditions across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.\n\nFor each zone:\n- condition: what you observe\n- severity: 1-10 (1=perfect, 10=severe)\n- notes: observation + advice${cycleContext}${historyContext}\n\nProvide overall_score (1-10) and a friendly summary in Hinglish.`,
+              text: `You are Ruhi, a skincare-obsessed elder sister who analyzes skin with love and honesty. Analyze this selfie across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.
+
+For each zone:
+- condition: what you observe (acne, dryness, oiliness, clear, texture, hyperpigmentation, etc.)
+- severity: score 1-10 where 10 = healthy glowing skin, 1 = needs serious attention
+- notes: friendly Hinglish observation + one actionable tip
+${cycleContext}${historyContext}
+
+Provide overall_score (1-10 where 10 = amazing skin) and a warm, encouraging summary in Hinglish. Always note what's going WELL before mentioning concerns. Be specific about zones, not generic.`,
             },
             { type: "image", image: imageBase64 },
           ],
@@ -178,15 +186,25 @@ export async function processTelegramUpdate(
         });
       }
 
-      // Format response from scan results
+      // Format response — Ruhi style, not clinical report
       let responseText: string;
       if (scanResult.output) {
         const scan = scanResult.output as z.infer<typeof scanSchema>;
         responseText = scan.summary;
-        responseText += `\n\n📊 Overall Score: ${scan.overall_score}/10`;
-        responseText += `\n\nZone Details:`;
+        responseText += `\n\n✨ Skin Score: ${scan.overall_score}/10`;
+        responseText += `\n\n🔍 Zone by Zone:`;
+        const zoneNames: Record<string, string> = {
+          forehead: "Forehead",
+          t_zone: "T-Zone",
+          left_cheek: "Left Cheek",
+          right_cheek: "Right Cheek",
+          chin: "Chin",
+          jawline: "Jawline",
+        };
         for (const [zone, data] of Object.entries(scan.zones)) {
-          responseText += `\n• ${zone.replace("_", " ")}: ${data.condition} (${data.severity}/10) — ${data.notes}`;
+          const name = zoneNames[zone] || zone;
+          const emoji = data.severity >= 7 ? "💚" : data.severity >= 4 ? "🟡" : "🔴";
+          responseText += `\n${emoji} ${name}: ${data.condition} (${data.severity}/10)\n   → ${data.notes}`;
         }
       } else {
         responseText = "Sorry yaar, photo analyze nahi ho payi. Clear selfie bhejo with good lighting!";
