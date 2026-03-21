@@ -202,21 +202,54 @@ export async function processTelegramUpdate(
 
     // ---- TEXT PATH: Use Ruhi agent ----
 
-    // --- Send typing indicator ---
-    await tg.sendChatAction(chatId);
-
-    // --- Run Ruhi agent (single message for now — history added in Sprint 2) ---
-    const result = await runRuhiAgent([
-      { role: "user" as const, content: userText },
-    ]);
-    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
-
-    // --- Save messages to DB ---
+    // --- Save user message to DB first ---
     await saveMessage({
       conversationId: conversation.id,
       role: "user",
       content: userText,
     });
+
+    // --- Load recent messages for context ---
+    let aiMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+    try {
+      const recentMessages = await getRecentMessages({
+        conversationId: conversation.id,
+        limit: 20,
+      });
+
+      aiMessages = recentMessages
+        .map((m) => {
+          // parts is stored as [{ type: "text", text: "..." }]
+          let text = "";
+          if (Array.isArray(m.parts)) {
+            for (const p of m.parts as any[]) {
+              if (p && p.type === "text" && p.text) {
+                text += p.text;
+              }
+            }
+          }
+          return {
+            role: m.role as "user" | "assistant",
+            content: text,
+          };
+        })
+        .filter((m) => m.content.length > 0); // Skip empty messages
+    } catch (err) {
+      console.error("[Telegram] Failed to load history, using single message:", err);
+      aiMessages = [{ role: "user", content: userText }];
+    }
+
+    // Fallback if history is empty
+    if (aiMessages.length === 0) {
+      aiMessages = [{ role: "user", content: userText }];
+    }
+
+    // --- Send typing indicator ---
+    await tg.sendChatAction(chatId);
+
+    // --- Run Ruhi agent ---
+    const result = await runRuhiAgent(aiMessages);
+    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
 
 
     // --- Save assistant response to DB ---
