@@ -5,11 +5,11 @@
 // Plain "provider/model" strings — AI Gateway routes automatically.
 // -----------------------------------------
 
-export const DEFAULT_CHAT_MODEL = "anthropic/claude-haiku-4-5-20241022";
+export const DEFAULT_CHAT_MODEL = "anthropic/claude-3-5-haiku-20241022";
 export const VISION_MODEL = "google/gemini-2.5-flash-preview-04-17";
 
 export const titleModel = {
-  id: "anthropic/claude-haiku-4-5-20241022",
+  id: "anthropic/claude-3-5-haiku-20241022",
   name: "Claude Haiku 4.5",
   provider: "anthropic",
   description: "Fast model for title generation",
@@ -32,7 +32,7 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "anthropic/claude-haiku-4-5-20241022",
+    id: "anthropic/claude-3-5-haiku-20241022",
     name: "Claude Haiku 4.5",
     provider: "anthropic",
     description: "Fast and affordable — primary chat model",
