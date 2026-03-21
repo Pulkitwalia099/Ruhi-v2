@@ -288,15 +288,14 @@ async function handleCommand(
       await clearTelegramHistory({ telegramChatId: chatId });
       await tg.sendMessage(
         chatId,
-        `Hey ${from.first_name}! Main Ruhi hoon — tumhari personal skincare didi.\n\n` +
-          `Main kya kar sakti hoon:\n` +
-          `- Tumhare skincare questions ka jawab de sakti hoon\n` +
-          `- Tumhari selfie se skin analyze kar sakti hoon (bas photo bhejo!)\n` +
-          `- Tumhara menstrual cycle track karke better advice de sakti hoon\n\n` +
-          `Commands:\n` +
-          `/scan — Send a photo for skin analysis\n` +
-          `/cycle — Log or check your cycle info\n\n` +
-          `Just type your question or send a photo to get started!`,
+        `Hey ${from.first_name}! Main Ruhi hoon — your skincare companion.\n\n` +
+          `Kya kar sakti hoon:\n` +
+          `- Skincare questions ka jawab\n` +
+          `- Selfie se skin analysis (bas photo bhejo!)\n` +
+          `- Cycle track karke better skin advice\n\n` +
+          `/scan — photo se skin analysis\n` +
+          `/cycle — cycle info log karo\n\n` +
+          `Bolo kya scene hai!`,
       );
       // Also upsert the user so they exist in the DB
       await upsertTelegramUser({
