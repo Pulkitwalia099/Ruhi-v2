@@ -20,9 +20,12 @@ import { ChatbotError } from "@/lib/errors";
 import {
   type Chat,
   chat,
+  cycle,
   type DBMessage,
   message,
+  scan,
   stream,
+  user,
   vote,
 } from "./schema";
 
@@ -497,5 +500,243 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       "bad_request:database",
       "Failed to get stream ids by chat id"
     );
+  }
+}
+
+// ---- Cycle queries ----
+
+export async function getLatestCycle({ userId }: { userId: string }) {
+  try {
+    const [latest] = await db
+      .select()
+      .from(cycle)
+      .where(eq(cycle.userId, userId))
+      .orderBy(desc(cycle.periodStart))
+      .limit(1);
+    return latest ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest cycle"
+    );
+  }
+}
+
+export async function insertCycle({
+  userId,
+  periodStart,
+  cycleLength,
+}: {
+  userId: string;
+  periodStart: Date;
+  cycleLength: number;
+}) {
+  try {
+    const [inserted] = await db
+      .insert(cycle)
+      .values({ userId, periodStart, cycleLength })
+      .returning();
+    return inserted;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to insert cycle");
+  }
+}
+
+// ---- Scan queries ----
+
+export async function getRecentScans({
+  userId,
+  limit = 10,
+}: {
+  userId: string;
+  limit?: number;
+}) {
+  try {
+    return await db
+      .select()
+      .from(scan)
+      .where(eq(scan.userId, userId))
+      .orderBy(desc(scan.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get recent scans"
+    );
+  }
+}
+
+export async function insertScan(data: {
+  userId: string;
+  conversationId?: string;
+  scanType?: string;
+  imageUrl?: string;
+  results: Record<string, unknown>;
+  cycleDay?: number;
+  cyclePhase?: string;
+}) {
+  try {
+    const [inserted] = await db
+      .insert(scan)
+      .values({
+        userId: data.userId,
+        conversationId: data.conversationId ?? null,
+        scanType: data.scanType ?? "face",
+        imageUrl: data.imageUrl ?? null,
+        results: data.results,
+        cycleDay: data.cycleDay ?? null,
+        cyclePhase: data.cyclePhase ?? null,
+      })
+      .returning();
+    return inserted;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to insert scan");
+  }
+}
+
+// ---- Telegram user queries ----
+
+export async function getUserByTelegramId({
+  telegramId,
+}: {
+  telegramId: bigint;
+}) {
+  try {
+    const [found] = await db
+      .select()
+      .from(user)
+      .where(eq(user.telegramId, telegramId))
+      .limit(1);
+    return found ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get user by telegram id"
+    );
+  }
+}
+
+export async function upsertTelegramUser({
+  telegramId,
+  username,
+}: {
+  telegramId: bigint;
+  username?: string;
+}) {
+  try {
+    const existing = await getUserByTelegramId({ telegramId });
+    if (existing) {
+      if (username && existing.telegramUsername !== username) {
+        await db
+          .update(user)
+          .set({ telegramUsername: username, updatedAt: new Date() })
+          .where(eq(user.id, existing.id));
+      }
+      return existing;
+    }
+
+    const { nanoid } = await import("nanoid");
+    const [created] = await db
+      .insert(user)
+      .values({
+        id: nanoid(),
+        email: `tg_${telegramId.toString()}@telegram.local`,
+        telegramId,
+        telegramUsername: username ?? null,
+        isAnonymous: true,
+      })
+      .returning();
+    return created;
+  } catch (error) {
+    if (error instanceof ChatbotError) throw error;
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to upsert telegram user"
+    );
+  }
+}
+
+// ---- Conversation helpers for Telegram ----
+
+export async function getOrCreateConversation({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    // Find an existing conversation for this user
+    const [existing] = await db
+      .select()
+      .from(chat)
+      .where(eq(chat.userId, userId))
+      .orderBy(desc(chat.createdAt))
+      .limit(1);
+
+    if (existing) return existing;
+
+    // Create a new conversation
+    const [created] = await db
+      .insert(chat)
+      .values({
+        createdAt: new Date(),
+        title: "Ruhi Skincare Chat",
+        userId,
+        visibility: "private",
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get or create conversation"
+    );
+  }
+}
+
+export async function getRecentMessages({
+  conversationId,
+  limit = 20,
+}: {
+  conversationId: string;
+  limit?: number;
+}) {
+  try {
+    return await db
+      .select()
+      .from(message)
+      .where(eq(message.chatId, conversationId))
+      .orderBy(asc(message.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get recent messages"
+    );
+  }
+}
+
+export async function saveMessage({
+  conversationId,
+  role,
+  content,
+}: {
+  conversationId: string;
+  role: string;
+  content: string;
+}) {
+  try {
+    const [inserted] = await db
+      .insert(message)
+      .values({
+        chatId: conversationId,
+        role,
+        parts: [{ type: "text", text: content }],
+        attachments: [],
+        createdAt: new Date(),
+      })
+      .returning();
+    return inserted;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to save message");
   }
 }

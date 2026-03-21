@@ -1,8 +1,11 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   foreignKey,
+  integer,
   json,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -44,6 +47,8 @@ export const user = pgTable("users", {
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
   isAnonymous: boolean("isAnonymous").notNull().default(false),
+  telegramId: bigint("telegramId", { mode: "bigint" }).unique(),
+  telegramUsername: text("telegramUsername"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
@@ -205,3 +210,31 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const cycle = pgTable("cycles", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
+  periodStart: timestamp("periodStart").notNull(),
+  cycleLength: integer("cycleLength").notNull().default(28),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type Cycle = InferSelectModel<typeof cycle>;
+
+export const scan = pgTable("scans", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
+  conversationId: uuid("conversationId").references(() => chat.id),
+  scanType: text("scanType").notNull().default("face"),
+  imageUrl: text("imageUrl"),
+  results: jsonb("results").notNull(),
+  cycleDay: integer("cycleDay"),
+  cyclePhase: text("cyclePhase"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type Scan = InferSelectModel<typeof scan>;
