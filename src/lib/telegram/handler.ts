@@ -1,7 +1,15 @@
 import { put } from "@vercel/blob";
+import { generateText, Output } from "ai";
+import { z } from "zod";
 
 import { runRuhiAgent } from "@/lib/ai/agent";
+import { getLanguageModel } from "@/lib/ai/providers";
+import { VISION_MODEL } from "@/lib/ai/models";
+import { calculateCyclePhase } from "@/lib/ai/tools/cycle-utils";
 import {
+  getLatestCycle,
+  getRecentScans,
+  insertScan,
   getOrCreateConversation,
   getRecentMessages,
   saveMessage,
@@ -93,22 +101,106 @@ export async function processTelegramUpdate(
     let imageUrl: string | undefined;
 
     if (msg.photo && msg.photo.length > 0) {
-      // Use the largest photo (last in array)
+      // ---- PHOTO PATH: Call Gemini Vision directly ----
       const largestPhoto = msg.photo[msg.photo.length - 1];
       const photoBuffer = await tg.downloadFile(largestPhoto.file_id);
 
-      // Upload to Vercel Blob
+      // Upload to Vercel Blob for permanent storage
       const blob = await put(
         `telegram-photos/${dbUser.id}/${Date.now()}.jpg`,
         photoBuffer,
         { access: "public", contentType: "image/jpeg" },
       );
-      imageUrl = blob.url;
 
-      if (!userText) {
-        userText = "Sent a photo for skin analysis";
+      await tg.sendChatAction(chatId);
+
+      // Get cycle context for the scan
+      let cycleContext = "";
+      let cycleDay: number | undefined;
+      let cyclePhase: string | undefined;
+      const cycle = await getLatestCycle({ userId: dbUser.id });
+      if (cycle) {
+        const phase = calculateCyclePhase(cycle.periodStart, cycle.cycleLength);
+        cycleDay = phase.cycleDay;
+        cyclePhase = phase.phase;
+        cycleContext = `\nCycle context: Day ${phase.cycleDay}, ${phase.phase} phase. ${phase.skinImplications}`;
       }
+
+      // Get recent scan history
+      const recentScans = await getRecentScans({ userId: dbUser.id, limit: 3 });
+      let historyContext = "";
+      if (recentScans.length > 0) {
+        historyContext = `\nPrevious scans:\n${JSON.stringify(
+          recentScans.map((s) => ({
+            date: s.createdAt.toISOString().split("T")[0],
+            results: s.results,
+          })), null, 2)}`;
+      }
+
+      const imageBase64 = photoBuffer.toString("base64");
+
+      // Call Gemini Vision directly
+      const scanSchema = z.object({
+        zones: z.object({
+          forehead: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          t_zone: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          left_cheek: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          right_cheek: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          chin: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+          jawline: z.object({ condition: z.string(), severity: z.number(), notes: z.string() }),
+        }),
+        overall_score: z.number(),
+        summary: z.string(),
+      });
+
+      const scanResult = await generateText({
+        model: getLanguageModel(VISION_MODEL),
+        output: Output.object({ schema: scanSchema }),
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `You are a dermatology-trained skin analysis AI. Analyze this selfie for skin conditions across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.\n\nFor each zone:\n- condition: what you observe\n- severity: 1-10 (1=perfect, 10=severe)\n- notes: observation + advice${cycleContext}${historyContext}\n\nProvide overall_score (1-10) and a friendly summary in Hinglish.`,
+            },
+            { type: "image", image: imageBase64 },
+          ],
+        }],
+      });
+
+      // Save scan to DB
+      if (scanResult.output) {
+        await insertScan({
+          userId: dbUser.id,
+          imageUrl: blob.url,
+          scanType: "face",
+          results: scanResult.output as Record<string, unknown>,
+          cycleDay,
+          cyclePhase,
+        });
+      }
+
+      // Format response from scan results
+      let responseText: string;
+      if (scanResult.output) {
+        const scan = scanResult.output as z.infer<typeof scanSchema>;
+        responseText = scan.summary;
+        responseText += `\n\n📊 Overall Score: ${scan.overall_score}/10`;
+        responseText += `\n\nZone Details:`;
+        for (const [zone, data] of Object.entries(scan.zones)) {
+          responseText += `\n• ${zone.replace("_", " ")}: ${data.condition} (${data.severity}/10) — ${data.notes}`;
+        }
+      } else {
+        responseText = "Sorry yaar, photo analyze nahi ho payi. Clear selfie bhejo with good lighting!";
+      }
+
+      await saveMessage({ conversationId: conversation.id, role: "user", content: userText || "Sent a selfie for skin analysis" });
+      await saveMessage({ conversationId: conversation.id, role: "assistant", content: responseText });
+      await tg.sendMessage(chatId, responseText);
+      return;
     }
+
+    // ---- TEXT PATH: Use Ruhi agent ----
 
     // --- Save user message to DB ---
     await saveMessage({
@@ -133,27 +225,16 @@ export async function processTelegramUpdate(
 
       return {
         role: m.role as "user" | "assistant",
-        content: [{ type: "text" as const, text: textContent }],
+        content: textContent,
       };
     });
-
-    // If the user sent a photo, add image content to the last user message
-    if (imageUrl) {
-      const lastMsg = aiMessages[aiMessages.length - 1];
-      if (lastMsg && lastMsg.role === "user") {
-        lastMsg.content.push({
-          type: "image" as const,
-          image: imageUrl,
-        } as never);
-      }
-    }
 
     // --- Send typing indicator ---
     await tg.sendChatAction(chatId);
 
     // --- Run Ruhi agent ---
     const result = await runRuhiAgent(aiMessages);
-    const responseText = result.text || "Sorry, I could not generate a response. Please try again.";
+    const responseText = result.text || "Sorry yaar, kuch samajh nahi aaya. Dobara try kar?";
 
     // --- Save assistant response to DB ---
     await saveMessage({
