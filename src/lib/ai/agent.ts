@@ -1,14 +1,8 @@
 import type { SharedV3ProviderOptions } from "@ai-sdk/provider";
-import type { LanguageModel, ToolSet, ModelMessage } from "ai";
+import type { LanguageModel, ToolSet } from "ai";
 import { generateText, stepCountIs, ToolLoopAgent } from "ai";
-import {
-  getCycleContext,
-  logCycle,
-  analyzeFaceScan,
-  getScanHistory,
-} from "./tools";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { buildRuhiSystemPrompt } from "./prompts";
-import { DEFAULT_CHAT_MODEL } from "./models";
 import { getLanguageModel } from "./providers";
 
 // ----------------------------------------
@@ -56,8 +50,12 @@ export async function runRuhiAgent(
   messages: Array<{ role: "user" | "assistant"; content: any }>,
   cycleContext?: string,
 ) {
+  const anthropic = createAnthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
   const result = await generateText({
-    model: getLanguageModel(DEFAULT_CHAT_MODEL),
+    model: anthropic("claude-haiku-4-5-20251001"),
     system: buildRuhiSystemPrompt(cycleContext),
     messages,
   });
