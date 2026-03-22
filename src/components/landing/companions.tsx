@@ -105,10 +105,9 @@ export function Companions() {
                 <button
                   className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95"
                   style={{
-                    background: c.gradient,
-                    color: "#FFFFFF",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    opacity: 1,
+                    backgroundColor: "transparent",
+                    border: `2px solid ${c.roleColor}`,
+                    color: c.roleColor,
                     cursor: "pointer",
                   }}
                   onClick={() => { setSelectedCompanion(c.name); setNotifyOpen(true); }}
