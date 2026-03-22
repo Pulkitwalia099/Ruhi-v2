@@ -100,6 +100,7 @@ import {
   slashCommands,
 } from "./slash-commands";
 import { SuggestedActions } from "./suggested-actions";
+import { resizeImageFile } from "@/lib/image-utils";
 import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
@@ -297,8 +298,18 @@ function PureMultimodalInput({
   ]);
 
   const uploadFile = useCallback(async (file: File) => {
+    // Resize images client-side before upload
+    let fileToUpload = file;
+    if (file.type.startsWith("image/")) {
+      try {
+        fileToUpload = await resizeImageFile(file);
+      } catch (err) {
+        console.error("Image resize failed, uploading original:", err);
+      }
+    }
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", fileToUpload);
 
     try {
       const response = await fetch(
@@ -408,8 +419,59 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer.files).filter((f) =>
+        f.type.startsWith("image/")
+      );
+      if (files.length === 0) return;
+
+      const file = files[0];
+      setUploadQueue([file.name]);
+
+      try {
+        const uploaded = await uploadFile(file);
+        if (uploaded) {
+          setAttachments((curr) => [...curr, uploaded]);
+        }
+      } catch {
+        toast.error("Failed to upload dropped image");
+      } finally {
+        setUploadQueue([]);
+      }
+    },
+    [uploadFile, setAttachments]
+  );
+
   return (
-    <div className={cn("relative flex w-full flex-col gap-4", className)}>
+    <div
+      className={cn(
+        "relative flex w-full flex-col gap-4",
+        isDragging && "ring-2 ring-primary/50 rounded-2xl",
+        className
+      )}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {editingMessage && onCancelEdit && (
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <span>Editing message</span>
@@ -439,8 +501,9 @@ function PureMultimodalInput({
         )}
 
       <input
+        accept="image/*"
+        capture="user"
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
-        multiple
         onChange={handleFileChange}
         ref={fileInputRef}
         tabIndex={-1}
@@ -574,12 +637,12 @@ function PureMultimodalInput({
             <PromptInputSubmit
               className={cn(
                 "h-7 w-7 rounded-xl transition-all duration-200",
-                input.trim()
+                (input.trim() || attachments.length > 0)
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={(!input.trim() && attachments.length === 0) || uploadQueue.length > 0}
               status={status}
               variant="secondary"
             >
