@@ -330,6 +330,57 @@ async function handleCommand(
       );
       return true;
 
+    case "/link": {
+      const linkCodeStr = text.split(" ")[1]?.trim().toUpperCase();
+      if (!linkCodeStr) {
+        await tg.sendMessage(
+          chatId,
+          "Code bhejo! Example: /link ABC123\n\nWeb pe jaake code generate karo: ruhi-v2.vercel.app/link-telegram",
+        );
+        return true;
+      }
+
+      const { findValidLinkCode, markLinkCodeUsed } = await import("@/db/queries");
+      const { linkAccounts } = await import("@/lib/account/link-accounts");
+
+      const codeRecord = await findValidLinkCode({ code: linkCodeStr });
+      if (!codeRecord) {
+        await tg.sendMessage(
+          chatId,
+          "Yeh code valid nahi hai ya expire ho gaya. Web pe naya code generate karo: ruhi-v2.vercel.app/link-telegram",
+        );
+        return true;
+      }
+
+      // Get or create the Telegram user
+      const telegramUser = await upsertTelegramUser({
+        telegramId: BigInt(from.id),
+        username: from.username,
+      });
+
+      // Check if already the same user
+      if (telegramUser.id === codeRecord.userId) {
+        await tg.sendMessage(chatId, "Yeh account already linked hai!");
+        return true;
+      }
+
+      try {
+        await linkAccounts(codeRecord.userId, telegramUser.id, BigInt(from.id));
+        await markLinkCodeUsed({ id: codeRecord.id });
+        await tg.sendMessage(
+          chatId,
+          "Account linked! Ab web aur Telegram dono pe same data milega. Memories, scans, sab ek jagah!",
+        );
+      } catch (err) {
+        console.error("[Link] Account linking failed:", err);
+        await tg.sendMessage(
+          chatId,
+          "Sorry, linking mein kuch problem ho gayi. Thodi der mein try karo.",
+        );
+      }
+      return true;
+    }
+
     default:
       // Unknown command — let it fall through to the agent
       return false;
