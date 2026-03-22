@@ -1,18 +1,11 @@
 import { put } from "@vercel/blob";
-import { generateText, Output } from "ai";
-import { z } from "zod";
+import { generateText } from "ai";
 
 import { runRuhiAgent } from "@/lib/ai/agent";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { VISION_MODEL } from "@/lib/ai/models";
-import { calculateCyclePhase } from "@/lib/ai/tools/cycle-utils";
+import { runScanPipeline } from "@/lib/ai/scan-pipeline";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
-import { compareScans } from "@/lib/scan/comparator";
 import {
-  getLatestCycle,
-  getRecentScans,
-  insertScan,
   upsertTelegramUser,
   saveTelegramMessage,
   getTelegramHistory,
@@ -115,111 +108,26 @@ export async function processTelegramUpdate(
 
       await tg.sendChatAction(chatId);
 
-      // Get cycle context for the scan
-      let cycleContext = "";
-      let cycleDay: number | undefined;
-      let cyclePhase: string | undefined;
-      const cycle = await getLatestCycle({ userId: dbUser.id });
-      if (cycle) {
-        const phase = calculateCyclePhase(cycle.periodStart, cycle.cycleLength);
-        cycleDay = phase.cycleDay;
-        cyclePhase = phase.phase;
-        cycleContext = `\nCycle context: Day ${phase.cycleDay}, ${phase.phase} phase. ${phase.skinImplications}`;
-      }
-
-      // Get recent scan history
-      const recentScans = await getRecentScans({ userId: dbUser.id, limit: 3 });
-      let historyContext = "";
-      if (recentScans.length > 0) {
-        historyContext = `\nPrevious scans:\n${JSON.stringify(
-          recentScans.map((s) => ({
-            date: s.createdAt.toISOString().split("T")[0],
-            results: s.results,
-          })), null, 2)}`;
-      }
-
       const imageBase64 = photoBuffer.toString("base64");
 
-      // Step 1: Gemini does RAW clinical analysis (no personality, just facts)
-      const scanSchema = z.object({
-        zones: z.object({
-          forehead: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-          t_zone: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-          left_cheek: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-          right_cheek: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-          chin: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-          jawline: z.object({ condition: z.string(), severity: z.number(), clinical_notes: z.string() }),
-        }),
-        overall_score: z.number(),
-        key_concerns: z.array(z.string()),
-        positives: z.array(z.string()),
-      });
-
-      const scanResult = await generateText({
-        model: getLanguageModel(VISION_MODEL),
-        output: Output.object({ schema: scanSchema }),
-        messages: [{
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `You are a clinical dermatology AI. Analyze this selfie objectively across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.
-
-For each zone provide:
-- condition: clinical observation (acne, dryness, oiliness, clear, texture issues, hyperpigmentation, etc.)
-- severity: 1-10 where 10 = perfectly healthy skin, 1 = severe concern
-- clinical_notes: brief clinical assessment
-${cycleContext}${historyContext}
-
-Also provide:
-- overall_score: 1-10 (10 = excellent skin health)
-- key_concerns: array of top 2-3 issues found
-- positives: array of things that look good
-
-Be precise and clinical. No personality or emotion — just facts.`,
-            },
-            { type: "image", image: imageBase64 },
-          ],
-        }],
-      });
-
-      // Save raw scan to DB
-      if (scanResult.output) {
-        await insertScan({
+      // Step 1: Shared scan pipeline — Gemini Vision analysis + DB save + comparison
+      const { scanResult, comparisonBlock, cycleContext } =
+        await runScanPipeline({
+          imageData: imageBase64,
           userId: dbUser.id,
           imageUrl: blob.url,
-          scanType: "face",
-          results: scanResult.output as Record<string, unknown>,
-          cycleDay,
-          cyclePhase,
         });
-      }
 
       // Step 2: Ruhi (Claude) interprets the raw scan in her voice
       let responseText: string;
-      if (scanResult.output) {
-        const scanData = JSON.stringify(scanResult.output, null, 2);
+      if (scanResult) {
+        const scanData = JSON.stringify(scanResult, null, 2);
         const { buildRuhiSystemPrompt } = await import("@/lib/ai/prompts");
         const { getLanguageModel } = await import("@/lib/ai/providers");
         const { DEFAULT_CHAT_MODEL } = await import("@/lib/ai/models");
 
         // Load memories for photo interpretation too
         const photoMemoriesBlock = await loadAndFormatMemories(dbUser.id);
-
-        // Compare with previous scan if one exists
-        let comparisonBlock = "";
-        // recentScans was fetched earlier for historyContext — index 0 is the
-        // PREVIOUS scan (before we inserted the new one above)
-        if (recentScans.length > 0) {
-          const previousScan = recentScans[0];
-          const comparison = compareScans(
-            { results: previousScan.results as Record<string, unknown>, createdAt: previousScan.createdAt },
-            { results: scanResult.output as Record<string, unknown>, createdAt: new Date() },
-          );
-          if (comparison) {
-            comparisonBlock = `\n\n${comparison.summary}`;
-          }
-        }
 
         const interpretation = await generateText({
           model: getLanguageModel(DEFAULT_CHAT_MODEL),
