@@ -5,7 +5,7 @@
 // Uses gateway-compatible "provider/model" format (dots for versions).
 // -----------------------------------------
 
-export const DEFAULT_CHAT_MODEL = "anthropic/claude-haiku-4.5";
+export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-pro";
 export const VISION_MODEL = "google/gemini-2.5-flash";
 
 export const titleModel = {
@@ -23,6 +23,7 @@ export const titleModel = {
 export const DIRECT_MODEL_MAP: Record<string, string> = {
   "claude-haiku-4.5": "claude-haiku-4-5-20251001",
   "claude-sonnet-4.6": "claude-sonnet-4-6-20250326",
+  "gemini-2.5-pro": "gemini-2.5-pro",
 };
 
 export type ModelCapabilities = {
@@ -42,10 +43,17 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
+    id: "google/gemini-2.5-pro",
+    name: "Gemini 2.5 Pro",
+    provider: "google",
+    description: "Primary chat model — strong reasoning and multilingual",
+    capabilities: { tools: true, vision: true, reasoning: true },
+  },
+  {
     id: "anthropic/claude-haiku-4.5",
     name: "Claude Haiku 4.5",
     provider: "anthropic",
-    description: "Fast and affordable — primary chat model",
+    description: "Fast and affordable — fallback model",
     capabilities: { tools: true, vision: true, reasoning: true },
   },
   {

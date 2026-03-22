@@ -17,17 +17,6 @@ export function FinalCta() {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <TelegramCtaButton variant="primary" size="large" />
-          <a
-            href="/chat"
-            className="rounded-full px-8 py-4 text-lg font-medium"
-            style={{
-              backgroundColor: "rgba(232,225,222,0.6)",
-              backdropFilter: "blur(10px)",
-              color: "#2D1810",
-            }}
-          >
-            Try Web Demo
-          </a>
         </div>
       </div>
     </section>

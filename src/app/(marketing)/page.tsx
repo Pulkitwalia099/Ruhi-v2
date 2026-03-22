@@ -1,6 +1,5 @@
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
-import { ChatPreview } from "@/components/landing/chat-preview";
 import { Companions } from "@/components/landing/companions";
 import { InterconnectedCare } from "@/components/landing/interconnected-care";
 import { SocialProof } from "@/components/landing/social-proof";
@@ -13,7 +12,6 @@ export default function LandingPage() {
       <LandingNav />
       <main>
         <Hero />
-        <ChatPreview />
         <Companions />
         <InterconnectedCare />
         <SocialProof />
