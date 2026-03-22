@@ -1,4 +1,8 @@
 // src/components/landing/nav.tsx
+"use client";
+
+import { TelegramCtaButton } from "./cta-button";
+
 export function LandingNav() {
   return (
     <nav className="sticky top-0 z-50 backdrop-blur-md" style={{ backgroundColor: "rgba(255,248,245,0.85)" }}>
@@ -14,15 +18,7 @@ export function LandingNav() {
           <a href="#interconnected" className="text-sm font-medium" style={{ color: "#584140" }}>
             About
           </a>
-          <a
-            href={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full px-5 py-2.5 text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #AE2F34, #FF6B6B)" }}
-          >
-            Chat on Telegram
-          </a>
+          <TelegramCtaButton variant="primary" />
         </div>
 
         <button

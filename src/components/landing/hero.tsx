@@ -1,4 +1,8 @@
 // src/components/landing/hero.tsx
+"use client";
+
+import { TelegramCtaButton } from "./cta-button";
+
 export function Hero() {
   return (
     <section className="px-6 pb-20 pt-12">
@@ -33,18 +37,7 @@ export function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full px-7 py-3.5 text-base font-semibold text-white"
-              style={{
-                background: "linear-gradient(135deg, #AE2F34, #FF6B6B)",
-                boxShadow: "0 8px 24px rgba(174,47,52,0.25)",
-              }}
-            >
-              💬 Chat with Noor on Telegram
-            </a>
+            <TelegramCtaButton variant="primary" size="large" />
             <a
               href="/chat"
               className="rounded-full px-7 py-3.5 text-base font-medium"
