@@ -1,23 +1,25 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { customProvider } from "ai";
+import { customProvider, gateway } from "ai";
 import { isTestEnvironment } from "../constants";
 import { env } from "../env";
-import { titleModel } from "./models";
+import { DIRECT_MODEL_MAP, titleModel } from "./models";
 
 // -----------------------------------------
 // src/lib/ai/providers.ts
 //
-// const openai                          L22
-// const anthropic                       L26
-// const google                          L30
-// const providers                       L34
-// function resolveModel()               L43
-// export const myProvider               L53
-// export function getLanguageModel()    L65
-// export function getTitleModel()       L72
+// Model resolution strategy:
+// 1. Test env → mock provider
+// 2. Gateway available (VERCEL_OIDC_TOKEN or AI_GATEWAY_API_KEY) → gateway()
+// 3. Fallback → direct provider SDKs with API keys
 // -----------------------------------------
+
+const useGateway = !!(
+  process.env.VERCEL_OIDC_TOKEN || process.env.AI_GATEWAY_API_KEY
+);
+
+// --- Direct provider SDKs (fallback for local dev) ---
 
 const openai = createOpenAI({
   apiKey: env.OPENAI_API_KEY,
@@ -31,7 +33,7 @@ const google = createGoogleGenerativeAI({
   apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-const providers: Record<
+const directProviders: Record<
   string,
   (modelId: string) => ReturnType<typeof openai>
 > = {
@@ -40,15 +42,20 @@ const providers: Record<
   google: (id) => google(id),
 };
 
-function resolveModel(compositeId: string) {
+function resolveDirectModel(compositeId: string) {
   const [provider, ...rest] = compositeId.split("/");
-  const modelId = rest.join("/");
-  const factory = providers[provider];
+  const gatewaySlug = rest.join("/");
+  // Map gateway slugs (e.g. "claude-haiku-4.5") to direct API IDs
+  // (e.g. "claude-haiku-4-5-20251001"). Passes through unmapped IDs as-is.
+  const modelId = DIRECT_MODEL_MAP[gatewaySlug] ?? gatewaySlug;
+  const factory = directProviders[provider];
   if (!factory) {
     throw new Error(`Unknown provider: ${provider}`);
   }
   return factory(modelId);
 }
+
+// --- Test mock provider ---
 
 export const myProvider = isTestEnvironment
   ? (() => {
@@ -62,16 +69,26 @@ export const myProvider = isTestEnvironment
     })()
   : null;
 
+// --- Public API ---
+
 export function getLanguageModel(modelId: string) {
+  // 1. Test environment → mock
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel(modelId);
   }
-  return resolveModel(modelId);
+
+  // 2. Gateway available → route through Vercel AI Gateway
+  if (useGateway) {
+    return gateway(modelId);
+  }
+
+  // 3. Fallback → direct provider SDKs
+  return resolveDirectModel(modelId);
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return resolveModel(titleModel.id);
+  return getLanguageModel(titleModel.id);
 }

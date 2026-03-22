@@ -198,15 +198,15 @@ Be precise and clinical. No personality or emotion — just facts.`,
       let responseText: string;
       if (scanResult.output) {
         const scanData = JSON.stringify(scanResult.output, null, 2);
-        const { createAnthropic } = await import("@ai-sdk/anthropic");
-        const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
         const { buildRuhiSystemPrompt } = await import("@/lib/ai/prompts");
+        const { getLanguageModel } = await import("@/lib/ai/providers");
+        const { DEFAULT_CHAT_MODEL } = await import("@/lib/ai/models");
 
         // Load memories for photo interpretation too
         const photoMemoriesBlock = await loadAndFormatMemories(dbUser.id);
 
         const interpretation = await generateText({
-          model: anthropic("claude-haiku-4-5-20251001"),
+          model: getLanguageModel(DEFAULT_CHAT_MODEL),
           system: buildRuhiSystemPrompt(cycleContext, photoMemoriesBlock ?? undefined),
           messages: [{
             role: "user",

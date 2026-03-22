@@ -2,17 +2,27 @@
 // src/lib/ai/models.ts
 //
 // Simplified model registry for Ruhi Telegram MVP.
-// Plain "provider/model" strings — AI Gateway routes automatically.
+// Uses gateway-compatible "provider/model" format (dots for versions).
 // -----------------------------------------
 
-export const DEFAULT_CHAT_MODEL = "anthropic/claude-haiku-4-5-20251001";
+export const DEFAULT_CHAT_MODEL = "anthropic/claude-haiku-4.5";
 export const VISION_MODEL = "google/gemini-2.5-flash";
 
 export const titleModel = {
-  id: "anthropic/claude-haiku-4-5-20251001",
+  id: "anthropic/claude-haiku-4.5",
   name: "Claude Haiku 4.5",
   provider: "anthropic",
   description: "Fast model for title generation",
+};
+
+/**
+ * Maps gateway model slugs to direct API model IDs.
+ * Used by the direct SDK fallback path when gateway is unavailable.
+ * Gateway translates slugs automatically; direct SDKs need exact API IDs.
+ */
+export const DIRECT_MODEL_MAP: Record<string, string> = {
+  "claude-haiku-4.5": "claude-haiku-4-5-20251001",
+  "claude-sonnet-4.6": "claude-sonnet-4-6-20250326",
 };
 
 export type ModelCapabilities = {
@@ -32,7 +42,7 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "anthropic/claude-haiku-4-5-20251001",
+    id: "anthropic/claude-haiku-4.5",
     name: "Claude Haiku 4.5",
     provider: "anthropic",
     description: "Fast and affordable — primary chat model",
