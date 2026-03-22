@@ -19,8 +19,8 @@ export const isTestEnvironment = Boolean(
 export const guestRegex = /^guest-\d+/;
 
 export const suggestions = [
-  "What are the advantages of using Next.js?",
-  "Write code to demonstrate Dijkstra's algorithm",
-  "Help me write an essay about Silicon Valley",
-  "What is the weather in San Francisco?",
+  "My skin feels super dry after washing — kya karu?",
+  "Best sunscreen under ₹500 for oily skin?",
+  "Niacinamide aur salicylic acid saath mein use kar sakti hoon?",
+  "My period just started — skin ke liye kya change karu?",
 ];
