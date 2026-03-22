@@ -3,15 +3,19 @@
 
 import { useEffect, useState } from "react";
 
-const LINES = [
-  "Noor knows why you break out before your period",
-  "Noor knows which moisturizer works in Mumbai humidity",
-  "Noor knows when your skin needs rest, not products",
-  "Noor knows how your cortisol affects your glow",
-  "Noor knows why your skin feels different every week",
-  "Noor knows the connection between your sleep and your breakouts",
-  "Noor knows which ingredients to avoid during your luteal phase",
-  "Noor knows when stress is showing up on your face",
+const LINES: { name: string; color: string; text: string }[] = [
+  { name: "Noor", color: "#006A65", text: "knows why you break out before your period" },
+  { name: "Ruhi", color: "#AE2F34", text: "knows your energy dips aren't laziness — it's your luteal phase" },
+  { name: "Saahi", color: "#655975", text: "knows that 3am anxiety is your cortisol talking" },
+  { name: "Noor", color: "#006A65", text: "knows which moisturizer works in Mumbai humidity" },
+  { name: "Ruhi", color: "#AE2F34", text: "knows why your cravings spike the week before your period" },
+  { name: "Saahi", color: "#655975", text: "knows when you need a breathing exercise, not another to-do list" },
+  { name: "Noor", color: "#006A65", text: "knows when your skin needs rest, not products" },
+  { name: "Ruhi", color: "#AE2F34", text: "knows how your cycle affects your sleep, workouts, and appetite" },
+  { name: "Saahi", color: "#655975", text: "knows the difference between a bad day and a pattern" },
+  { name: "Noor", color: "#006A65", text: "knows the connection between your stress and your breakouts" },
+  { name: "Ruhi", color: "#AE2F34", text: "knows which foods help with period cramps — and which make them worse" },
+  { name: "Saahi", color: "#655975", text: "knows that journaling for 2 minutes can change your whole day" },
 ];
 
 export function NoorTicker() {
@@ -40,8 +44,9 @@ export function NoorTicker() {
         <span
           className="inline-block h-2 w-2 flex-shrink-0 rounded-full"
           style={{
-            backgroundColor: "#006A65",
+            backgroundColor: LINES[index].color,
             animation: "typingDot 1.5s ease-in-out infinite",
+            transition: "background-color 0.4s ease",
           }}
         />
 
@@ -49,12 +54,12 @@ export function NoorTicker() {
         <p
           className="text-center text-sm font-medium transition-all duration-400"
           style={{
-            color: "#2D1810",
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0)" : "translateY(6px)",
           }}
         >
-          {LINES[index]}
+          <span style={{ color: LINES[index].color, fontWeight: 700 }}>{LINES[index].name}</span>
+          <span style={{ color: "#2D1810" }}> {LINES[index].text}</span>
         </p>
       </div>
     </div>
