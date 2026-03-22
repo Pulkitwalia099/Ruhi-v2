@@ -28,9 +28,11 @@ import {
   chatModels,
   DEFAULT_CHAT_MODEL,
 } from "@/lib/ai/models";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
+import { type RequestHints, getRequestPromptFromHints, buildRuhiSystemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { getWeather } from "@/lib/ai/tools/get-weather";
+import { getCycleContext, logCycle, getScanHistory, saveMemory } from "@/lib/ai/tools";
+import { loadAndFormatMemories } from "@/lib/memory/loader";
+import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { ChatbotError } from "@/lib/errors";
@@ -189,6 +191,15 @@ export async function POST(request: Request) {
       });
     }
 
+    // Load user memories for Ruhi's system prompt
+    const memoriesBlock = await loadAndFormatMemories(session.user.id);
+
+    // Build Ruhi system prompt with memories + geo hints
+    const requestPrompt = getRequestPromptFromHints(requestHints);
+    const ruhiInstructions = buildRuhiSystemPrompt(undefined, memoriesBlock ?? undefined)
+      + `\n\n## Internal Context\nThe current user's database ID is: ${session.user.id}\nAlways use this exact ID when calling tools like getCycleContext, logCycle, getScanHistory, or saveMemory.`
+      + `\n\n${requestPrompt}`;
+
     const modelConfig = chatModels.find((m) => m.id === chatModel);
     const capabilities = modelConfig?.capabilities;
     const isReasoningModel = capabilities?.reasoning === true;
@@ -196,13 +207,15 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    const ruhiTools = { getCycleContext, logCycle, getScanHistory, saveMemory };
+
     const cfg = {
       model: getLanguageModel(chatModel),
-      instructions: systemPrompt({ requestHints, supportsTools }),
+      instructions: ruhiInstructions,
       activeTools:
         isReasoningModel && !supportsTools
           ? []
-          : ["getWeather"],
+          : Object.keys(ruhiTools),
       providerOptions: {
         ...(modelConfig?.reasoningEffort && {
           openai: { reasoningEffort: modelConfig.reasoningEffort },
@@ -215,9 +228,7 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const agent = createChatAgent({
           ...cfg,
-          tools: {
-            getWeather,
-          },
+          tools: ruhiTools,
         });
 
         const result = await agent.stream({ messages: modelMessages });
@@ -267,6 +278,20 @@ export async function POST(request: Request) {
               chatId: id,
             })),
           });
+        }
+
+        // Post-hoc safety net: catch identity facts the LLM may have missed
+        const lastUserMsg = uiMessages.filter(m => m.role === "user").pop();
+        if (lastUserMsg) {
+          const userText = lastUserMsg.parts
+            ?.filter((p: any) => p.type === "text")
+            .map((p: any) => p.text)
+            .join("") ?? "";
+          if (userText) {
+            runPostHocSafetyNet(session.user.id, userText).catch((err) =>
+              console.error("[SafetyNet] Web chat:", err),
+            );
+          }
         }
       },
       onError: () => {
