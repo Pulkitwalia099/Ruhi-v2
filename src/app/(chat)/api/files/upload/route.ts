@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await put(`${safeName}`, fileBuffer, {
+      const data = await put(`web-photos/${session.user.id}/${Date.now()}-${safeName}`, fileBuffer, {
         access: "public",
       });
 
