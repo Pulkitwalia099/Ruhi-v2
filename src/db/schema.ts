@@ -320,3 +320,20 @@ export const proactiveLog = pgTable(
 );
 
 export type ProactiveLog = InferSelectModel<typeof proactiveLog>;
+
+// ---- Link codes for web ↔ Telegram account linking (Sprint 5B) ----
+
+export const linkCode = pgTable("link_codes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 6 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type LinkCode = typeof linkCode.$inferSelect;
