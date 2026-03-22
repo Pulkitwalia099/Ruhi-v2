@@ -25,6 +25,7 @@ import {
   chat,
   cycle,
   type DBMessage,
+  linkCode,
   memory,
   message,
   proactiveLog,
@@ -1185,4 +1186,63 @@ export async function getAllProactiveEligibleUsers() {
       "Failed to get proactive eligible users",
     );
   }
+}
+
+// ---- Link code queries (Sprint 5B) ----
+
+function generateLinkCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I confusion
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+export async function createLinkCode({ userId }: { userId: string }) {
+  // Delete any existing unused codes for this user
+  await db
+    .delete(linkCode)
+    .where(and(eq(linkCode.userId, userId), isNull(linkCode.usedAt)));
+
+  const code = generateLinkCode();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  const [result] = await db
+    .insert(linkCode)
+    .values({ userId, code, expiresAt })
+    .returning();
+
+  return result;
+}
+
+export async function findValidLinkCode({ code }: { code: string }) {
+  const [result] = await db
+    .select()
+    .from(linkCode)
+    .where(
+      and(
+        eq(linkCode.code, code.toUpperCase()),
+        isNull(linkCode.usedAt),
+        gt(linkCode.expiresAt, new Date()),
+      )
+    );
+
+  return result ?? null;
+}
+
+export async function markLinkCodeUsed({ id }: { id: string }) {
+  await db
+    .update(linkCode)
+    .set({ usedAt: new Date() })
+    .where(eq(linkCode.id, id));
+}
+
+export async function getLinkStatus({ userId }: { userId: string }) {
+  const [u] = await db
+    .select({ telegramId: user.telegramId })
+    .from(user)
+    .where(eq(user.id, userId));
+
+  return { linked: u?.telegramId != null };
 }
