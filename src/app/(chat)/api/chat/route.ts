@@ -23,6 +23,7 @@ import {
 import type { DBMessage } from "@/db/schema";
 import { createChatAgent } from "@/lib/ai/agent";
 import { entitlementsByIsAnonymous } from "@/lib/ai/entitlements";
+import { runScanPipeline } from "@/lib/ai/scan-pipeline";
 import {
   allowedModelIds,
   chatModels,
@@ -226,12 +227,62 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        // Check for image attachments in the latest user message
+        const lastUserMessage = uiMessages.filter(m => m.role === "user").pop();
+        const imageParts = lastUserMessage?.parts?.filter(
+          (p: any) => p.type === "file" && p.mediaType?.startsWith("image/")
+        ) ?? [];
+
+        let scanContext = "";
+
+        if (imageParts.length > 0) {
+          const imageUrl = (imageParts[0] as any).url;
+          try {
+            const imageResponse = await fetch(imageUrl);
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+            const imageBase64 = imageBuffer.toString("base64");
+
+            const { scanResult, comparisonBlock } = await runScanPipeline({
+              imageData: imageBase64,
+              userId: session.user.id,
+              imageUrl,
+            });
+
+            if (scanResult) {
+              const scanData = JSON.stringify(scanResult, null, 2);
+              scanContext = `Here are the clinical skin scan results for the photo the user just sent. Interpret them in your style — what's good, what needs attention, and what should they do:\n\n${scanData}`;
+              if (comparisonBlock) {
+                scanContext += `\n\n${comparisonBlock}`;
+              }
+            }
+          } catch (err) {
+            console.error("[ScanPipeline] Web chat scan failed:", err);
+          }
+        }
+
+        // If we have scan results, append them to the last user message for Ruhi to interpret
+        const agentMessages = scanContext
+          ? (() => {
+              const msgs = [...modelMessages];
+              const lastMsg = msgs[msgs.length - 1];
+              if (lastMsg && lastMsg.role === "user") {
+                msgs[msgs.length - 1] = {
+                  ...lastMsg,
+                  content: Array.isArray(lastMsg.content)
+                    ? [...lastMsg.content, { type: "text" as const, text: scanContext }]
+                    : [{ type: "text" as const, text: String(lastMsg.content) }, { type: "text" as const, text: scanContext }],
+                };
+              }
+              return msgs;
+            })()
+          : modelMessages;
+
         const agent = createChatAgent({
           ...cfg,
           tools: ruhiTools,
         });
 
-        const result = await agent.stream({ messages: modelMessages });
+        const result = await agent.stream({ messages: agentMessages });
         dataStream.merge(
           result.toUIMessageStream({ sendReasoning: isReasoningModel })
         );
