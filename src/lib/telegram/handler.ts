@@ -8,6 +8,7 @@ import { VISION_MODEL } from "@/lib/ai/models";
 import { calculateCyclePhase } from "@/lib/ai/tools/cycle-utils";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
+import { compareScans } from "@/lib/scan/comparator";
 import {
   getLatestCycle,
   getRecentScans,
@@ -205,12 +206,27 @@ Be precise and clinical. No personality or emotion — just facts.`,
         // Load memories for photo interpretation too
         const photoMemoriesBlock = await loadAndFormatMemories(dbUser.id);
 
+        // Compare with previous scan if one exists
+        let comparisonBlock = "";
+        // recentScans was fetched earlier for historyContext — index 0 is the
+        // PREVIOUS scan (before we inserted the new one above)
+        if (recentScans.length > 0) {
+          const previousScan = recentScans[0];
+          const comparison = compareScans(
+            { results: previousScan.results as Record<string, unknown>, createdAt: previousScan.createdAt },
+            { results: scanResult.output as Record<string, unknown>, createdAt: new Date() },
+          );
+          if (comparison) {
+            comparisonBlock = `\n\n${comparison.summary}`;
+          }
+        }
+
         const interpretation = await generateText({
           model: getLanguageModel(DEFAULT_CHAT_MODEL),
           system: buildRuhiSystemPrompt(cycleContext, photoMemoriesBlock ?? undefined),
           messages: [{
             role: "user",
-            content: `Here are my skin scan results. Interpret them for me in your style — what's good, what needs attention, and what should I do:\n\n${scanData}`,
+            content: `Here are my skin scan results. Interpret them for me in your style — what's good, what needs attention, and what should I do:\n\n${scanData}${comparisonBlock}`,
           }],
         });
 
