@@ -686,7 +686,7 @@ export async function getOrCreateConversation({
       .insert(chat)
       .values({
         createdAt: new Date(),
-        title: "Ruhi Skincare Chat",
+        title: "Noor Skincare Chat",
         userId,
         visibility: "private",
       })

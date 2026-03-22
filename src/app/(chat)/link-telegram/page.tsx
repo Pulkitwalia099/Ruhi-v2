@@ -87,7 +87,7 @@ export default function LinkTelegramPage() {
       <div className="text-center">
         <h1 className="text-2xl font-semibold">Link your Telegram</h1>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          Connect your Telegram account so Ruhi remembers everything across both
+          Connect your Telegram account so Noor remembers everything across both
           web and Telegram.
         </p>
       </div>
@@ -104,7 +104,7 @@ export default function LinkTelegramPage() {
             <code className="rounded bg-muted px-1.5 py-0.5">
               /link {code}
             </code>{" "}
-            to Ruhi on Telegram
+            to Noor on Telegram
           </p>
           <p className="text-xs text-muted-foreground/60">
             Expires in {Math.floor(timeLeft / 60)}:

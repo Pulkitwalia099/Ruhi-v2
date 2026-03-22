@@ -21,6 +21,43 @@ import { TelegramClient } from "./client";
 // and runs the Ruhi agent for responses.
 // ------------------------------------------------
 
+// ---- Message splitting helpers ----
+
+/** Pool of "thinking" messages sent before scan processing */
+const SCAN_THINKING_MESSAGES = [
+  "Hmm dekhti hoon...",
+  "Ek second, check karti hoon...",
+  "Photo dekh rahi hoon...",
+  "Ruk, analyze karti hoon...",
+  "Okay let me see...",
+];
+
+/**
+ * Split an LLM response on `|||` delimiters and send each chunk
+ * with a typing indicator and a natural delay in between.
+ */
+async function sendSplitMessages(
+  tg: TelegramClient,
+  chatId: number,
+  text: string,
+) {
+  const chunks = text
+    .split("|||")
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+  for (let i = 0; i < chunks.length; i++) {
+    // Show "typing..." before every chunk (including the first)
+    await tg.sendChatAction(chatId);
+    if (i > 0) {
+      // Wait proportional to chunk length between messages
+      const delay = Math.min(Math.max(chunks[i].length * 50, 800), 3000);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    await tg.sendMessage(chatId, chunks[i]);
+  }
+}
+
 /** Set of update_ids already processed (in-memory, per instance). */
 const processedUpdates = new Set<number>();
 
@@ -106,6 +143,12 @@ export async function processTelegramUpdate(
         { access: "public", contentType: "image/jpeg" },
       );
 
+      // Send immediate "thinking" message so user doesn't stare at nothing
+      const thinkingMsg =
+        SCAN_THINKING_MESSAGES[
+          Math.floor(Math.random() * SCAN_THINKING_MESSAGES.length)
+        ];
+      await tg.sendMessage(chatId, thinkingMsg);
       await tg.sendChatAction(chatId);
 
       const imageBase64 = photoBuffer.toString("base64");
@@ -146,7 +189,7 @@ export async function processTelegramUpdate(
       // Save scan conversation to simple telegram_messages table
       await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText || "Sent a selfie for skin analysis" });
       await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
-      await tg.sendMessage(chatId, responseText);
+      await sendSplitMessages(tg, chatId, responseText);
       return;
     }
 
@@ -244,8 +287,8 @@ export async function processTelegramUpdate(
       console.error("[OptOut] Unhandled:", err),
     );
 
-    // Send response back to Telegram
-    await tg.sendMessage(chatId, responseText);
+    // Send response back to Telegram (split on ||| for natural pacing)
+    await sendSplitMessages(tg, chatId, responseText);
   } catch (error: any) {
     const errDetail = error?.message || String(error);
     console.error("[Telegram] OUTER ERROR:", errDetail);
@@ -277,7 +320,7 @@ async function handleCommand(
       await clearTelegramHistory({ telegramChatId: chatId });
       await tg.sendMessage(
         chatId,
-        `Hey ${from.first_name}! Main Ruhi hoon — your skincare companion.\n\n` +
+        `Hey ${from.first_name}! Main Noor hoon — your skincare companion.\n\n` +
           `Kya kar sakti hoon:\n` +
           `- Skincare questions ka jawab\n` +
           `- Selfie se skin analysis (bas photo bhejo!)\n` +

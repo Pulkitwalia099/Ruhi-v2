@@ -21,7 +21,7 @@ outline: |
 
 Last updated: `2026.03.22`
 
-> Next.js 16 skincare companion (Ruhi) with Telegram bot + web chat, multi-model AI, memory system, proactive messaging, scan comparison, photo upload (web + Telegram), and account linking.
+> Next.js 16 skincare companion (Noor) with Telegram bot + web chat, multi-model AI, memory system, proactive messaging, scan comparison, photo upload (web + Telegram), and account linking.
 
 ---
 
@@ -51,7 +51,7 @@ src/
     └── editor/       # Prosemirror editor config
 tests/                # Playwright e2e tests
 scripts/              # Test utilities (memory system integration test)
-content/              # ruhi-prompt.md (Ruhi v2.0 persona)
+content/              # ruhi-prompt.md (Noor v3.0 persona)
 public/               # Static assets
 ```
 
@@ -71,11 +71,11 @@ Default model: `anthropic/claude-haiku-4.5`. Vision model: `google/gemini-2.5-fl
 - `getScanHistory` — fetch recent skin scans
 - `saveMemory` — persist user facts across conversations
 
-**Web Chat Agent** (`createChatAgent`) uses `ToolLoopAgent` for streaming with the same Ruhi tools as Telegram (getCycleContext, logCycle, getScanHistory, saveMemory). Memory injection, userId injection, and post-hoc safety net run on every web chat request. Photo attachments are detected and routed through the shared scan pipeline.
+**Web Chat Agent** (`createChatAgent`) uses `ToolLoopAgent` for streaming with the same Noor tools as Telegram (getCycleContext, logCycle, getScanHistory, saveMemory). Memory injection, userId injection, and post-hoc safety net run on every web chat request. Photo attachments are detected and routed through the shared scan pipeline.
 
 ### Memory System (`src/lib/memory/`)
 
-Cross-session memory so Ruhi remembers users between conversations.
+Cross-session memory so Noor remembers users between conversations.
 
 - **5 categories:** identity (name, gender, skin_type, city...), health (products, symptoms), preference (budget, brands), moment (emotional events), context (temporary facts, 14-day expiry)
 - **saveMemory tool:** LLM calls it mid-conversation to persist facts. Enum keys prevent hallucinated categories.
@@ -86,7 +86,7 @@ Cross-session memory so Ruhi remembers users between conversations.
 
 ### Proactive Messaging (`src/lib/proactive/`)
 
-Ruhi initiates conversations with three message types:
+Noor initiates conversations with three message types:
 
 - **Product follow-up:** Day 3 + day 5 after recommending a product (status: "recommended" in health memories)
 - **Scan nudge:** Day 4 + day 10 after last scan, referencing previous concerns
@@ -101,7 +101,7 @@ Shared module used by both Telegram and web chat for skin scan analysis:
 1. **Gemini Vision** structured analysis → 6 facial zones with severity scores
 2. **Save scan** to DB via `insertScan()`
 3. **Compare** with previous scan via `compareScans()` — zone-by-zone severity deltas, overall score trend
-4. **Return** structured results + comparison block + cycle context for Ruhi to interpret
+4. **Return** structured results + comparison block + cycle context for Noor to interpret
 
 Web chat detects image attachments in `route.ts` and branches into this pipeline. Telegram handler calls it after downloading the photo. Both paths upload to Vercel Blob (`web-photos/` or `telegram-photos/`) before analysis.
 
@@ -111,8 +111,8 @@ Zone-by-zone comparison between consecutive scans:
 
 - Severity deltas across 6 zones (forehead, t-zone, cheeks, chin, jawline)
 - Overall score trend (improved/worsened/stable)
-- Formatted summary injected into Ruhi's interpretation prompt
-- Ruhi celebrates improvements and gently flags regressions
+- Formatted summary injected into Noor's interpretation prompt
+- Noor celebrates improvements and gently flags regressions
 
 ### Artifacts (`src/artifacts/`)
 
@@ -152,7 +152,7 @@ History uses cursor-based pagination (`startingAfter`/`endingBefore`).
 Links Telegram and web user accounts so memories, scans, and history are unified:
 
 1. **Web user** generates a 6-character link code at `/link-telegram` (10-minute expiry)
-2. **Telegram user** sends `/link CODE` to Ruhi
+2. **Telegram user** sends `/link CODE` to Noor
 3. **Handler** validates code → runs `linkAccounts()` in a single transaction:
    - Moves memories (web user's identity/preference values win on conflict)
    - Moves scans, cycles, proactive logs, chats
@@ -182,13 +182,13 @@ Base-path aware for multi-tenant deployment (`IS_DEMO` env).
 ## Data Flow
 
 ### Telegram (primary)
-1. **User sends text** → webhook → `processTelegramUpdate()` → load memories → load history (40 msgs) → `runRuhiAgent()` (with tools + memories) → save response → safety net → send reply
-2. **User sends photo** → Gemini Vision analysis → fetch previous scan → `compareScans()` → Claude interprets with comparison + memories → save scan + response → send reply
+1. **User sends text** → webhook → `processTelegramUpdate()` → load memories → load history (40 msgs) → `runRuhiAgent()` (with tools + memories) → save response → safety net → split on `|||` → send reply chunks with typing delays
+2. **User sends photo** → send "thinking" message → Gemini Vision analysis → fetch previous scan → `compareScans()` → Claude interprets with comparison + memories → save scan + response → split on `|||` → send reply chunks with typing delays
 3. **Proactive cron** (daily 9 AM IST) → check eligible users → product follow-ups / scan nudges / weather tips → LLM generates message → send via Telegram
 
 ### Web Chat
-1. **User sends text** → `POST /api/chat` → load memories → build Ruhi prompt (with userId) → `ToolLoopAgent` streams response (with Ruhi tools) → save messages → safety net
-2. **User sends photo** → detect image attachment → fetch from Blob URL → `runScanPipeline()` (Gemini Vision → compare → save) → inject scan results → Ruhi agent interprets and streams
+1. **User sends text** → `POST /api/chat` → load memories → build Noor prompt (with userId) → `ToolLoopAgent` streams response (with Noor tools) → save messages → safety net
+2. **User sends photo** → detect image attachment → fetch from Blob URL → `runScanPipeline()` (Gemini Vision → compare → save) → inject scan results → Noor agent interprets and streams
 3. **Stream interrupted** → `resumable-stream` persists to Redis → client reconnects via `/api/chat/[id]/stream` → resumes from last position
 4. **Account linking** → `/link-telegram` page generates code → user sends `/link CODE` on Telegram → transactional data migration
 
