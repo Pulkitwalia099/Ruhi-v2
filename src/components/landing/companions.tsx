@@ -59,7 +59,6 @@ export function Companions() {
               style={{
                 backgroundColor: "#FFFFFF",
                 boxShadow: "0 24px 48px rgba(29,27,26,0.06)",
-                opacity: c.live ? 1 : 0.75,
               }}
             >
               <span
@@ -104,8 +103,14 @@ export function Companions() {
                 </div>
               ) : (
                 <button
-                  className="rounded-full px-4 py-2 text-sm font-medium"
-                  style={{ backgroundColor: "#F9F2EF", color: "#8c706f" }}
+                  className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    background: c.gradient,
+                    color: "#FFFFFF",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    opacity: 1,
+                    cursor: "pointer",
+                  }}
                   onClick={() => { setSelectedCompanion(c.name); setNotifyOpen(true); }}
                 >
                   Notify Me →
