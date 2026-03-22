@@ -20,7 +20,8 @@ const FREQUENCY_CAP_MS = 24 * 60 * 60 * 1000; // 24 hours
  * Returns the total number of messages sent.
  */
 export async function runProactiveChecks(): Promise<number> {
-  // Check quiet hours (IST = UTC+5:30)
+  // On Hobby plan, cron runs once daily at 9 AM IST (3:30 AM UTC).
+  // Quiet hours check kept as safety guard in case schedule changes.
   const nowUtc = new Date();
   const istHour = (nowUtc.getUTCHours() + 5 + (nowUtc.getUTCMinutes() >= 30 ? 1 : 0)) % 24;
 
