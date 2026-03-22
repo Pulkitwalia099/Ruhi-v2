@@ -1,4 +1,9 @@
+"use client";
+
 // src/components/landing/companions.tsx
+import { useState } from "react";
+import { NotifyModal } from "./notify-modal";
+
 const COMPANIONS = [
   {
     name: "Noor",
@@ -33,6 +38,9 @@ const COMPANIONS = [
 ] as const;
 
 export function Companions() {
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [selectedCompanion, setSelectedCompanion] = useState("");
+
   return (
     <section id="companions" className="px-6 py-20" style={{ backgroundColor: "#FFF8F5" }}>
       <div className="mx-auto max-w-5xl">
@@ -105,6 +113,7 @@ export function Companions() {
                 <button
                   className="rounded-full px-4 py-2 text-sm font-medium"
                   style={{ backgroundColor: "#F9F2EF", color: "#8c706f" }}
+                  onClick={() => { setSelectedCompanion(c.name); setNotifyOpen(true); }}
                 >
                   Notify Me →
                 </button>
@@ -113,6 +122,7 @@ export function Companions() {
           ))}
         </div>
       </div>
+      <NotifyModal open={notifyOpen} onOpenChange={setNotifyOpen} companionName={selectedCompanion} />
     </section>
   );
 }
