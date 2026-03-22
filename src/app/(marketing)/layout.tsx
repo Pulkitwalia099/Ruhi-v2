@@ -28,7 +28,7 @@ export default function MarketingLayout({
   return (
     <div
       className={`${plusJakarta.variable} ${beVietnam.variable} min-h-screen`}
-      style={{ backgroundColor: "#FFF8F5" }}
+      style={{ backgroundColor: "#FFF8F5", scrollBehavior: "smooth" }}
     >
       {children}
     </div>

@@ -337,3 +337,12 @@ export const linkCode = pgTable("link_codes", {
 });
 
 export type LinkCode = typeof linkCode.$inferSelect;
+
+export const waitlist = pgTable("waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).notNull(),
+  companion: varchar("companion", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Waitlist = InferSelectModel<typeof waitlist>;

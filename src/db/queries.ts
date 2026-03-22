@@ -34,6 +34,7 @@ import {
   telegramMessage,
   user,
   vote,
+  waitlist,
 } from "./schema";
 
 // --------------------------------------------------------------------
@@ -1245,4 +1246,8 @@ export async function getLinkStatus({ userId }: { userId: string }) {
     .where(eq(user.id, userId));
 
   return { linked: u?.telegramId != null };
+}
+
+export async function addToWaitlist(email: string, companion: string) {
+  return db.insert(waitlist).values({ email, companion });
 }

@@ -7,32 +7,41 @@ const MESSAGES = [
   {
     sender: "noor",
     label: "NOOR · SKIN ARCHITECT",
-    text: "Good morning! ☀️ Aaj humidity 78% hai — your skin might feel chipchipa. A light gel moisturizer would work best today.",
+    color: "#006A65",
+    gradient: "linear-gradient(135deg, #006A65, #4ECDC4)",
+    initial: "N",
+    text: "Priya, today's UV index is high in your area! ☀️ Yaad se apply your sunscreen before heading out. Aapki skin will thank you later!",
+  },
+  {
+    sender: "ruhi",
+    label: "RUHI · CYCLE SYNC",
+    color: "#AE2F34",
+    gradient: "linear-gradient(135deg, #AE2F34, #FF6B6B)",
+    initial: "R",
+    text: "Bilkul Noor! And Priya, you're in your Follicular phase now. Energy levels increase ho rahe hain, perfect time for a light workout! 💪",
   },
   {
     sender: "user",
-    text: "Thanks Noor! Also my skin is breaking out a lot this week 😩",
+    text: "Thanks Sakhiyaan! I'll put on some SPF 50 right now. Feeling a bit anxious today though.",
   },
   {
-    sender: "noor",
-    label: "NOOR · SKIN ARCHITECT",
-    text: "That makes sense — you're in your luteal phase right now. Progesterone increases sebum production. 🧬 Try a salicylic acid cleanser at night and keep your routine simple. No new products this week!",
-  },
-  {
-    sender: "noor",
-    label: "NOOR · SKIN ARCHITECT",
-    text: "Also — stress bhi breakouts ka reason ho sakta hai. Kal raat neend kaisi thi? 💛 Sometimes the skin is just telling you to slow down.",
+    sender: "saahi",
+    label: "SAAHI · MINDFULNESS GUIDE",
+    color: "#655975",
+    gradient: "linear-gradient(135deg, #655975, #A495B4)",
+    initial: "S",
+    text: "I hear you, Priya. ❤️ Anxiety is just a visitor. Ek choti si breathing exercise karein? Just 2 minutes to center yourself. Shall we?",
   },
 ] as const;
 
 export function ChatPreview() {
   const [visibleCount, setVisibleCount] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    const el = sectionRef.current;
+    const el = containerRef.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
@@ -70,101 +79,97 @@ export function ChatPreview() {
   }
 
   return (
-    <section ref={sectionRef} className="px-6 py-20" style={{ backgroundColor: "#F9F2EF" }}>
-      <div className="mb-10 text-center">
-        <span
-          className="mb-4 inline-block rounded-full px-4 py-1.5 text-xs font-medium"
-          style={{ backgroundColor: "rgba(174,47,52,0.08)", color: "#AE2F34" }}
-        >
-          See Sakhiyaan in Action
-        </span>
-        <h2
-          className="mb-2 font-[var(--font-heading)] text-3xl font-bold"
-          style={{ color: "#2D1810" }}
-        >
-          Your Sakhiyaan Circle
-        </h2>
-        <p style={{ color: "#584140" }}>
-          A real conversation — watch how Noor connects skin, health, and mood.
-        </p>
-      </div>
-
-      <div
-        className="mx-auto max-w-[680px] rounded-3xl p-6"
-        style={{ backgroundColor: "#FFFFFF", boxShadow: "0 24px 48px rgba(29,27,26,0.06)" }}
-      >
-        <div className="mb-4 flex items-center gap-3 border-b pb-3" style={{ borderColor: "#F9F2EF" }}>
+    <div
+      ref={containerRef}
+      className="rounded-3xl p-5"
+      style={{
+        backgroundColor: "#FFFFFF",
+        boxShadow: "0 24px 48px rgba(29,27,26,0.06)",
+      }}
+    >
+      {/* Chat header */}
+      <div className="mb-4 flex items-center gap-3 border-b pb-3" style={{ borderColor: "#F9F2EF" }}>
+        <div className="flex -space-x-1.5">
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold text-white ring-2 ring-white"
             style={{ background: "linear-gradient(135deg, #006A65, #4ECDC4)" }}
           >
             N
           </div>
-          <div>
-            <div className="text-sm font-semibold" style={{ color: "#2D1810" }}>Sakhiyaan Circle</div>
-            <div className="text-xs" style={{ color: "#006A65" }}>Noor is online</div>
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold text-white ring-2 ring-white"
+            style={{ background: "linear-gradient(135deg, #AE2F34, #FF6B6B)" }}
+          >
+            R
+          </div>
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold text-white ring-2 ring-white"
+            style={{ background: "linear-gradient(135deg, #655975, #A495B4)" }}
+          >
+            S
           </div>
         </div>
+        <div>
+          <div className="text-sm font-semibold" style={{ color: "#2D1810" }}>Your Sakhiyaan</div>
+          <div className="text-xs" style={{ color: "#8c706f" }}>Noor, Ruhi &amp; Saahi are typing...</div>
+        </div>
+      </div>
 
-        <div className="flex flex-col gap-3">
-          {MESSAGES.slice(0, visibleCount).map((msg, i) => (
-            <div
-              key={i}
-              className="transition-all duration-500"
-              style={{ animation: "fadeSlideUp 0.5s ease-out" }}
-            >
-              {msg.sender === "noor" ? (
-                <div className="flex gap-2">
-                  <div
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #006A65, #4ECDC4)" }}
-                  >
-                    N
-                  </div>
-                  <div>
-                    <div className="mb-1 text-[0.7rem] font-semibold" style={{ color: "#006A65" }}>
-                      {msg.label}
-                    </div>
-                    <div
-                      className="rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed"
-                      style={{ backgroundColor: "#F9F2EF", color: "#2D1810" }}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
+      {/* Messages */}
+      <div className="flex flex-col gap-3">
+        {MESSAGES.slice(0, visibleCount).map((msg, i) => (
+          <div
+            key={i}
+            className="transition-all duration-500"
+            style={{ animation: "fadeSlideUp 0.5s ease-out" }}
+          >
+            {msg.sender !== "user" ? (
+              <div className="flex gap-2">
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
+                  style={{ background: msg.gradient }}
+                >
+                  {msg.initial}
                 </div>
-              ) : (
-                <div className="max-w-[75%] self-end">
+                <div>
+                  <div className="mb-1 text-[0.7rem] font-semibold" style={{ color: msg.color }}>
+                    {msg.label}
+                  </div>
                   <div
-                    className="rounded-2xl rounded-br-sm px-4 py-3 text-sm leading-relaxed text-white"
-                    style={{ background: "linear-gradient(135deg, #AE2F34, #FF6B6B)" }}
+                    className="rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed"
+                    style={{ backgroundColor: "#F9F2EF", color: "#2D1810" }}
                   >
                     {msg.text}
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ) : (
+              <div className="max-w-[75%] self-end">
+                <div
+                  className="rounded-2xl rounded-br-sm px-4 py-3 text-sm leading-relaxed text-white"
+                  style={{ background: "linear-gradient(135deg, #AE2F34, #FF6B6B)" }}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
 
-          {showTyping && (
-            <div className="flex items-center gap-2">
-              <div
-                className="flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #006A65, #4ECDC4)" }}
-              >
-                N
-              </div>
-              <div className="rounded-full px-4 py-2 text-xs" style={{ backgroundColor: "#F9F2EF", color: "#8c706f" }}>
-                ● ● ● typing...
-              </div>
+        {showTyping && (
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #006A65, #4ECDC4)" }}
+            >
+              N
             </div>
-          )}
-        </div>
+            <div className="rounded-full px-4 py-2 text-xs" style={{ backgroundColor: "#F9F2EF", color: "#8c706f" }}>
+              ● ● ● typing...
+            </div>
+          </div>
+        )}
       </div>
-
-      <p className="mt-4 text-center text-xs" style={{ color: "#8c706f" }}>
-        ✨ Noor connects skin science with your daily life
-      </p>
-    </section>
+    </div>
   );
 }

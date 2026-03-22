@@ -18,10 +18,7 @@ export function InterconnectedCare() {
       <div className="mx-auto grid max-w-5xl items-center gap-16 lg:grid-cols-2">
         {/* Left — Orbital diagram */}
         <div className="relative mx-auto flex h-[380px] w-[380px] items-center justify-center">
-          <div
-            className="absolute rounded-full"
-            style={{ inset: "40px", border: "2px dashed #E0BFBD", opacity: 0.5 }}
-          />
+          {/* Center "Digital Sanctuary" — stays still */}
           <div
             className="z-10 flex h-28 w-28 items-center justify-center rounded-full text-center text-sm font-bold leading-tight text-white"
             style={{
@@ -34,30 +31,42 @@ export function InterconnectedCare() {
             Sanctuary
           </div>
 
-          {DOMAINS.map((d, i) => {
-            const angle = (i * 72 - 90) * (Math.PI / 180);
-            const radius = 150;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            return (
-              <div
-                key={d.label}
-                className="absolute rounded-full px-3 py-2 text-xs font-medium"
-                style={{
-                  left: `calc(50% + ${x}px - 52px)`,
-                  top: `calc(50% + ${y}px - 16px)`,
-                  backgroundColor: "#FFFFFF",
-                  color: d.color,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-                  whiteSpace: "nowrap",
-                  animation: "orbitalFloat 3s ease-in-out infinite",
-                  animationDelay: `${i * 0.4}s`,
-                }}
-              >
-                {d.emoji} {d.label}
-              </div>
-            );
-          })}
+          {/* Rotating wrapper: dashed circle + pills */}
+          <div
+            className="absolute inset-0"
+            style={{ animation: "orbitRotate 30s linear infinite" }}
+          >
+            {/* Dashed orbit ring */}
+            <div
+              className="absolute rounded-full"
+              style={{ inset: "40px", border: "2px dashed #E0BFBD", opacity: 0.5 }}
+            />
+
+            {/* Domain pills — counter-rotate to stay upright */}
+            {DOMAINS.map((d, i) => {
+              const angle = (i * 72 - 90) * (Math.PI / 180);
+              const radius = 150;
+              const x = Math.cos(angle) * radius;
+              const y = Math.sin(angle) * radius;
+              return (
+                <div
+                  key={d.label}
+                  className="absolute rounded-full px-3 py-2 text-xs font-medium"
+                  style={{
+                    left: `calc(50% + ${x}px - 52px)`,
+                    top: `calc(50% + ${y}px - 16px)`,
+                    backgroundColor: "#FFFFFF",
+                    color: d.color,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
+                    whiteSpace: "nowrap",
+                    animation: "orbitRotate 30s linear infinite reverse",
+                  }}
+                >
+                  {d.emoji} {d.label}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right — Copy */}

@@ -29,6 +29,13 @@
       "when": 1774164482603,
       "tag": "0003_mute_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774170751168,
+      "tag": "0004_square_romulus",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { addToWaitlist } from "@/db/queries";
 
 export async function POST(request: Request) {
   const { email, companion } = await request.json();
@@ -7,8 +8,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
-  // Placeholder: log to console. Wire to DB in a follow-up.
-  console.log(`[waitlist] ${email} wants to know when ${companion} launches`);
-
-  return NextResponse.json({ ok: true });
+  try {
+    await addToWaitlist(email, companion);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[waitlist] Failed to save:", error);
+    return NextResponse.json({ error: "Failed to save" }, { status: 500 });
+  }
 }
