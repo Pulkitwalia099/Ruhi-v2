@@ -1,5 +1,6 @@
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
+import { NoorTicker } from "@/components/landing/noor-ticker";
 import { Companions } from "@/components/landing/companions";
 import { InterconnectedCare } from "@/components/landing/interconnected-care";
 import { SocialProof } from "@/components/landing/social-proof";
@@ -12,6 +13,7 @@ export default function LandingPage() {
       <LandingNav />
       <main>
         <Hero />
+        <NoorTicker />
         <Companions />
         <InterconnectedCare />
         <SocialProof />
