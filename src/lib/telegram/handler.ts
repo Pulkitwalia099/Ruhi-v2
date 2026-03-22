@@ -315,6 +315,11 @@ Be precise and clinical. No personality or emotion — just facts.`,
       console.error("[SafetyNet] Unhandled:", err),
     );
 
+    // Natural language opt-out detection for proactive messages
+    detectProactiveOptOut(dbUser.id, userText).catch((err) =>
+      console.error("[OptOut] Unhandled:", err),
+    );
+
     // Send response back to Telegram
     await tg.sendMessage(chatId, responseText);
   } catch (error: any) {
@@ -383,8 +388,58 @@ async function handleCommand(
       );
       return true;
 
+    case "/quiet":
+      // Pause proactive messages
+      await upsertProactivePreference(from.id, "paused");
+      await tg.sendMessage(
+        chatId,
+        "Okay, mein khud se message nahi karungi ab. Jab chahiye ho toh /nudge bhej dena!",
+      );
+      return true;
+
+    case "/nudge":
+      // Resume proactive messages
+      await upsertProactivePreference(from.id, "active");
+      await tg.sendMessage(
+        chatId,
+        "Done! Ab mein check-in karungi — product follow-ups, scan reminders, weather tips. 🙌",
+      );
+      return true;
+
     default:
       // Unknown command — let it fall through to the agent
       return false;
   }
+}
+
+/** Detect natural language opt-out for proactive messages */
+async function detectProactiveOptOut(userId: string, text: string) {
+  const optOutPatterns = /(?:stop messaging|stop texting|don'?t message|don'?t text|mat bhej|band kar|message mat kar|msg mat kar|stop sending|leave me alone)/i;
+  if (!optOutPatterns.test(text)) return;
+
+  const { upsertMemory } = await import("@/db/queries");
+  await upsertMemory({
+    userId,
+    category: "preference",
+    key: "proactive",
+    value: "paused",
+  });
+  console.log("[OptOut] Natural language opt-out detected for user:", userId);
+}
+
+/** Helper to set proactive preference via upsertMemory */
+async function upsertProactivePreference(
+  telegramFromId: number,
+  value: "active" | "paused",
+) {
+  const dbUser = await upsertTelegramUser({
+    telegramId: BigInt(telegramFromId),
+  });
+  const { upsertMemory } = await import("@/db/queries");
+  await upsertMemory({
+    userId: dbUser.id,
+    category: "preference",
+    key: "proactive",
+    value,
+  });
 }

@@ -27,6 +27,7 @@ import {
   type DBMessage,
   memory,
   message,
+  proactiveLog,
   scan,
   stream,
   telegramMessage,
@@ -973,6 +974,215 @@ export async function findMemoryByKey({
     throw new ChatbotError(
       "bad_request:database",
       "Failed to find memory by key",
+    );
+  }
+}
+
+// ---- Proactive messaging queries (Sprint 3B) ----
+
+export async function logProactiveMessage({
+  userId,
+  type,
+  referenceId,
+  message: msg,
+}: {
+  userId: string;
+  type: "product_followup" | "scan_nudge" | "weather_tip";
+  referenceId?: string;
+  message: string;
+}) {
+  try {
+    const [result] = await db
+      .insert(proactiveLog)
+      .values({
+        userId,
+        type,
+        referenceId: referenceId ?? null,
+        message: msg,
+      })
+      .returning();
+    return result;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to log proactive message",
+    );
+  }
+}
+
+export async function getProactiveCountSince({
+  userId,
+  since,
+}: {
+  userId: string;
+  since: Date;
+}) {
+  try {
+    const [result] = await db
+      .select({ total: count(proactiveLog.id) })
+      .from(proactiveLog)
+      .where(
+        and(
+          eq(proactiveLog.userId, userId),
+          gte(proactiveLog.sentAt, since),
+        ),
+      );
+    return result?.total ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get proactive count",
+    );
+  }
+}
+
+export async function getNudgeCountForReference({
+  userId,
+  type,
+  referenceId,
+}: {
+  userId: string;
+  type: "product_followup" | "scan_nudge" | "weather_tip";
+  referenceId: string;
+}) {
+  try {
+    const [result] = await db
+      .select({ total: count(proactiveLog.id) })
+      .from(proactiveLog)
+      .where(
+        and(
+          eq(proactiveLog.userId, userId),
+          eq(proactiveLog.type, type),
+          eq(proactiveLog.referenceId, referenceId),
+        ),
+      );
+    return result?.total ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get nudge count",
+    );
+  }
+}
+
+export async function getScanNudgeCountSince({
+  userId,
+  since,
+}: {
+  userId: string;
+  since: Date;
+}) {
+  try {
+    const [result] = await db
+      .select({ total: count(proactiveLog.id) })
+      .from(proactiveLog)
+      .where(
+        and(
+          eq(proactiveLog.userId, userId),
+          eq(proactiveLog.type, "scan_nudge"),
+          gte(proactiveLog.sentAt, since),
+        ),
+      );
+    return result?.total ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get scan nudge count",
+    );
+  }
+}
+
+export async function getUserLastMessageTime({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    // Get the user's telegramId to look up telegram_messages
+    const [dbUser] = await db
+      .select({ telegramId: user.telegramId })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (!dbUser?.telegramId) return null;
+
+    const telegramChatId = Number(dbUser.telegramId);
+    const [latest] = await db
+      .select({ createdAt: telegramMessage.createdAt })
+      .from(telegramMessage)
+      .where(
+        and(
+          eq(telegramMessage.telegramChatId, telegramChatId),
+          eq(telegramMessage.role, "user"),
+        ),
+      )
+      .orderBy(desc(telegramMessage.createdAt))
+      .limit(1);
+
+    return latest?.createdAt ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get user last message time",
+    );
+  }
+}
+
+export async function getRecommendationMemories({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.userId, userId),
+          eq(memory.category, "health"),
+          sql`${memory.metadata}->>'status' = 'recommended'`,
+        ),
+      )
+      .orderBy(desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get recommendation memories",
+    );
+  }
+}
+
+export async function getAllProactiveEligibleUsers() {
+  try {
+    // Get all users who have a telegramId (telegram users) and haven't opted out
+    const users = await db
+      .select({
+        id: user.id,
+        telegramId: user.telegramId,
+      })
+      .from(user)
+      .where(sql`${user.telegramId} IS NOT NULL`);
+
+    // Filter out users who have proactive paused
+    const result: Array<{ id: string; telegramId: bigint }> = [];
+    for (const u of users) {
+      if (!u.telegramId) continue;
+      const pausedMemory = await findMemoryByKey({
+        userId: u.id,
+        category: "preference",
+        key: "proactive",
+      });
+      if (pausedMemory?.value === "paused") continue;
+      result.push({ id: u.id, telegramId: u.telegramId });
+    }
+
+    return result;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get proactive eligible users",
     );
   }
 }

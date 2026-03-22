@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/cleanup-memories",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/proactive-ruhi",
+      "schedule": "0 * * * *"
     }
   ]
 }

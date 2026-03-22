@@ -49,9 +49,11 @@ export const saveMemory = tool({
       ),
     value: z.string().describe("The memory content to save"),
     status: z
-      .enum(["active", "resolved", "stopped"])
+      .enum(["active", "resolved", "stopped", "recommended"])
       .optional()
-      .describe("Only for health entries: active, resolved, or stopped"),
+      .describe(
+        "For health entries: active (currently using), resolved (issue fixed), stopped (discontinued), recommended (you suggested this product/routine)",
+      ),
     date: z
       .string()
       .optional()

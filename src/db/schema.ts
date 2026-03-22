@@ -289,3 +289,34 @@ export const memory = pgTable(
 );
 
 export type Memory = InferSelectModel<typeof memory>;
+
+// ---- Proactive messaging log (Sprint 3B) ----
+
+export const proactiveLog = pgTable(
+  "proactive_log",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type", {
+      enum: ["product_followup", "scan_nudge", "weather_tip"],
+    }).notNull(),
+    referenceId: text("referenceId"),
+    message: text("message").notNull(),
+    sentAt: timestamp("sentAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userTypeRefIdx: index("proactive_user_type_ref_idx").on(
+      table.userId,
+      table.type,
+      table.referenceId,
+    ),
+    userSentIdx: index("proactive_user_sent_idx").on(
+      table.userId,
+      table.sentAt,
+    ),
+  }),
+);
+
+export type ProactiveLog = InferSelectModel<typeof proactiveLog>;
