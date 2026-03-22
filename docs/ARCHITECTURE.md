@@ -21,7 +21,7 @@ outline: |
 
 Last updated: `2026.03.22`
 
-> Next.js 16 skincare companion (Ruhi) with Telegram bot, multi-model AI, memory system, proactive messaging, and scan comparison.
+> Next.js 16 skincare companion (Ruhi) with Telegram bot + web chat, multi-model AI, memory system, proactive messaging, scan comparison, photo upload (web + Telegram), and account linking.
 
 ---
 
@@ -71,7 +71,7 @@ Default model: `anthropic/claude-haiku-4.5`. Vision model: `google/gemini-2.5-fl
 - `getScanHistory` — fetch recent skin scans
 - `saveMemory` — persist user facts across conversations
 
-**Web Chat Agent** (`createChatAgent`) uses `ToolLoopAgent` for streaming with artifact tools.
+**Web Chat Agent** (`createChatAgent`) uses `ToolLoopAgent` for streaming with the same Ruhi tools as Telegram (getCycleContext, logCycle, getScanHistory, saveMemory). Memory injection, userId injection, and post-hoc safety net run on every web chat request. Photo attachments are detected and routed through the shared scan pipeline.
 
 ### Memory System (`src/lib/memory/`)
 
@@ -94,13 +94,24 @@ Ruhi initiates conversations with three message types:
 
 Global rules: inactive 48h+ → max 1/day; active → no cap. Quiet hours 9 AM - 9 PM IST. `/quiet` to pause, `/nudge` to resume. Natural language opt-out detection. LLM-generated messages personalized with user memories.
 
+### Scan Pipeline (`src/lib/ai/scan-pipeline.ts`)
+
+Shared module used by both Telegram and web chat for skin scan analysis:
+
+1. **Gemini Vision** structured analysis → 6 facial zones with severity scores
+2. **Save scan** to DB via `insertScan()`
+3. **Compare** with previous scan via `compareScans()` — zone-by-zone severity deltas, overall score trend
+4. **Return** structured results + comparison block + cycle context for Ruhi to interpret
+
+Web chat detects image attachments in `route.ts` and branches into this pipeline. Telegram handler calls it after downloading the photo. Both paths upload to Vercel Blob (`web-photos/` or `telegram-photos/`) before analysis.
+
 ### Scan Comparison (`src/lib/scan/`)
 
-When a user sends a new scan photo, the system automatically compares with their previous scan:
+Zone-by-zone comparison between consecutive scans:
 
-- Zone-by-zone severity deltas (6 zones: forehead, t-zone, cheeks, chin, jawline)
+- Severity deltas across 6 zones (forehead, t-zone, cheeks, chin, jawline)
 - Overall score trend (improved/worsened/stable)
-- Formatted comparison summary injected into Claude's interpretation prompt
+- Formatted summary injected into Ruhi's interpretation prompt
 - Ruhi celebrates improvements and gently flags regressions
 
 ### Artifacts (`src/artifacts/`)
@@ -132,8 +143,22 @@ Streaming uses typed delta parts (`textDelta`, `codeDelta`, `sheetDelta`) pushed
 | `telegram_messages` | Plain text Telegram conversation history |
 | `memories` | Cross-session user facts (5 categories, enum keys, expiry) |
 | `proactive_log` | Tracks sent proactive messages (prevents duplicates) |
+| `link_codes` | 6-char codes for Telegram ↔ Web account linking (10-min expiry) |
 
 History uses cursor-based pagination (`startingAfter`/`endingBefore`).
+
+### Account Linking (`src/lib/account/`)
+
+Links Telegram and web user accounts so memories, scans, and history are unified:
+
+1. **Web user** generates a 6-character link code at `/link-telegram` (10-minute expiry)
+2. **Telegram user** sends `/link CODE` to Ruhi
+3. **Handler** validates code → runs `linkAccounts()` in a single transaction:
+   - Moves memories (web user's identity/preference values win on conflict)
+   - Moves scans, cycles, proactive logs, chats
+   - Sets `telegramId` on web user record
+   - Deletes orphan Telegram user record
+4. Post-link: both platforms resolve to the same userId
 
 ### Authentication (`src/lib/auth.ts`)
 
@@ -162,9 +187,10 @@ Base-path aware for multi-tenant deployment (`IS_DEMO` env).
 3. **Proactive cron** (daily 9 AM IST) → check eligible users → product follow-ups / scan nudges / weather tips → LLM generates message → send via Telegram
 
 ### Web Chat
-1. **User sends message** → `POST /api/chat` → `saveChat()` + `saveMessages()` → `streamText()` streams response
-2. **Model calls tool** → tool handler executes (e.g., `createDocument`) → document handler streams deltas → `Document` row saved
+1. **User sends text** → `POST /api/chat` → load memories → build Ruhi prompt (with userId) → `ToolLoopAgent` streams response (with Ruhi tools) → save messages → safety net
+2. **User sends photo** → detect image attachment → fetch from Blob URL → `runScanPipeline()` (Gemini Vision → compare → save) → inject scan results → Ruhi agent interprets and streams
 3. **Stream interrupted** → `resumable-stream` persists to Redis → client reconnects via `/api/chat/[id]/stream` → resumes from last position
+4. **Account linking** → `/link-telegram` page generates code → user sends `/link CODE` on Telegram → transactional data migration
 
 ---
 

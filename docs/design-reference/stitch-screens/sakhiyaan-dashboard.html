@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sakhiyaan Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#00201e",
+                        "error": "#ba1a1a",
+                        "background": "#fff8f5",
+                        "primary": "#ae2f34",
+                        "surface-container-highest": "#e8e1de",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#584140",
+                        "surface-variant": "#e8e1de",
+                        "on-tertiary-container": "#392e48",
+                        "on-primary-fixed-variant": "#8c1520",
+                        "inverse-on-surface": "#f6efec",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#a495b4",
+                        "surface-container": "#f3ecea",
+                        "outline-variant": "#e0bfbd",
+                        "inverse-primary": "#ffb3b0",
+                        "primary-container": "#ff6b6b",
+                        "secondary-fixed-dim": "#5dd9d0",
+                        "tertiary-fixed": "#eddcfe",
+                        "secondary-container": "#79f3ea",
+                        "on-tertiary-fixed-variant": "#4d425d",
+                        "on-tertiary-fixed": "#21172f",
+                        "surface": "#fff8f5",
+                        "surface-container-high": "#ede7e4",
+                        "outline": "#8c706f",
+                        "surface-tint": "#ae2f34",
+                        "primary-fixed": "#ffdad8",
+                        "secondary-fixed": "#7cf6ec",
+                        "on-primary-fixed": "#410006",
+                        "primary-fixed-dim": "#ffb3b0",
+                        "surface-bright": "#fff8f5",
+                        "secondary": "#006a65",
+                        "on-surface": "#1d1b1a",
+                        "on-secondary-fixed-variant": "#00504c",
+                        "tertiary": "#655975",
+                        "surface-dim": "#dfd9d6",
+                        "on-primary-container": "#6d0010",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f9f2ef",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1d1b1a",
+                        "tertiary-fixed-dim": "#d0c0e1",
+                        "on-secondary-container": "#006f69",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#33302e"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Be Vietnam Pro"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #fff8f5;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #1d1b1a;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-72 fixed left-0 top-0 border-r-0 bg-orange-50/80 dark:bg-stone-950/80 backdrop-blur-xl shadow-[24px_0_40px_-12px_rgba(0,0,0,0.06)] z-50 flex flex-col py-8">
+<div class="px-8 mb-10">
+<h1 class="text-2xl font-bold text-red-800 dark:text-red-400 tracking-tight font-headline">Sakhiyaan</h1>
+<p class="text-xs text-stone-500 font-body mt-1">Your Digital Sanctuary</p>
+</div>
+<nav class="flex-1 space-y-2 pr-4">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 px-6 py-4 dark:text-stone-400 hover:text-red-700 transition-colors hover:bg-white/30 dark:hover:bg-stone-800/30 transition-all duration-300 rounded-r-full bg-white/50 text-red-800" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-headline">Sakhiyaan</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
+                Start Daily Check-in
+            </button>
+<div class="mt-8 flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border-2 border-white">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Portrait of a smiling Indian woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChEs02rh5dbMI9nKMSbaDCYabqPhEV21obPARdAhH1h-1wl3x54Q-zIuVQufgLAyHMyTpY38U_x9Q-2D3HzD0vMsrpcgqnQGqLlPIDPbmxFgJBJ0PRwSuyM4Yog1Z7Fdd7uYAwIEd_LHcV_EvDBtKLC3zdYmUqdN0l_cmsS6srTJuVcP7tGir0vDcZVZ6nE-LLgiHhn0uCEi0k61ouX3Vii4VHKjrnGaeGA2KI9un9QZKP-Q4gyPeYDk50AOjbQr-Btki6bebggbA"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Priya Sharma</p>
+<p class="text-xs text-stone-500">Premium Member</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-72 flex-1 flex flex-col bg-background min-h-screen">
+<!-- TopNavBar Component -->
+<header class="w-full h-20 px-8 flex justify-between items-center bg-transparent">
+<div class="flex items-center">
+<h2 class="text-2xl font-headline font-extrabold text-primary tracking-tight">Sakhiyaan Circle</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border border-white"></span>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Dashboard Layout Grid -->
+<div class="flex-1 p-8 grid grid-cols-12 gap-8">
+<!-- Central Chat Area (Sakhiyaan Circle) -->
+<section class="col-span-8 flex flex-col h-[calc(100vh-10rem)]">
+<div class="flex-1 glass-card rounded-xl border border-white/40 shadow-sm overflow-hidden flex flex-col">
+<!-- Chat Header -->
+<div class="px-6 py-4 bg-white/40 border-b border-surface-container flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full ring-2 ring-white bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-secondary" data-icon="face_3">face_3</span>
+</div>
+<div class="w-8 h-8 rounded-full ring-2 ring-white bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="spa">spa</span>
+</div>
+<div class="w-8 h-8 rounded-full ring-2 ring-white bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-tertiary" data-icon="psychology">psychology</span>
+</div>
+</div>
+<div class="flex-1 ml-4">
+<h3 class="font-headline font-bold text-on-surface">Your Sakhiyaan</h3>
+<p class="text-[10px] text-secondary font-medium uppercase tracking-wider">Noor, Ruhi &amp; Saahi are typing...</p>
+</div>
+<button class="p-2 text-stone-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Chat Messages -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Noor (Skin) -->
+<div class="flex flex-col items-start max-w-[80%]">
+<span class="text-[10px] font-bold text-secondary mb-1 ml-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                NOOR • SKIN ARCHITECT
+                            </span>
+<div class="bg-secondary-container/30 text-on-secondary-container p-4 rounded-2xl rounded-tl-none border border-secondary-container/50">
+<p class="text-sm leading-relaxed">Priya, today's UV index is high in your area! ☀️ Yaad se apply your sunscreen before heading out. Aapki skin will thank you later!</p>
+</div>
+</div>
+<!-- Ruhi (Cycle) -->
+<div class="flex flex-col items-start max-w-[80%]">
+<span class="text-[10px] font-bold text-primary mb-1 ml-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="cycle">cycle</span>
+                                RUHI • CYCLE SYNC
+                            </span>
+<div class="bg-primary-fixed/30 text-on-primary-fixed-variant p-4 rounded-2xl rounded-tl-none border border-primary-fixed/50">
+<p class="text-sm leading-relaxed">Bilkul Noor! And Priya, you're in your Follicular phase now. Energy levels increase ho rahe hain, perfect time for a light workout! 💪</p>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col items-end self-end max-w-[80%]">
+<div class="bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-md">
+<p class="text-sm leading-relaxed">Thanks Sakhiyaan! I'll put on some SPF 50 right now. Feeling a bit anxious today though.</p>
+</div>
+<span class="text-[10px] text-stone-400 mt-1 mr-2">10:42 AM</span>
+</div>
+<!-- Saahi (Mindfulness) -->
+<div class="flex flex-col items-start max-w-[80%]">
+<span class="text-[10px] font-bold text-tertiary mb-1 ml-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="self_improvement">self_improvement</span>
+                                SAAHI • MINDFULNESS GUIDE
+                            </span>
+<div class="bg-tertiary-fixed/30 text-on-tertiary-fixed-variant p-4 rounded-2xl rounded-tl-none border border-tertiary-fixed/50">
+<p class="text-sm leading-relaxed">I hear you, Priya. ❤️ Anxiety is just a visitor. Ek choti si breathing exercise karein? Just 2 minutes to center yourself. Shall we?</p>
+</div>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-4 bg-white/60 border-t border-surface-container">
+<div class="flex items-center gap-3 bg-white rounded-full px-5 py-3 shadow-sm border border-outline-variant/20">
+<button class="text-stone-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-body text-on-surface placeholder:text-stone-400" placeholder="Baat karein..." type="text"/>
+<button class="text-stone-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-primary text-white rounded-full shadow-md hover:bg-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel (Today's Rituals) -->
+<section class="col-span-4 space-y-6">
+<!-- Rituals Card -->
+<div class="glass-card p-6 rounded-xl border border-white/40 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline font-bold text-lg text-on-surface">Today's Rituals</h3>
+<span class="text-xs font-bold text-primary bg-primary-fixed px-3 py-1 rounded-full">2/4 Done</span>
+</div>
+<div class="space-y-4">
+<!-- Checklist Items -->
+<div class="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/40 transition-all cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-white">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface">Hydration Check</p>
+<p class="text-xs text-stone-500">2L goal today</p>
+</div>
+<span class="material-symbols-outlined text-secondary opacity-0 group-hover:opacity-100 transition-opacity" data-icon="water_drop">water_drop</span>
+</div>
+<div class="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/40 transition-all cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-white">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface">Sunscreen Applied</p>
+<p class="text-xs text-stone-500">SPF 50+ Broad Spectrum</p>
+</div>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 transition-opacity" data-icon="wb_sunny">wb_sunny</span>
+</div>
+<div class="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/40 transition-all cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center"></div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface">Quick Mood Check</p>
+<p class="text-xs text-stone-500">Log how you feel</p>
+</div>
+<span class="material-symbols-outlined text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" data-icon="mood">mood</span>
+</div>
+<div class="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/40 transition-all cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center"></div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface">Evening Reflection</p>
+<p class="text-xs text-stone-500">3 things you're grateful for</p>
+</div>
+<span class="material-symbols-outlined text-on-tertiary-container opacity-0 group-hover:opacity-100 transition-opacity" data-icon="history_edu">history_edu</span>
+</div>
+</div>
+</div>
+<!-- Phase Card -->
+<div class="bg-gradient-to-br from-primary/10 to-primary-container/20 p-6 rounded-xl border border-primary/10">
+<div class="flex items-start justify-between">
+<div>
+<p class="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-1">CURRENT PHASE</p>
+<h4 class="text-xl font-headline font-extrabold text-on-primary-container">Follicular Phase</h4>
+</div>
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="eco">eco</span>
+</div>
+</div>
+<p class="mt-4 text-sm text-on-surface-variant leading-relaxed">You're in your 'Spring' season. Creativity and energy are peaking. It's a great time to start new projects!</p>
+<div class="mt-4 h-2 w-full bg-white/50 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/5 rounded-full"></div>
+</div>
+<div class="mt-2 flex justify-between text-[10px] font-bold text-on-surface-variant">
+<span>Day 5</span>
+<span>Next: Ovulation (9 Days)</span>
+</div>
+</div>
+<!-- Quick Action Bento -->
+<div class="grid grid-cols-2 gap-4">
+<button class="bg-white p-4 rounded-xl shadow-sm border border-surface-container hover:shadow-md transition-all flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+</div>
+<span class="text-xs font-bold text-on-surface">Med Log</span>
+</button>
+<button class="bg-white p-4 rounded-xl shadow-sm border border-surface-container hover:shadow-md transition-all flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="book_heart">bookmark_heart</span>
+</div>
+<span class="text-xs font-bold text-on-surface">Journal</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+</body></html>

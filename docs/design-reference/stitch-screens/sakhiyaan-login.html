@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "inverse-on-surface": "#f6efec",
+                "surface-container-highest": "#e8e1de",
+                "surface-bright": "#fff8f5",
+                "on-primary": "#ffffff",
+                "on-secondary-container": "#006f69",
+                "outline": "#8c706f",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "secondary-fixed-dim": "#5dd9d0",
+                "surface": "#fff8f5",
+                "primary": "#ae2f34",
+                "error": "#ba1a1a",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed": "#eddcfe",
+                "tertiary-container": "#a495b4",
+                "on-secondary-fixed-variant": "#00504c",
+                "inverse-surface": "#33302e",
+                "secondary-fixed": "#7cf6ec",
+                "primary-fixed": "#ffdad8",
+                "background": "#fff8f5",
+                "on-tertiary-fixed": "#21172f",
+                "tertiary": "#655975",
+                "on-secondary-fixed": "#00201e",
+                "surface-tint": "#ae2f34",
+                "tertiary-fixed-dim": "#d0c0e1",
+                "on-tertiary": "#ffffff",
+                "error-container": "#ffdad6",
+                "primary-fixed-dim": "#ffb3b0",
+                "on-primary-container": "#6d0010",
+                "inverse-primary": "#ffb3b0",
+                "surface-variant": "#e8e1de",
+                "surface-container-high": "#ede7e4",
+                "on-primary-fixed-variant": "#8c1520",
+                "surface-container-low": "#f9f2ef",
+                "on-primary-fixed": "#410006",
+                "surface-dim": "#dfd9d6",
+                "on-tertiary-container": "#392e48",
+                "surface-container-lowest": "#ffffff",
+                "outline-variant": "#e0bfbd",
+                "primary-container": "#ff6b6b",
+                "on-background": "#1d1b1a",
+                "secondary-container": "#79f3ea",
+                "on-tertiary-fixed-variant": "#4d425d",
+                "on-surface": "#1d1b1a",
+                "secondary": "#006a65",
+                "on-surface-variant": "#584140",
+                "surface-container": "#f3ecea"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Be Vietnam Pro"],
+                "label": ["Be Vietnam Pro"]
+              },
+              borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .organic-shape-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 107, 107, 0.1) 0%, rgba(255, 248, 245, 0) 70%);
+            border-radius: 43% 57% 38% 62% / 55% 45% 55% 45%;
+        }
+        .organic-shape-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(174, 47, 52, 0.05) 0%, rgba(255, 248, 245, 0) 70%);
+            border-radius: 62% 38% 68% 32% / 45% 55% 45% 55%;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface min-h-screen flex items-center justify-center overflow-hidden selection:bg-primary-fixed-dim">
+<!-- Decorative Background Elements -->
+<div class="fixed inset-0 pointer-events-none z-0">
+<div class="absolute -top-20 -left-20 organic-shape-1"></div>
+<div class="absolute bottom-[-10%] -right-20 organic-shape-2"></div>
+<div class="absolute top-[20%] right-[10%] w-32 h-32 bg-tertiary-fixed opacity-20 blur-3xl rounded-full"></div>
+</div>
+<main class="relative z-10 w-full max-w-[480px] px-6 py-12">
+<!-- Brand Identity -->
+<div class="text-center mb-10">
+<h1 class="font-headline text-4xl font-extrabold text-primary tracking-tight mb-2">Sakhiyaan</h1>
+<p class="text-on-surface-variant font-medium opacity-80">Welcome back to your sanctuary.</p>
+</div>
+<!-- Login Card -->
+<div class="glass-card rounded-xl p-8 md:p-10 shadow-[0_24px_48px_rgba(45,24,16,0.06)] border border-outline-variant/10">
+<form action="#" class="space-y-6" method="POST">
+<!-- Username/Email Field -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1" for="identity">Email or Username</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-xl">person</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all placeholder:text-outline-variant/60" id="identity" name="identity" placeholder="Enter your email" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="block text-sm font-semibold text-on-surface-variant" for="password">Password</label>
+<a class="text-xs font-bold text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-xl">lock</span>
+<input class="w-full pl-12 pr-12 py-4 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all placeholder:text-outline-variant/60" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+</div>
+</div>
+<!-- Login Button -->
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-full shadow-lg shadow-primary-container/30 hover:shadow-xl hover:shadow-primary-container/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300" type="submit">
+                    Login
+                </button>
+<!-- Divider -->
+<div class="relative py-4 flex items-center">
+<div class="flex-grow border-t border-outline-variant/20"></div>
+<span class="flex-shrink mx-4 text-xs font-bold text-outline-variant uppercase tracking-widest">Or continue with</span>
+<div class="flex-grow border-t border-outline-variant/20"></div>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 py-3.5 bg-surface-container-lowest border border-outline-variant/20 rounded-lg hover:bg-surface-container-high transition-colors group" type="button">
+<img alt="Google" class="w-5 h-5" data-alt="Google logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNhfnlJ28ZqOFTl7EPWhipHIkpCfz6bAu0C9A5njQzRWEUPs5-XCodiK1DnO4Y_u3gl_MLXroQ0vrTPL5CqIVkiaL3tZUO1FYurIIs1jr7Mm971VZqwkKea-YpVSYJkP6O-tokQdxvjQOhxMF6NxmcvmjvWEpLyKB8DF4f9KbOdjHTh3DE9DLafmSD3VRsaSdQwaUqvRNPWUT2oizyaDznGu12-VXHvEZveBB9IXhC2StYXkFpqDMjeNIRCK-mYGvclHcuYyaybM0"/>
+<span class="text-sm font-semibold text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3.5 bg-surface-container-lowest border border-outline-variant/20 rounded-lg hover:bg-surface-container-high transition-colors group" type="button">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">ios</span>
+<span class="text-sm font-semibold text-on-surface">Apple</span>
+</button>
+</div>
+</form>
+<!-- Sign Up Footer -->
+<p class="mt-8 text-center text-sm font-medium text-on-surface-variant">
+                Don't have an account? 
+                <a class="ml-1 font-bold text-primary hover:underline underline-offset-4 decoration-2" href="#">Sign Up</a>
+</p>
+</div>
+<!-- Footer Links -->
+<div class="mt-12 flex justify-center gap-6 text-[11px] font-bold uppercase tracking-widest text-outline-variant/60">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</main>
+<!-- Aesthetic Decorative Image (Bleed Effect) -->
+<div class="hidden lg:block fixed -right-20 top-1/2 -translate-y-1/2 w-[30vw] opacity-40 mix-blend-multiply">
+<img alt="Abstract warm waves" class="rounded-l-[10rem] object-cover h-[716px] shadow-2xl" data-alt="Abstract organic waves in warm coral and cream tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgM1_ISLN-d4gR6tJJnA8P_1MPGBYwY7Xft9FkgkBH5AsLJTv45lSW8wESpDFuE2SVHcgSm8CAwYWjN_sEA7Cm7KCeYfm-AHgIeHIDm2atxjCvvvwEyUMRmUCyhFMyL-33jqaXU5k0aYfJITzkcyh3IIMAZFBwpsyZ68NAsscqgJPDeEVdGYE7LJsh_6Ouj5-QuKpwRhYR7x6pqguYDcQGj8B_p4hbEMHCTqHbn9BZVMTmHW8F01D1d6liy3Bl17qx5XUDGEJPUtw"/>
+</div>
+</body></html>
