@@ -1,7 +1,7 @@
 # Web Chat + Auth — Sprint 4E Design Spec
 
 **Date:** 2026-03-22
-**Status:** Approved
+**Status:** Implemented
 **Scope:** Web chat with Ruhi persona, memory, and tools (text only, no photo upload)
 
 ---
