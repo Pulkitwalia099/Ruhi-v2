@@ -29,7 +29,7 @@ export function NoorTicker() {
         setIndex((prev) => (prev + 1) % LINES.length);
         setIsVisible(true);
       }, 400);
-    }, 3500);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
