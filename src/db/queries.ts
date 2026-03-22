@@ -9,7 +9,10 @@ import {
   gt,
   gte,
   inArray,
+  isNull,
   lt,
+  or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -22,6 +25,7 @@ import {
   chat,
   cycle,
   type DBMessage,
+  memory,
   message,
   scan,
   stream,
@@ -783,4 +787,192 @@ export async function clearTelegramHistory({
   await db
     .delete(telegramMessage)
     .where(eq(telegramMessage.telegramChatId, telegramChatId));
+}
+
+// ---- Memory queries (Sprint 2) ----
+
+export async function upsertMemory({
+  userId,
+  category,
+  key,
+  value,
+  metadata,
+}: {
+  userId: string;
+  category: "identity" | "preference";
+  key: string;
+  value: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const [result] = await db
+      .insert(memory)
+      .values({
+        userId,
+        category,
+        key,
+        value,
+        metadata: metadata ?? {},
+      })
+      .onConflictDoUpdate({
+        target: [memory.userId, memory.category, memory.key],
+        targetWhere: sql`${memory.key} IS NOT NULL`,
+        set: {
+          value,
+          metadata: metadata ?? {},
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to upsert memory");
+  }
+}
+
+export async function insertMemory({
+  userId,
+  category,
+  value,
+  metadata,
+  expiresAt,
+}: {
+  userId: string;
+  category: "health" | "context";
+  value: string;
+  metadata?: Record<string, unknown>;
+  expiresAt?: Date;
+}) {
+  try {
+    const [result] = await db
+      .insert(memory)
+      .values({
+        userId,
+        category,
+        key: null,
+        value,
+        metadata: metadata ?? {},
+        expiresAt: expiresAt ?? null,
+      })
+      .returning();
+    return result;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to insert memory");
+  }
+}
+
+export async function insertMomentMemory({
+  userId,
+  value,
+  metadata,
+}: {
+  userId: string;
+  value: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    return await db.transaction(async (tx) => {
+      // Lock rows for this user's moments to prevent race conditions.
+      // SELECT ... FOR UPDATE can't use aggregate functions, so we select
+      // the IDs directly and count in JS.
+      const lockedRows = await tx
+        .select({ id: memory.id, createdAt: memory.createdAt })
+        .from(memory)
+        .where(and(eq(memory.userId, userId), eq(memory.category, "moment")))
+        .orderBy(asc(memory.createdAt))
+        .for("update");
+
+      // If at cap, delete the oldest moment
+      if (lockedRows.length >= 30) {
+        await tx.delete(memory).where(eq(memory.id, lockedRows[0].id));
+      }
+
+      // Insert the new moment
+      const [result] = await tx
+        .insert(memory)
+        .values({
+          userId,
+          category: "moment",
+          key: null,
+          value,
+          metadata: metadata ?? {},
+        })
+        .returning();
+
+      return result;
+    });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to insert moment memory",
+    );
+  }
+}
+
+export async function loadMemories({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.userId, userId),
+          or(isNull(memory.expiresAt), gt(memory.expiresAt, new Date())),
+        ),
+      )
+      .orderBy(memory.category, desc(memory.createdAt))
+      .limit(200);
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to load memories");
+  }
+}
+
+export async function deleteExpiredMemories() {
+  try {
+    const result = await db
+      .delete(memory)
+      .where(
+        and(
+          sql`${memory.expiresAt} IS NOT NULL`,
+          lt(memory.expiresAt, new Date()),
+        ),
+      )
+      .returning({ id: memory.id });
+    return result.length;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete expired memories",
+    );
+  }
+}
+
+export async function findMemoryByKey({
+  userId,
+  category,
+  key,
+}: {
+  userId: string;
+  category: "identity" | "health" | "preference" | "moment" | "context";
+  key: string;
+}) {
+  try {
+    const [found] = await db
+      .select({ id: memory.id, value: memory.value })
+      .from(memory)
+      .where(
+        and(
+          eq(memory.userId, userId),
+          eq(memory.category, category),
+          eq(memory.key, key),
+        ),
+      )
+      .limit(1);
+    return found ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to find memory by key",
+    );
+  }
 }

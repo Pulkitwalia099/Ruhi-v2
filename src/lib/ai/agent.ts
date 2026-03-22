@@ -4,7 +4,7 @@ import { generateText, stepCountIs, ToolLoopAgent } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { buildRuhiSystemPrompt } from "./prompts";
 import { getLanguageModel } from "./providers";
-import { getCycleContext, logCycle, getScanHistory } from "./tools";
+import { getCycleContext, logCycle, getScanHistory, saveMemory } from "./tools";
 
 // ----------------------------------------
 // src/lib/ai/agent.ts
@@ -48,24 +48,27 @@ export function createChatAgent({
  */
 export async function runRuhiAgent(
   messages: Array<{ role: "user" | "assistant"; content: any }>,
-  options?: { userId?: string; cycleContext?: string },
+  options?: { userId?: string; cycleContext?: string; memoriesBlock?: string },
 ) {
   const anthropic = createAnthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-  let systemPrompt = buildRuhiSystemPrompt(options?.cycleContext);
+  let systemPrompt = buildRuhiSystemPrompt(
+    options?.cycleContext,
+    options?.memoriesBlock ?? undefined,
+  );
 
   // Inject userId so the LLM can pass it to tools
   if (options?.userId) {
-    systemPrompt += `\n\n## Internal Context\nThe current user's database ID is: ${options.userId}\nAlways use this exact ID when calling tools like getCycleContext, logCycle, or getScanHistory.`;
+    systemPrompt += `\n\n## Internal Context\nThe current user's database ID is: ${options.userId}\nAlways use this exact ID when calling tools like getCycleContext, logCycle, getScanHistory, or saveMemory.`;
   }
 
   const result = await generateText({
     model: anthropic("claude-haiku-4-5-20251001"),
     system: systemPrompt,
     messages,
-    tools: { getCycleContext, logCycle, getScanHistory },
+    tools: { getCycleContext, logCycle, getScanHistory, saveMemory },
     stopWhen: stepCountIs(5),
   });
 

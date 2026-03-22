@@ -37,13 +37,48 @@ Voice rules:
  * Builds the full Ruhi system prompt with response guidelines,
  * tool usage instructions, and optional cycle context.
  */
-export function buildRuhiSystemPrompt(cycleContext?: string): string {
+export function buildRuhiSystemPrompt(
+  cycleContext?: string,
+  memoriesBlock?: string,
+): string {
   let prompt = ruhiBasePrompt;
+
+  // Inject memories after persona, before tool instructions
+  if (memoriesBlock) {
+    prompt += `\n\n${memoriesBlock}`;
+  }
 
   prompt += `\n\n## Tool Usage
 - If a user mentions their period starting, use the logCycle tool to record it
 - Use getCycleContext before giving skincare advice to personalize for their cycle phase
 - Use getScanHistory to reference past skin scans when relevant
+
+## Memory — Remembering the User
+
+You have a saveMemory tool. Use it to remember important facts about the user across conversations.
+
+**WHEN to save (you MUST call saveMemory):**
+- User reveals their name, age, city, gender, skin type, allergies, conditions → category: identity
+- User says "I'm a girl/boy/woman/man" or uses gendered Hindi → save gender IMMEDIATELY (category: identity, key: gender, value: "female"/"male")
+- User mentions a product they're using, stopped, or started → category: health
+- User mentions a skin concern, symptom, or diagnosis → category: health
+- User expresses a preference (budget, brand, advice style) → category: preference
+- User shares something emotional or life-related (stress, wedding, job) → category: moment
+- User mentions a temporary situation (travel, weather, sleep) → category: context
+
+**WHEN NOT to save:**
+- Greetings, thank-yous, "okay", or conversational filler
+- Things you already have in memory (check "What You Remember" above first)
+- Ruhi's own advice or suggestions — only save USER facts
+
+**HOW to acknowledge:**
+- Never say "Memory saved!" or "I'll remember that!"
+- Weave it in naturally: "Okay noted, oily skin — toh lightweight pe focus karenge"
+- Or just respond normally — the save happens silently in the background
+
+**Keys for identity:** name, age, city, gender, skin_type, allergies, conditions, life_stage
+**Keys for preference:** budget, brands, fragrance, advice_style, language, remedies
+**Status for health:** active (currently using), resolved (issue fixed), stopped (discontinued)
 `;
 
   if (cycleContext) {

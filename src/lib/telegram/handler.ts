@@ -6,6 +6,8 @@ import { runRuhiAgent } from "@/lib/ai/agent";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { VISION_MODEL } from "@/lib/ai/models";
 import { calculateCyclePhase } from "@/lib/ai/tools/cycle-utils";
+import { loadAndFormatMemories } from "@/lib/memory/loader";
+import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
 import {
   getLatestCycle,
   getRecentScans,
@@ -200,9 +202,12 @@ Be precise and clinical. No personality or emotion — just facts.`,
         const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
         const { buildRuhiSystemPrompt } = await import("@/lib/ai/prompts");
 
+        // Load memories for photo interpretation too
+        const photoMemoriesBlock = await loadAndFormatMemories(dbUser.id);
+
         const interpretation = await generateText({
           model: anthropic("claude-haiku-4-5-20251001"),
-          system: buildRuhiSystemPrompt(cycleContext),
+          system: buildRuhiSystemPrompt(cycleContext, photoMemoriesBlock ?? undefined),
           messages: [{
             role: "user",
             content: `Here are my skin scan results. Interpret them for me in your style — what's good, what needs attention, and what should I do:\n\n${scanData}`,
@@ -226,9 +231,12 @@ Be precise and clinical. No personality or emotion — just facts.`,
     // Save user message (plain text — no JSON parts)
     await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText });
 
-    // Load conversation history — last 20 messages (10 exchanges)
-    // Alternation fix ensures proper user/assistant ordering
-    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 20 });
+    // Load user memories for system prompt injection
+    const memoriesBlock = await loadAndFormatMemories(dbUser.id);
+
+    // Load conversation history — last 40 messages (20 exchanges)
+    // Larger window prevents Ruhi from forgetting things said earlier in long conversations
+    const history = await getTelegramHistory({ telegramChatId: chatId, limit: 40 });
 
     // Filter out any error messages that got saved previously
     const aiMessages = history
@@ -280,7 +288,10 @@ Be precise and clinical. No personality or emotion — just facts.`,
     let responseText: string;
     let agentSucceeded = false;
     try {
-      const result = await runRuhiAgent(cleanMessages, { userId: dbUser.id });
+      const result = await runRuhiAgent(cleanMessages, {
+        userId: dbUser.id,
+        memoriesBlock: memoriesBlock ?? undefined,
+      });
       responseText = result.text || "";
       console.log("[Ruhi] Agent response length:", responseText.length);
       if (responseText) agentSucceeded = true;
@@ -298,6 +309,11 @@ Be precise and clinical. No personality or emotion — just facts.`,
     if (agentSucceeded) {
       await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
     }
+
+    // Post-hoc safety net: catch critical identity facts the LLM may have missed
+    runPostHocSafetyNet(dbUser.id, userText).catch((err) =>
+      console.error("[SafetyNet] Unhandled:", err),
+    );
 
     // Send response back to Telegram
     await tg.sendMessage(chatId, responseText);

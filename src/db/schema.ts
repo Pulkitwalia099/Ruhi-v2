@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   foreignKey,
+  index,
   integer,
   json,
   jsonb,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -250,3 +252,40 @@ export const telegramMessage = pgTable("telegram_messages", {
 });
 
 export type TelegramMessage = InferSelectModel<typeof telegramMessage>;
+
+// ---- Memory system (Sprint 2) ----
+
+export const memory = pgTable(
+  "memories",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: ["identity", "health", "preference", "moment", "context"],
+    }).notNull(),
+    key: text("key"),
+    value: text("value").notNull(),
+    metadata: jsonb("metadata").default({}),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    expiresAt: timestamp("expiresAt"),
+  },
+  (table) => ({
+    userCategoryIdx: index("memory_user_category_idx").on(
+      table.userId,
+      table.category,
+    ),
+    expiresIdx: index("memory_expires_idx").on(table.expiresAt),
+    // NULLs are distinct in PG unique constraints, so rows with key=NULL
+    // (health, moment, context) won't conflict with each other.
+    userCategoryKeyUnique: uniqueIndex("memory_user_category_key_unique").on(
+      table.userId,
+      table.category,
+      table.key,
+    ),
+  }),
+);
+
+export type Memory = InferSelectModel<typeof memory>;
