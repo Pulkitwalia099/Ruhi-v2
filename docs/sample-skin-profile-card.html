@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skin Profile Card — Sample Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,800;1,9..40,400&family=Playfair+Display:wght@700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0f0a08;
+    font-family: 'DM Sans', sans-serif;
+    padding: 40px 20px;
+    gap: 24px;
+  }
+
+  .label {
+    color: #8c706f;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* ─── Card Container ─── */
+  .card {
+    width: 1080px;
+    height: 1350px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    transform-origin: top center;
+    transform: scale(0.45);
+    margin-bottom: -740px;
+    /* Richer gradient — warm peach to blush pink */
+    background: linear-gradient(175deg, #FFF9F6 0%, #FFF3ED 35%, #FFE8DF 70%, #FFE0D4 100%);
+  }
+
+  @media (max-width: 600px) {
+    .card { transform: scale(0.32); margin-bottom: -910px; }
+  }
+
+  /* ─── Decorative Orbs — bolder, more saturated ─── */
+  .orb-1 {
+    position: absolute;
+    top: -200px;
+    right: -120px;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,107,107,0.14) 0%, rgba(174,47,52,0.04) 50%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .orb-2 {
+    position: absolute;
+    bottom: -180px;
+    left: -120px;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(78,205,196,0.12) 0%, rgba(0,106,101,0.03) 50%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .orb-3 {
+    position: absolute;
+    top: 28%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Shimmer line accent */
+  .shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #006A65, #4ECDC4, #E8A830, #FF6B6B, #006A65);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ─── Inner Layout ─── */
+  .inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 52px 56px 44px;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .noor-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #006A65, #4ECDC4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(0,106,101,0.25);
+  }
+
+  .header-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: #2D1810;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .header-text .subtitle {
+    font-size: 22px;
+    color: #8c706f;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .header-date {
+    font-size: 22px;
+    color: #a08a87;
+    font-weight: 500;
+  }
+
+  /* ─── Headline ─── */
+  .headline {
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 32px;
+    font-weight: 700;
+  }
+
+  .headline .text { color: #584140; }
+  .headline .highlight { font-weight: 800; }
+
+  /* ─── Score Section ─── */
+  .score-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 6px;
+    position: relative;
+  }
+
+  .sparkle { position: absolute; filter: drop-shadow(0 0 8px rgba(255,200,50,0.4)); }
+  /* Top-left of circle — large accent */
+  .sparkle-1 { top: 12px; left: 290px; font-size: 38px; animation: float 2.5s ease-in-out infinite; }
+  /* Top-right of circle — medium, slightly inward */
+  .sparkle-2 { top: 20px; right: 290px; font-size: 30px; animation: float 3s ease-in-out infinite 0.5s; }
+  /* Bottom-right, tucked near badge */
+  .sparkle-3 { bottom: 58px; right: 310px; font-size: 22px; animation: float 2s ease-in-out infinite 1s; }
+  /* Mid-left, small subtle */
+  .sparkle-4 { top: 140px; left: 270px; font-size: 18px; animation: float 2.8s ease-in-out infinite 0.3s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+    50% { transform: translateY(-6px) scale(1.15); opacity: 0.8; }
+  }
+
+  /* Score ring — thicker, glowing */
+  .score-ring {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    box-shadow: 0 8px 40px rgba(212,160,23,0.25), 0 0 60px rgba(240,208,96,0.15);
+  }
+
+  .score-inner {
+    width: 256px;
+    height: 256px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #FFFBF9, #FFF5F0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  /* Score number — centered properly with /10 */
+  .score-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .score-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 130px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    transition: color 0.4s;
+  }
+
+  .score-denominator {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 40px;
+    font-weight: 600;
+    color: #b8a09c;
+    margin-bottom: 20px;
+  }
+
+  /* ─── Verdict Badge — bigger, bolder ─── */
+  .verdict-badge {
+    margin-top: -24px;
+    border-radius: 50px;
+    padding: 14px 42px;
+    z-index: 2;
+    box-shadow: 0 6px 24px rgba(0,106,101,0.25);
+    transition: background 0.4s, box-shadow 0.4s;
+  }
+
+  .verdict-badge span {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  /* ─── Metrics — vibrant emoji bars ─── */
+  .metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 22px;
+    margin-bottom: 20px;
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(243,234,229,0.8);
+    border-radius: 30px;
+    padding: 22px 34px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .metric-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  }
+
+  .metric-label {
+    font-size: 34px;
+    font-weight: 800;
+    width: 230px;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+
+  .metric-label.teal { color: #006A65; }
+  .metric-label.amber { color: #D49B20; }
+  .metric-label.coral { color: #AE2F34; }
+
+  .metric-emojis {
+    flex: 1;
+    font-size: 52px;
+    letter-spacing: 4px;
+    line-height: 1;
+    filter: saturate(1.3) brightness(1.05);
+  }
+
+  .metric-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 800;
+    width: 70px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .metric-score.teal { color: #006A65; }
+  .metric-score.amber { color: #D49B20; }
+  .metric-score.coral { color: #AE2F34; }
+
+  /* ─── Concerns + Wins — punchier colors ─── */
+  .concerns-wins {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 12px;
+  }
+
+  .cw-card {
+    flex: 1;
+    border-radius: 26px;
+    padding: 24px 28px;
+  }
+
+  .cw-card.concerns {
+    background: linear-gradient(135deg, #FFF0F0, #FFE8E8);
+    border: 2px solid #FAD0D0;
+  }
+
+  .cw-card.wins {
+    background: linear-gradient(135deg, #EEFAF9, #E4F7F5);
+    border: 2px solid #B8E6E0;
+  }
+
+  .cw-label {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .cw-label.red { color: #C0392B; }
+  .cw-label.green { color: #006A65; }
+
+  .cw-item {
+    font-size: 23px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+
+  .cw-item.red { color: #D14836; }
+  .cw-item.green { color: #008078; }
+
+  /* ─── CTA Footer — gradient glow ─── */
+  .cta-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+    padding-top: 8px;
+  }
+
+  .cta-pill {
+    background: linear-gradient(135deg, #E63946, #FF6B6B, #FF8585);
+    border-radius: 60px;
+    padding: 24px 64px;
+    box-shadow: 0 8px 32px rgba(230,57,70,0.3), 0 0 60px rgba(255,107,107,0.1);
+    transition: transform 0.2s;
+  }
+
+  .cta-pill:hover {
+    transform: scale(1.02);
+  }
+
+  .cta-pill span {
+    font-size: 30px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    letter-spacing: 0.01em;
+  }
+
+  /* ─── Controls ─── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .controls button {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #3a2820;
+    background: #1a0f0a;
+    color: #FFF8F5;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .controls button:hover { background: #3a2820; transform: translateY(-1px); }
+
+  .controls button.active {
+    background: #006A65;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 12px rgba(78,205,196,0.3);
+  }
+
+  .note {
+    color: #6a5550;
+    font-size: 13px;
+    max-width: 500px;
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<p class="label">Skin Profile Card — Sample Preview (1080 &times; 1350)</p>
+
+<div class="card" id="card">
+  <div class="shimmer"></div>
+  <div class="orb-1"></div>
+  <div class="orb-2"></div>
+  <div class="orb-3"></div>
+
+  <div class="inner">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="noor-avatar">N</div>
+        <div class="header-text">
+          <h1 id="cardTitle">Priya's Skin Profile</h1>
+          <div class="subtitle">by Noor &middot; your skin bestie</div>
+        </div>
+      </div>
+      <div class="header-date">23 Mar 2026</div>
+    </div>
+
+    <!-- Headline -->
+    <div class="headline">
+      <span class="text" id="headlineText">Bestie, your skin is </span>
+      <span class="highlight" id="headlineHighlight">thriving!</span>
+      <span id="headlineEmoji"> 💅</span>
+    </div>
+
+    <!-- Score circle -->
+    <div class="score-section">
+      <span class="sparkle sparkle-1">✨</span>
+      <span class="sparkle sparkle-2">⭐</span>
+      <span class="sparkle sparkle-3">✨</span>
+      <span class="sparkle sparkle-4">✦</span>
+
+      <div class="score-ring" id="scoreRing" style="background: linear-gradient(135deg, #D4A017, #F0D060, #E8A830);">
+        <div class="score-inner">
+          <div class="score-display">
+            <span class="score-number" id="scoreNumber" style="color: #006A65;">7</span>
+            <span class="score-denominator">/10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict-badge" id="verdictBadge" style="background: linear-gradient(135deg, #006A65, #4ECDC4);">
+        <span id="verdictText">💅 Main Character Skin</span>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics">
+      <div class="metric-row">
+        <span class="metric-label teal">Hydration</span>
+        <span class="metric-emojis">💧💧💧💧💧💧</span>
+        <span class="metric-score teal">6</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label teal">Glow Factor</span>
+        <span class="metric-emojis">✨✨✨✨✨✨✨</span>
+        <span class="metric-score teal">7</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label amber">Clarity</span>
+        <span class="metric-emojis">🫧🫧🫧🫧🫧</span>
+        <span class="metric-score amber">5</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label teal">Texture</span>
+        <span class="metric-emojis">🪷🪷🪷🪷🪷🪷🪷🪷</span>
+        <span class="metric-score teal">8</span>
+      </div>
+    </div>
+
+    <!-- Concerns + Wins -->
+    <div class="concerns-wins">
+      <div class="cw-card concerns">
+        <div class="cw-label red">🎯 Focus Areas</div>
+        <div class="cw-item red">• Active acne on chin &amp; jawline</div>
+        <div class="cw-item red">• Post-inflammatory pigmentation</div>
+      </div>
+      <div class="cw-card wins">
+        <div class="cw-label green">💪 Your Wins</div>
+        <div class="cw-item green">• Strong skin barrier overall</div>
+        <div class="cw-item green">• Great natural texture</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-footer">
+      <div class="cta-pill">
+        <span>Get yours &rarr; meetSakhi.com ✨</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive controls -->
+<div class="controls">
+  <button class="active" onclick="setPersonality('main-character')">Main Character Skin 💅</button>
+  <button onclick="setPersonality('soft-girl')">Soft Girl Skin 🌸</button>
+  <button onclick="setPersonality('clear-skin')">Clear Skin Era ✨</button>
+  <button onclick="setPersonality('skinimalist')">Skinimalist 🧴</button>
+  <button onclick="setPersonality('day-one')">Day One Energy 🚀</button>
+  <button onclick="setPersonality('naturally-blessed')">Naturally Blessed 👑</button>
+</div>
+
+<p class="note">Click labels to preview personality variants. This matches the 1080&times;1350 Telegram format. The shimmer bar at top is just for the HTML preview — the actual Satori-rendered PNG won't have animations.</p>
+
+<script>
+const presets = {
+  'main-character': {
+    name: "Priya's Skin Profile",
+    verdict: "💅 Main Character Skin",
+    headline: ["Bestie, your skin is ", "thriving!", " 💅"],
+    score: 7,
+    color: 'teal',
+  },
+  'soft-girl': {
+    name: "Ananya's Skin Profile",
+    verdict: "🌸 Soft Girl Skin",
+    headline: ["Bestie, your skin is ", "thriving!", " 💅"],
+    score: 7,
+    color: 'teal',
+  },
+  'clear-skin': {
+    name: "Meera's Skin Profile",
+    verdict: "✨ Clear Skin Era",
+    headline: ["Your glow up is ", "in progress!", " 🌱"],
+    score: 5,
+    color: 'amber',
+  },
+  'skinimalist': {
+    name: "Isha's Skin Profile",
+    verdict: "🧴 Skinimalist",
+    headline: ["Bestie, your skin is ", "thriving!", " 💅"],
+    score: 8,
+    color: 'teal',
+  },
+  'day-one': {
+    name: "Riya's Skin Profile",
+    verdict: "🚀 Day One Energy",
+    headline: ["Your glow journey ", "starts now!", " 🚀"],
+    score: 4,
+    color: 'coral',
+  },
+  'naturally-blessed': {
+    name: "Zara's Skin Profile",
+    verdict: "👑 Naturally Blessed",
+    headline: ["You're literally ", "glowing!", " 🔥"],
+    score: 9,
+    color: 'teal',
+  },
+};
+
+const colors = {
+  teal: {
+    text: '#006A65',
+    badge: 'linear-gradient(135deg, #006A65, #4ECDC4)',
+    badgeShadow: '0 6px 24px rgba(0,106,101,0.3)',
+  },
+  amber: {
+    text: '#C48B10',
+    badge: 'linear-gradient(135deg, #D49B20, #F0D060)',
+    badgeShadow: '0 6px 24px rgba(212,155,32,0.3)',
+  },
+  coral: {
+    text: '#C0392B',
+    badge: 'linear-gradient(135deg, #D63031, #FF6B6B)',
+    badgeShadow: '0 6px 24px rgba(214,48,49,0.3)',
+  },
+};
+
+function setPersonality(key) {
+  const p = presets[key];
+  const c = colors[p.color];
+
+  document.getElementById('cardTitle').textContent = p.name;
+  document.getElementById('verdictText').textContent = p.verdict;
+  document.getElementById('headlineText').textContent = p.headline[0];
+
+  const hl = document.getElementById('headlineHighlight');
+  hl.textContent = p.headline[1];
+  hl.style.color = c.text;
+
+  document.getElementById('headlineEmoji').textContent = p.headline[2];
+
+  const num = document.getElementById('scoreNumber');
+  num.textContent = p.score;
+  num.style.color = c.text;
+
+  // Ring stays golden for all users
+  const badge = document.getElementById('verdictBadge');
+  badge.style.background = c.badge;
+  badge.style.boxShadow = c.badgeShadow;
+
+  document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
