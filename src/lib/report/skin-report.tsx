@@ -120,12 +120,11 @@ export function buildReportCardResponse(
             display: "flex",
             position: "absolute",
             top: -60,
-            left: "50%",
+            left: 120,
             width: 300,
             height: 300,
             borderRadius: 150,
             background: `radial-gradient(circle, ${B.teal}33 0%, transparent 70%)`,
-            transform: "translateX(-50%)",
           }}
         />
 
@@ -159,7 +158,7 @@ export function buildReportCardResponse(
             marginBottom: 28,
           }}
         >
-          {/* Outer glow ring */}
+          {/* Score ring with colored border + glow */}
           <div
             style={{
               display: "flex",
@@ -168,21 +167,17 @@ export function buildReportCardResponse(
               width: 130,
               height: 130,
               borderRadius: 65,
-              background: `conic-gradient(${scoreColor(results.overall_score)} ${results.overall_score * 10}%, ${B.cardBg} 0%)`,
-              boxShadow: `0 0 40px ${scoreColor(results.overall_score)}44`,
+              border: `4px solid ${scoreColor(results.overall_score)}`,
+              boxShadow: `0 0 40px ${scoreColor(results.overall_score)}44, inset 0 0 20px ${scoreColor(results.overall_score)}22`,
+              backgroundColor: B.bg,
             }}
           >
-            {/* Inner circle */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 108,
-                height: 108,
-                borderRadius: 54,
-                backgroundColor: B.bg,
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline" }}>
