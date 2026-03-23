@@ -233,7 +233,7 @@ export async function processTelegramUpdate(
           await tg.sendPhoto(
             chatId,
             reportBuffer,
-            "Tumhara Skin Report Card 📊 Share karo agar chahti ho!",
+            "Get your skin report card on meetSakhi.com ✨",
           );
           console.log("[Noor] Report card sent successfully to chat:", chatId);
         } catch (reportErr: any) {
