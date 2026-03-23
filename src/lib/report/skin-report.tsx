@@ -14,58 +14,90 @@ export interface ScanResults {
 }
 
 // ---- Sakhiyaan brand palette ----
-const BRAND = {
-  bg: "#FFF8F5",
-  cardBg: "#FFFFFF",
-  dark: "#2D1810",
-  body: "#584140",
-  muted: "#8A7B79",
-  teal: "#006A65",
-  tealLight: "#4ECDC4",
-  red: "#AE2F34",
-  redBg: "#FFF0F0",
-  greenBg: "#F0FAF0",
-  green: "#1B7A3D",
-  border: "#E8E1DE",
-  barBg: "#F3EDEA",
+const B = {
+  bg: "#0F1923",
+  cardBg: "rgba(255,255,255,0.06)",
+  cardBorder: "rgba(255,255,255,0.08)",
+  white: "#FFFFFF",
+  light: "#E8F0F0",
+  muted: "#8BA4A3",
+  teal: "#4ECDC4",
+  tealDark: "#006A65",
+  amber: "#F0B860",
+  red: "#E85D5D",
+  redSoft: "rgba(232,93,93,0.12)",
+  greenSoft: "rgba(78,205,196,0.12)",
 };
 
-/** Score → teal/amber/red color */
-function scoreColor(score: number): string {
-  if (score >= 8) return BRAND.teal;
-  if (score >= 5) return "#B8860B";
-  return BRAND.red;
+/** Score → color */
+function scoreColor(s: number): string {
+  if (s >= 8) return B.teal;
+  if (s >= 5) return B.amber;
+  return B.red;
 }
 
-/** Score → background tint */
-function scoreBgColor(score: number): string {
-  if (score >= 8) return "#E8F7F6";
-  if (score >= 5) return "#FFF8E8";
-  return "#FFF0F0";
-}
-
-/** Readable zone label */
-function zoneLabel(key: string): string {
-  const labels: Record<string, string> = {
-    forehead: "Forehead",
-    t_zone: "T-Zone",
-    left_cheek: "L. Cheek",
-    right_cheek: "R. Cheek",
-    chin: "Chin",
-    jawline: "Jawline",
-  };
-  return labels[key] ?? key;
+/** Build emoji bar: filled + empty dots */
+function emojiBar(score: number, emoji: string): string {
+  const filled = Math.round(score / 2); // 1-10 → 0-5 dots
+  const empty = 5 - filled;
+  return emoji.repeat(filled) + "░".repeat(empty);
 }
 
 /**
- * Build a Sakhiyaan-branded skin report card PNG.
- * Standalone module — no DB or env imports.
+ * Derive higher-level metrics from zone data.
+ * These are more interesting/shareable than raw zone scores.
+ */
+function deriveMetrics(results: ScanResults) {
+  const zones = Object.values(results.zones);
+  const avg = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+
+  // Hydration: inverse of dryness across zones
+  const hydrationScores = zones.map((z) =>
+    z.condition.toLowerCase().includes("dry") ? Math.max(2, z.severity - 2) : z.severity,
+  );
+  const hydration = avg(hydrationScores);
+
+  // Glow: boosted by positives, penalized by concerns
+  const glowBase = results.overall_score;
+  const glowBoost = Math.min(results.positives.length, 2);
+  const glow = Math.min(10, Math.max(1, glowBase + glowBoost - 1));
+
+  // Acne control: zones with acne get penalized
+  const acneScores = zones.map((z) =>
+    z.condition.toLowerCase().includes("acne") ? z.severity : Math.min(10, z.severity + 2),
+  );
+  const acneControl = avg(acneScores);
+
+  // Texture: direct from zone severity
+  const texture = avg(zones.map((z) => z.severity));
+
+  // Barrier: sensitive/redness signals
+  const barrierScores = zones.map((z) =>
+    z.condition.toLowerCase().includes("red") || z.condition.toLowerCase().includes("inflam")
+      ? Math.max(2, z.severity - 1)
+      : z.severity,
+  );
+  const barrier = avg(barrierScores);
+
+  return { hydration, glow, acneControl, texture, barrier };
+}
+
+/**
+ * Sakhiyaan skin report card — glow aesthetic + emoji bars.
  */
 export function buildReportCardResponse(
   results: ScanResults,
   createdAt: Date,
 ): ImageResponse {
-  const zones = Object.entries(results.zones);
+  const m = deriveMetrics(results);
+
+  const metrics = [
+    { label: "Hydration", emoji: "💧", score: m.hydration },
+    { label: "Glow", emoji: "✨", score: m.glow },
+    { label: "Acne Control", emoji: "🔴", score: m.acneControl },
+    { label: "Texture", emoji: "🧱", score: m.texture },
+    { label: "Barrier", emoji: "🛡", score: m.barrier },
+  ];
 
   return new ImageResponse(
     (
@@ -75,43 +107,41 @@ export function buildReportCardResponse(
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          backgroundColor: BRAND.bg,
-          padding: "36px 32px",
+          background: `radial-gradient(ellipse at 50% 0%, #0D3B3A 0%, ${B.bg} 60%)`,
+          padding: "40px 32px 32px",
           fontFamily: "Inter, system-ui, sans-serif",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        {/* Header bar */}
+        {/* Glow orb — top center */}
+        <div
+          style={{
+            display: "flex",
+            position: "absolute",
+            top: -60,
+            left: "50%",
+            width: 300,
+            height: 300,
+            borderRadius: 150,
+            background: `radial-gradient(circle, ${B.teal}33 0%, transparent 70%)`,
+            transform: "translateX(-50%)",
+          }}
+        />
+
+        {/* Header */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 24,
+            marginBottom: 28,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Noor avatar circle */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                background: `linear-gradient(135deg, ${BRAND.teal}, ${BRAND.tealLight})`,
-                color: "#FFFFFF",
-                fontSize: 16,
-                fontWeight: 700,
-              }}
-            >
-              N
-            </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: BRAND.dark }}>
-              Noor Skin Report
-            </span>
-          </div>
-          <span style={{ fontSize: 12, color: BRAND.muted }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: B.teal, letterSpacing: 1.5 }}>
+            ✨ SKIN REPORT CARD
+          </span>
+          <span style={{ fontSize: 12, color: B.muted }}>
             {createdAt.toLocaleDateString("en-IN", {
               day: "numeric",
               month: "short",
@@ -120,191 +150,163 @@ export function buildReportCardResponse(
           </span>
         </div>
 
-        {/* Score card */}
+        {/* Score circle with glow */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            backgroundColor: BRAND.cardBg,
-            borderRadius: 24,
-            padding: "28px 24px",
-            marginBottom: 20,
-            boxShadow: "0 4px 24px rgba(29,27,26,0.06)",
+            marginBottom: 28,
           }}
         >
-          <span style={{ fontSize: 13, color: BRAND.muted, fontWeight: 500, marginBottom: 8 }}>
-            OVERALL SKIN HEALTH
-          </span>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span
+          {/* Outer glow ring */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 130,
+              height: 130,
+              borderRadius: 65,
+              background: `conic-gradient(${scoreColor(results.overall_score)} ${results.overall_score * 10}%, ${B.cardBg} 0%)`,
+              boxShadow: `0 0 40px ${scoreColor(results.overall_score)}44`,
+            }}
+          >
+            {/* Inner circle */}
+            <div
               style={{
-                fontSize: 64,
-                fontWeight: 800,
-                color: scoreColor(results.overall_score),
-                lineHeight: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 108,
+                height: 108,
+                borderRadius: 54,
+                backgroundColor: B.bg,
               }}
             >
-              {results.overall_score}
-            </span>
-            <span style={{ fontSize: 24, fontWeight: 600, color: BRAND.muted }}>
-              /10
-            </span>
+              <div style={{ display: "flex", alignItems: "baseline" }}>
+                <span style={{ fontSize: 48, fontWeight: 800, color: B.white, lineHeight: 1 }}>
+                  {results.overall_score}
+                </span>
+                <span style={{ fontSize: 18, fontWeight: 500, color: B.muted }}>
+                  /10
+                </span>
+              </div>
+            </div>
           </div>
+          <span style={{ fontSize: 12, color: B.muted, marginTop: 10, fontWeight: 500 }}>
+            YOUR SKIN SCORE
+          </span>
         </div>
 
-        {/* Zone bars card */}
+        {/* Metrics card with emoji bars */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            backgroundColor: BRAND.cardBg,
-            borderRadius: 24,
-            padding: "20px 24px",
+            backgroundColor: B.cardBg,
+            border: `1px solid ${B.cardBorder}`,
+            borderRadius: 20,
+            padding: "20px 22px",
             marginBottom: 16,
-            boxShadow: "0 4px 24px rgba(29,27,26,0.06)",
-            gap: 12,
+            gap: 14,
           }}
         >
-          <span style={{ fontSize: 13, color: BRAND.muted, fontWeight: 600, marginBottom: 4 }}>
-            ZONE BREAKDOWN
-          </span>
-          {zones.map(([key, zone]) => (
+          {metrics.map((met) => (
             <div
-              key={key}
+              key={met.label}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
+                justifyContent: "space-between",
               }}
             >
-              <span
-                style={{
-                  fontSize: 13,
-                  color: BRAND.body,
-                  width: 70,
-                  fontWeight: 500,
-                }}
-              >
-                {zoneLabel(key)}
+              <span style={{ fontSize: 13, color: B.light, fontWeight: 500, width: 95 }}>
+                {met.label}
               </span>
-              {/* Bar track */}
-              <div
-                style={{
-                  display: "flex",
-                  flex: 1,
-                  height: 14,
-                  backgroundColor: BRAND.barBg,
-                  borderRadius: 7,
-                  overflow: "hidden",
-                }}
-              >
-                {/* Bar fill */}
-                <div
-                  style={{
-                    display: "flex",
-                    width: `${zone.severity * 10}%`,
-                    height: "100%",
-                    borderRadius: 7,
-                    background: `linear-gradient(90deg, ${scoreColor(zone.severity)}, ${scoreColor(zone.severity)}dd)`,
-                  }}
-                />
-              </div>
+              <span style={{ fontSize: 14, letterSpacing: 2 }}>
+                {emojiBar(met.score, met.emoji)}
+              </span>
               <span
                 style={{
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 700,
-                  color: scoreColor(zone.severity),
+                  color: scoreColor(met.score),
                   width: 24,
                   textAlign: "right",
                 }}
               >
-                {zone.severity}
+                {met.score}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Concerns + Positives row */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          {/* Concerns */}
+        {/* Concerns + Wins side by side */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
           {results.key_concerns.length > 0 && (
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 flex: 1,
-                backgroundColor: BRAND.redBg,
-                borderRadius: 20,
-                padding: "16px 18px",
-                gap: 8,
+                backgroundColor: B.redSoft,
+                borderRadius: 16,
+                padding: "14px 16px",
+                gap: 6,
               }}
             >
-              <span style={{ fontSize: 12, fontWeight: 700, color: BRAND.red }}>
-                NEEDS ATTENTION
+              <span style={{ fontSize: 11, fontWeight: 700, color: B.red }}>
+                🎯 PRIORITY
               </span>
-              {results.key_concerns.map((c) => (
-                <span key={c} style={{ fontSize: 12, color: BRAND.red, lineHeight: 1.4 }}>
-                  • {c}
+              {results.key_concerns.slice(0, 2).map((c) => (
+                <span key={c} style={{ fontSize: 11, color: B.red, lineHeight: 1.4 }}>
+                  {c}
                 </span>
               ))}
             </div>
           )}
-
-          {/* Positives */}
           {results.positives.length > 0 && (
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 flex: 1,
-                backgroundColor: BRAND.greenBg,
-                borderRadius: 20,
-                padding: "16px 18px",
-                gap: 8,
+                backgroundColor: B.greenSoft,
+                borderRadius: 16,
+                padding: "14px 16px",
+                gap: 6,
               }}
             >
-              <span style={{ fontSize: 12, fontWeight: 700, color: BRAND.green }}>
-                LOOKING GOOD
+              <span style={{ fontSize: 11, fontWeight: 700, color: B.teal }}>
+                💪 WINS
               </span>
-              {results.positives.map((p) => (
-                <span key={p} style={{ fontSize: 12, color: BRAND.green, lineHeight: 1.4 }}>
-                  • {p}
+              {results.positives.slice(0, 2).map((p) => (
+                <span key={p} style={{ fontSize: 11, color: B.teal, lineHeight: 1.4 }}>
+                  {p}
                 </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* CTA Footer */}
         <div
           style={{
             display: "flex",
-            justifyContent: "center",
+            flexDirection: "column",
             alignItems: "center",
             marginTop: "auto",
             paddingTop: 16,
             gap: 6,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              background: `linear-gradient(135deg, ${BRAND.teal}, ${BRAND.tealLight})`,
-              color: "#FFFFFF",
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            N
-          </div>
-          <span style={{ fontSize: 12, color: BRAND.muted }}>
-            Powered by Sakhiyaan · t.me/SakhiyaanBot
+          <span style={{ fontSize: 14, fontWeight: 600, color: B.teal }}>
+            Get your free skin report →
+          </span>
+          <span style={{ fontSize: 12, color: B.muted }}>
+            t.me/Ruhi_Sahki_Bot
           </span>
         </div>
       </div>
