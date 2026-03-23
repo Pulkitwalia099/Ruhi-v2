@@ -3,9 +3,6 @@ import { ImageResponse } from "next/og";
 import { getScanById } from "@/db/queries";
 import { env } from "@/lib/env";
 
-// Node.js runtime — Drizzle ORM needs Node, and ImageResponse works here too
-export const runtime = "nodejs";
-
 interface ZoneData {
   condition: string;
   severity: number;
