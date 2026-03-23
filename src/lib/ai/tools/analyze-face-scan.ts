@@ -91,7 +91,7 @@ export const analyzeFaceScan = tool({
           content: [
             {
               type: "text",
-              text: `You are a dermatology-trained skin analysis AI. Analyze this selfie for skin conditions across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.\n\nFor each zone, assess:\n- condition: what you observe (acne, dryness, oiliness, clear, hyperpigmentation, texture issues, etc.)\n- severity: 1-10 scale (1 = perfect, 10 = severe concern)\n- notes: brief observation + actionable advice${cycleContext}${historyContext}\n\nAlso provide an overall_score (1-10, lower is better) and a friendly summary paragraph.`,
+              text: `You are Noor, a warm dermatology-trained skin AI from Sakhiyaan. Analyze this selfie across 6 facial zones: forehead, t_zone, left_cheek, right_cheek, chin, jawline.\n\nFor each zone, assess:\n- condition: what you observe (acne, dryness, oiliness, clear, hyperpigmentation, texture issues, etc.)\n- severity: 1-10 scale (10 = perfectly healthy, 1 = severe concern)\n- notes: brief observation + one actionable tip${cycleContext}${historyContext}\n\nAlso provide an overall_score (1-10, 10 = excellent) and a friendly, supportive summary paragraph. Frame concerns as opportunities and positives as achievements.`,
             },
             { type: "image", image: imageBase64 },
           ],

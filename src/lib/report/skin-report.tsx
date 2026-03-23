@@ -13,90 +13,131 @@ export interface ScanResults {
   positives: string[];
 }
 
-// ---- Sakhiyaan brand palette ----
+// ---- Sakhiyaan warm brand palette (matches landing page) ----
 const B = {
-  bg: "#0F1923",
-  cardBg: "rgba(255,255,255,0.06)",
-  cardBorder: "rgba(255,255,255,0.08)",
-  white: "#FFFFFF",
-  light: "#E8F0F0",
-  muted: "#8BA4A3",
-  teal: "#4ECDC4",
-  tealDark: "#006A65",
-  amber: "#F0B860",
-  red: "#E85D5D",
-  redSoft: "rgba(232,93,93,0.12)",
-  greenSoft: "rgba(78,205,196,0.12)",
+  bg: "#FFF8F5",
+  cardBg: "#FFFFFF",
+  cardBorder: "#F3EAE5",
+  brown: "#2D1810",
+  brownMid: "#584140",
+  brownLight: "#8c706f",
+  blush: "#F9F2EF",
+  teal: "#006A65",
+  tealLight: "#4ECDC4",
+  coral: "#AE2F34",
+  coralLight: "#FF6B6B",
+  amber: "#E8A830",
+  redSoft: "#FFF0F0",
+  redText: "#C0392B",
+  greenSoft: "#F0FAF9",
+  greenText: "#006A65",
 };
 
-/** Score → color */
+/** Score → color (warm palette) */
 function scoreColor(s: number): string {
   if (s >= 8) return B.teal;
   if (s >= 5) return B.amber;
-  return B.red;
+  return B.coral;
 }
 
-/** Build emoji bar: filled + empty dots */
+/** Score → gradient for the score circle ring */
+function scoreGradient(s: number): string {
+  if (s >= 8) return "linear-gradient(135deg, #006A65, #4ECDC4)";
+  if (s >= 5) return "linear-gradient(135deg, #E8A830, #F0D060)";
+  return "linear-gradient(135deg, #AE2F34, #FF6B6B)";
+}
+
+/** Score → verdict (fun, shareable badge text) */
+function getVerdict(s: number): { text: string; emoji: string } {
+  if (s >= 9) {
+    const opts = [
+      { text: "Glow Queen", emoji: "👑" },
+      { text: "Skin Goals", emoji: "💅" },
+      { text: "Flawless Era", emoji: "🔥" },
+    ];
+    return opts[s % opts.length];
+  }
+  if (s >= 7) {
+    const opts = [
+      { text: "Almost There", emoji: "✨" },
+      { text: "Glowing Up", emoji: "🌟" },
+      { text: "Looking Good", emoji: "💫" },
+    ];
+    return opts[s % opts.length];
+  }
+  if (s >= 5) {
+    const opts = [
+      { text: "Work in Progress", emoji: "🌱" },
+      { text: "Building Your Glow", emoji: "🧴" },
+      { text: "Glow Up Loading", emoji: "⏳" },
+    ];
+    return opts[s % opts.length];
+  }
+  const opts = [
+    { text: "Fresh Start", emoji: "🚀" },
+    { text: "Your Glow Journey Begins", emoji: "🌿" },
+    { text: "Time to Glow Up", emoji: "💪" },
+  ];
+  return opts[s % opts.length];
+}
+
+/** Score → personalized headline + emoji */
+function getHeadline(s: number): { text: string; highlight: string; emoji: string } {
+  if (s >= 9) return { text: "You're literally", highlight: "glowing!", emoji: "🔥" };
+  if (s >= 7) return { text: "Bestie, your skin is", highlight: "thriving!", emoji: "💅" };
+  if (s >= 5) return { text: "Your glow up is", highlight: "in progress!", emoji: "🌱" };
+  return { text: "Your glow journey", highlight: "starts now!", emoji: "🚀" };
+}
+
+/** Build emoji bar: emoji count = score (1-10), spaced with gaps */
 function emojiBar(score: number, emoji: string): string {
-  const filled = Math.round(score / 2); // 1-10 → 0-5 dots
-  const empty = 5 - filled;
-  return emoji.repeat(filled) + "░".repeat(empty);
+  const count = Math.max(1, Math.min(10, score));
+  return Array(count).fill(emoji).join("  ");
 }
 
 /**
  * Derive higher-level metrics from zone data.
- * These are more interesting/shareable than raw zone scores.
  */
 function deriveMetrics(results: ScanResults) {
   const zones = Object.values(results.zones);
   const avg = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
-  // Hydration: inverse of dryness across zones
   const hydrationScores = zones.map((z) =>
     z.condition.toLowerCase().includes("dry") ? Math.max(2, z.severity - 2) : z.severity,
   );
   const hydration = avg(hydrationScores);
 
-  // Glow: boosted by positives, penalized by concerns
   const glowBase = results.overall_score;
   const glowBoost = Math.min(results.positives.length, 2);
   const glow = Math.min(10, Math.max(1, glowBase + glowBoost - 1));
 
-  // Acne control: zones with acne get penalized
   const acneScores = zones.map((z) =>
     z.condition.toLowerCase().includes("acne") ? z.severity : Math.min(10, z.severity + 2),
   );
   const acneControl = avg(acneScores);
 
-  // Texture: direct from zone severity
   const texture = avg(zones.map((z) => z.severity));
 
-  // Barrier: sensitive/redness signals
-  const barrierScores = zones.map((z) =>
-    z.condition.toLowerCase().includes("red") || z.condition.toLowerCase().includes("inflam")
-      ? Math.max(2, z.severity - 1)
-      : z.severity,
-  );
-  const barrier = avg(barrierScores);
-
-  return { hydration, glow, acneControl, texture, barrier };
+  return { hydration, glow, acneControl, texture };
 }
 
 /**
- * Sakhiyaan skin report card — glow aesthetic + emoji bars.
+ * Sakhiyaan skin report card — dopamine-inducing Insta aesthetic.
+ * 1080×1350 (4:5), dynamic colors, fun verdicts, personalized headlines.
  */
 export function buildReportCardResponse(
   results: ScanResults,
   createdAt: Date,
 ): ImageResponse {
   const m = deriveMetrics(results);
+  const verdict = getVerdict(results.overall_score);
+  const headline = getHeadline(results.overall_score);
 
   const metrics = [
     { label: "Hydration", emoji: "💧", score: m.hydration },
-    { label: "Glow", emoji: "✨", score: m.glow },
-    { label: "Acne Control", emoji: "🔴", score: m.acneControl },
-    { label: "Texture", emoji: "🧱", score: m.texture },
-    { label: "Barrier", emoji: "🛡", score: m.barrier },
+    { label: "Glow Factor", emoji: "✨", score: m.glow },
+    { label: "Clarity", emoji: "🫧", score: m.acneControl },
+    { label: "Texture", emoji: "🪷", score: m.texture },
   ];
 
   return new ImageResponse(
@@ -107,28 +148,40 @@ export function buildReportCardResponse(
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          background: `radial-gradient(ellipse at 50% 0%, #0D3B3A 0%, ${B.bg} 60%)`,
-          padding: "40px 32px 32px",
+          background: `linear-gradient(180deg, ${B.bg} 0%, #FFF2EC 100%)`,
+          padding: "48px 52px 40px",
           fontFamily: "Inter, system-ui, sans-serif",
           position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Glow orb — top center */}
+        {/* Decorative blush orb — top right */}
         <div
           style={{
             display: "flex",
             position: "absolute",
-            top: -60,
-            left: 120,
-            width: 300,
-            height: 300,
-            borderRadius: 150,
-            background: `radial-gradient(circle, ${B.teal}33 0%, transparent 70%)`,
+            top: -150,
+            right: -80,
+            width: 600,
+            height: 600,
+            borderRadius: 300,
+            background: "radial-gradient(circle, rgba(174,47,52,0.08) 0%, transparent 70%)",
+          }}
+        />
+        {/* Decorative teal orb — bottom left */}
+        <div
+          style={{
+            display: "flex",
+            position: "absolute",
+            bottom: -120,
+            left: -80,
+            width: 550,
+            height: 550,
+            borderRadius: 275,
+            background: "radial-gradient(circle, rgba(0,106,101,0.06) 0%, transparent 70%)",
           }}
         />
 
-        {/* Header */}
+        {/* ─── Header ─── */}
         <div
           style={{
             display: "flex",
@@ -137,10 +190,40 @@ export function buildReportCardResponse(
             marginBottom: 28,
           }}
         >
-          <span style={{ fontSize: 15, fontWeight: 700, color: B.teal, letterSpacing: 1.5 }}>
-            ✨ SKIN REPORT CARD
-          </span>
-          <span style={{ fontSize: 12, color: B.muted }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 68,
+                height: 68,
+                borderRadius: 34,
+                background: "linear-gradient(135deg, #006A65, #4ECDC4)",
+                fontSize: 30,
+                fontWeight: 700,
+                color: "#FFFFFF",
+              }}
+            >
+              N
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span
+                style={{
+                  fontSize: 40,
+                  fontWeight: 800,
+                  color: B.brown,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Skin Report Card
+              </span>
+              <span style={{ fontSize: 22, color: B.brownLight, fontWeight: 500 }}>
+                by Noor · your skin bestie
+              </span>
+            </div>
+          </div>
+          <span style={{ fontSize: 24, color: B.brownLight, fontWeight: 500 }}>
             {createdAt.toLocaleDateString("en-IN", {
               day: "numeric",
               month: "short",
@@ -149,63 +232,115 @@ export function buildReportCardResponse(
           </span>
         </div>
 
-        {/* Score circle with glow */}
+        {/* ─── Personalized headline ─── */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 20,
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 30, fontWeight: 700, color: B.brownMid }}>
+            {headline.text}
+          </span>
+          <span
+            style={{
+              fontSize: 30,
+              fontWeight: 800,
+              color: scoreColor(results.overall_score),
+            }}
+          >
+            {headline.highlight}
+          </span>
+          <span style={{ fontSize: 30 }}>{headline.emoji}</span>
+        </div>
+
+        {/* ─── Score circle — dynamic gradient ─── */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginBottom: 28,
+            marginBottom: 8,
+            position: "relative",
           }}
         >
-          {/* Score ring with colored border + glow */}
+          {/* Sparkle decorations */}
+          <span style={{ display: "flex", position: "absolute", top: 10, left: 340, fontSize: 32 }}>✨</span>
+          <span style={{ display: "flex", position: "absolute", top: 60, right: 340, fontSize: 24 }}>✨</span>
+          <span style={{ display: "flex", position: "absolute", bottom: 60, left: 360, fontSize: 20 }}>💫</span>
+
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 130,
-              height: 130,
-              borderRadius: 65,
-              border: `4px solid ${scoreColor(results.overall_score)}`,
-              boxShadow: `0 0 40px ${scoreColor(results.overall_score)}44, inset 0 0 20px ${scoreColor(results.overall_score)}22`,
-              backgroundColor: B.bg,
+              width: 260,
+              height: 260,
+              borderRadius: 130,
+              background: scoreGradient(results.overall_score),
+              padding: 9,
             }}
           >
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                width: 242,
+                height: 242,
+                borderRadius: 121,
+                backgroundColor: B.bg,
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline" }}>
-                <span style={{ fontSize: 48, fontWeight: 800, color: B.white, lineHeight: 1 }}>
+                <span
+                  style={{
+                    fontSize: 120,
+                    fontWeight: 800,
+                    color: scoreColor(results.overall_score),
+                    lineHeight: 1,
+                    letterSpacing: "-0.05em",
+                  }}
+                >
                   {results.overall_score}
                 </span>
-                <span style={{ fontSize: 18, fontWeight: 500, color: B.muted }}>
+                <span style={{ fontSize: 38, fontWeight: 500, color: B.brownLight }}>
                   /10
                 </span>
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 12, color: B.muted, marginTop: 10, fontWeight: 500 }}>
-            YOUR SKIN SCORE
-          </span>
+
+          {/* ─── Verdict badge ─── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: -20,
+              background: scoreGradient(results.overall_score),
+              borderRadius: 50,
+              padding: "10px 28px",
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF" }}>
+              {verdict.emoji} {verdict.text}
+            </span>
+          </div>
         </div>
 
-        {/* Metrics card with emoji bars */}
+        {/* ─── Metrics — each row is its own card ─── */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            backgroundColor: B.cardBg,
-            border: `1px solid ${B.cardBorder}`,
-            borderRadius: 20,
-            padding: "20px 22px",
-            marginBottom: 16,
-            gap: 14,
+            gap: 12,
+            marginTop: 20,
+            marginBottom: 18,
           }}
         >
           {metrics.map((met) => (
@@ -214,21 +349,40 @@ export function buildReportCardResponse(
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                backgroundColor: B.cardBg,
+                border: `2px solid ${B.cardBorder}`,
+                borderRadius: 28,
+                padding: "24px 32px",
               }}
             >
-              <span style={{ fontSize: 13, color: B.light, fontWeight: 500, width: 95 }}>
+              <span
+                style={{
+                  fontSize: 36,
+                  color: scoreColor(met.score),
+                  fontWeight: 800,
+                  width: 220,
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 {met.label}
               </span>
-              <span style={{ fontSize: 14, letterSpacing: 2 }}>
+              <span
+                style={{
+                  display: "flex",
+                  flex: 1,
+                  fontSize: 44,
+                  letterSpacing: 7,
+                  justifyContent: "flex-start",
+                }}
+              >
                 {emojiBar(met.score, met.emoji)}
               </span>
               <span
                 style={{
-                  fontSize: 14,
-                  fontWeight: 700,
+                  fontSize: 42,
+                  fontWeight: 800,
                   color: scoreColor(met.score),
-                  width: 24,
+                  width: 64,
                   textAlign: "right",
                 }}
               >
@@ -238,8 +392,8 @@ export function buildReportCardResponse(
           ))}
         </div>
 
-        {/* Concerns + Wins side by side */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        {/* ─── Concerns + Wins ─── */}
+        <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
           {results.key_concerns.length > 0 && (
             <div
               style={{
@@ -247,17 +401,34 @@ export function buildReportCardResponse(
                 flexDirection: "column",
                 flex: 1,
                 backgroundColor: B.redSoft,
-                borderRadius: 16,
-                padding: "14px 16px",
-                gap: 6,
+                border: "2px solid #FADCDC",
+                borderRadius: 24,
+                padding: "22px 26px",
+                gap: 10,
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 700, color: B.red }}>
-                🎯 PRIORITY
+              <span
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: B.coral,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                🎯 Focus Areas
               </span>
               {results.key_concerns.slice(0, 2).map((c) => (
-                <span key={c} style={{ fontSize: 11, color: B.red, lineHeight: 1.4 }}>
-                  {c}
+                <span
+                  key={c}
+                  style={{
+                    fontSize: 22,
+                    color: B.redText,
+                    lineHeight: 1.4,
+                    fontWeight: 500,
+                  }}
+                >
+                  • {c}
                 </span>
               ))}
             </div>
@@ -269,46 +440,71 @@ export function buildReportCardResponse(
                 flexDirection: "column",
                 flex: 1,
                 backgroundColor: B.greenSoft,
-                borderRadius: 16,
-                padding: "14px 16px",
-                gap: 6,
+                border: "2px solid #C8E6E3",
+                borderRadius: 24,
+                padding: "22px 26px",
+                gap: 10,
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 700, color: B.teal }}>
-                💪 WINS
+              <span
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: B.teal,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                💪 Your Wins
               </span>
               {results.positives.slice(0, 2).map((p) => (
-                <span key={p} style={{ fontSize: 11, color: B.teal, lineHeight: 1.4 }}>
-                  {p}
+                <span
+                  key={p}
+                  style={{
+                    fontSize: 22,
+                    color: B.teal,
+                    lineHeight: 1.4,
+                    fontWeight: 500,
+                  }}
+                >
+                  • {p}
                 </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* CTA Footer */}
+        {/* ─── CTA Footer ─── */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             marginTop: "auto",
-            paddingTop: 16,
-            gap: 6,
+            paddingTop: 6,
+            gap: 0,
           }}
         >
-          <span style={{ fontSize: 14, fontWeight: 600, color: B.teal }}>
-            Get your free skin report →
-          </span>
-          <span style={{ fontSize: 12, color: B.muted }}>
-            t.me/Ruhi_Sahki_Bot
-          </span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "linear-gradient(135deg, #AE2F34, #FF6B6B)",
+              borderRadius: 60,
+              padding: "22px 56px",
+            }}
+          >
+            <span style={{ fontSize: 28, fontWeight: 700, color: "#FFFFFF" }}>
+              Get your free report on meetSakhi.com ✨
+            </span>
+          </div>
         </div>
       </div>
     ),
     {
-      width: 540,
-      height: 960,
+      width: 1080,
+      height: 1350,
     },
   );
 }
