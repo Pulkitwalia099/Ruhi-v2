@@ -223,17 +223,12 @@ export async function processTelegramUpdate(
       // Step 3: Send report card image if scan succeeded
       if (scanId && scanResult) {
         try {
-          const { buildReportCardResponse } = await import(
-            "@/app/api/skin-report/[scanId]/route"
-          );
-          const imageResponse = buildReportCardResponse(
-            scanResult,
-            new Date(),
-          );
-          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          const { buildReportCardResponse } = await import("@/lib/report/skin-report");
+          const imageResponse = buildReportCardResponse(scanResult, new Date());
+          const reportBuffer = Buffer.from(await imageResponse.arrayBuffer());
           await tg.sendPhoto(
             chatId,
-            imageBuffer,
+            reportBuffer,
             "Tumhara Skin Report Card 📊 Share karo agar chahti ho!",
           );
         } catch (reportErr) {
