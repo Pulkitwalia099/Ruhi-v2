@@ -11,10 +11,24 @@ export function Hero() {
         {/* Left — Copy */}
         <div className="pt-8">
           <span
-            className="mb-6 inline-block rounded-full px-4 py-1.5 text-xs font-medium"
-            style={{ backgroundColor: "rgba(0,106,101,0.08)", color: "#006A65" }}
+            className="shine-badge mb-6 inline-block overflow-hidden rounded-full px-4 py-1.5 text-xs font-medium"
+            style={{
+              backgroundColor: "rgba(0,106,101,0.08)",
+              color: "#006A65",
+              position: "relative",
+            }}
           >
             Introducing Sakhiyaan
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "badge-shine 3s ease-in-out infinite",
+              }}
+            />
           </span>
 
           <h1
