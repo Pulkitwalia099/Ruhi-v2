@@ -49,13 +49,22 @@ If you can't read the label clearly, say so and ask for a clearer photo.`,
 
 /**
  * Classify whether a photo is a selfie/face or a product/label.
- * Returns "selfie" or "product". Defaults to "selfie" on any error
- * so the existing scan pipeline is always the safe fallback.
+ * Uses BOTH the image AND the user's text context (caption + recent messages)
+ * to make the decision. Defaults to "selfie" on any error.
  */
 export async function classifyPhotoIntent(
   imageBuffer: Buffer,
+  context?: { caption?: string; recentMessages?: string },
 ): Promise<"selfie" | "product"> {
   try {
+    let contextHint = "";
+    if (context?.caption) {
+      contextHint += `\nThe user sent this caption with the photo: "${context.caption}"`;
+    }
+    if (context?.recentMessages) {
+      contextHint += `\nRecent conversation context:\n${context.recentMessages}`;
+    }
+
     const result = await generateText({
       model: getLanguageModel(VISION_MODEL),
       messages: [
@@ -65,7 +74,16 @@ export async function classifyPhotoIntent(
             { type: "image", image: imageBuffer },
             {
               type: "text",
-              text: "Classify this photo. Reply with exactly one word:\n- 'selfie' = a person's face occupies most of the frame (even if products are visible in the background)\n- 'product' = the main subject is a product bottle, label, ingredient list, or shopping screenshot (no face as main subject)\nIf unclear, reply 'selfie'.",
+              text: `Classify this photo using BOTH the image AND the conversation context. Reply with exactly one word:
+- 'selfie' = a person's face/skin is the main subject (skin check, selfie, face close-up)
+- 'product' = the main subject is a product bottle, label, ingredient list, or shopping screenshot (no face as main subject)
+
+Important rules:
+- If a face is clearly visible as the main subject, it's ALWAYS a selfie — even if products are nearby
+- If the user's caption or recent messages mention skin check, scan, or analysis, lean towards 'selfie'
+- If the user's caption mentions a product name or asks about ingredients, lean towards 'product'
+- When in doubt, reply 'selfie'
+${contextHint}`,
             },
           ],
         },

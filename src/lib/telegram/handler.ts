@@ -152,9 +152,17 @@ export async function processTelegramUpdate(
       await tg.sendMessage(chatId, thinkingMsg);
       await tg.sendChatAction(chatId);
 
-      // Classify: is this a selfie or a product photo?
-      const intent = await classifyPhotoIntent(photoBuffer);
-      console.log("[Noor] Photo intent:", intent, "for chat", chatId);
+      // Classify using image + text context (caption + recent chat)
+      const recentMsgs = await getTelegramHistory({ telegramChatId: chatId, limit: 6 });
+      const recentContext = recentMsgs
+        .slice(-6)
+        .map((m) => `${m.role}: ${m.content.substring(0, 100)}`)
+        .join("\n");
+      const intent = await classifyPhotoIntent(photoBuffer, {
+        caption: userText || undefined,
+        recentMessages: recentContext || undefined,
+      });
+      console.log("[Noor] Photo intent:", intent, "for chat", chatId, "caption:", userText?.substring(0, 30));
 
       if (intent === "product") {
         // ---- PRODUCT PATH: Analyze ingredients ----
