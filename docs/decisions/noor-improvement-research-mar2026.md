@@ -157,14 +157,14 @@ Research confirms DistilBERT fine-tuned on Hinglish code-mixed data significantl
 
 ## Priority Summary
 
-| # | Area | Priority | Effort | Impact |
-|---|------|----------|--------|--------|
-| 1 | Switch to Gemini 2.5 Flash | **HIGH** | Low (config change) | 4x cost reduction |
-| 5 | Proactive memory surfacing | **HIGH** | Low (prompt engineering) | Retention boost |
-| 2 | Add pgvector to memories | **MEDIUM** | Medium (schema + embed logic) | Better recall accuracy |
-| 4 | Integrate skincare ingredient API | **MEDIUM** | Medium (new tool) | Better product advice |
-| 6 | Cycle-skin phase mapping | **MEDIUM** | Low (static data + prompt) | More precise advice |
-| 3 | Replace regex safety net | **LOW** | High (if DistilBERT) / Low (if LLM) | Marginal improvement |
+| # | Area | Priority | Effort | Impact | Status |
+|---|------|----------|--------|--------|--------|
+| 1 | Switch to Gemini 2.5 Flash | **HIGH** | Low (config change) | 4x cost reduction | **DEFERRED** — staying on Pro for stronger reasoning during behavior tuning |
+| 5 | Proactive memory surfacing | **HIGH** | Low (prompt engineering) | Retention boost | **DONE** (2026-03-22) — added "tumne bataya tha" framing to v4 prompt |
+| 6 | Cycle-skin phase mapping | **MEDIUM** | Low (static data + prompt) | More precise advice | **DONE** (2026-03-22) — enhanced cycle-utils.ts with 5-phase mapping + staleness safeguard |
+| 2 | Add pgvector to memories | **MEDIUM** | Medium (schema + embed logic) | Better recall accuracy | **SKIPPED** — only 10 memories currently, revisit at 100+ per user |
+| 4 | Integrate skincare ingredient API | **MEDIUM** | Medium (new tool) | Better product advice | **PARKED** — Indian brand coverage unverified (Mamaearth, Minimalist, Plum etc may not be in Western DBs). Verify skincareapi.dev coverage before implementing. Add as optional enrichment tool, not blocking. |
+| 3 | Replace regex safety net | **LOW** | High (if DistilBERT) / Low (if LLM) | Marginal improvement | **DEFERRED** — regex expanded with preference patterns instead |
 
 ---
 

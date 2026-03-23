@@ -20,6 +20,12 @@ export const getCycleContext = tool({
       };
     }
 
+    // Staleness check: if last period was logged >45 days ago, data is unreliable
+    const daysSinceLogged = Math.floor(
+      (Date.now() - latestCycle.periodStart.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    const isStale = daysSinceLogged > latestCycle.cycleLength + 14;
+
     const phaseResult = calculateCyclePhase(
       latestCycle.periodStart,
       latestCycle.cycleLength,
@@ -27,13 +33,20 @@ export const getCycleContext = tool({
 
     return {
       noCycleData: false,
+      isStale,
+      staleWarning: isStale
+        ? "Last period was logged " + daysSinceLogged + " days ago — this prediction may be inaccurate. Ask the user to update: 'Period kab aaya last? Update kar do toh better advice de paungi.'"
+        : undefined,
       cycleDay: phaseResult.cycleDay,
       phase: phaseResult.phase,
       ovulationEstimate: phaseResult.ovulationEstimate,
       nextPeriodEstimate: phaseResult.nextPeriodEstimate,
-      skinImplications: phaseResult.skinImplications,
+      skinImplications: isStale
+        ? phaseResult.skinImplications + " ⚠️ Note: this prediction is based on old data. Ask user to confirm their last period date."
+        : phaseResult.skinImplications,
       cycleLength: latestCycle.cycleLength,
       periodStart: latestCycle.periodStart.toISOString().split("T")[0],
+      daysSinceLogged,
     };
   },
 });
