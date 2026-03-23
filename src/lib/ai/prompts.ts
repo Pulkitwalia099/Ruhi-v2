@@ -9,7 +9,7 @@ import type { Geo } from "@vercel/functions";
 let ruhiBasePrompt: string;
 try {
   ruhiBasePrompt = readFileSync(
-    join(process.cwd(), "content", "ruhi-prompt.md"),
+    join(process.cwd(), "content", "noor-prompt.md"),
     "utf-8",
   );
 } catch {
