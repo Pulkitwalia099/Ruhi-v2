@@ -89,10 +89,18 @@ describe("calculateCyclePhase", () => {
       expect(result.phase).toBe("luteal");
     });
 
-    it("includes breakout warning during luteal phase", () => {
+    it("includes oil warning during early luteal phase", () => {
       const today = new Date("2025-01-20");
       const result = calculateCyclePhase(periodStart, cycleLength, today);
-      expect(result.skinImplications).toContain("breakouts");
+      expect(result.skinImplications).toContain("oil");
+      expect(result.skinImplications).toContain("Early luteal");
+    });
+
+    it("includes breakout warning during late luteal phase", () => {
+      const today = new Date("2025-01-25");
+      const result = calculateCyclePhase(periodStart, cycleLength, today);
+      expect(result.skinImplications).toContain("acne flares");
+      expect(result.skinImplications).toContain("Late luteal");
       expect(result.skinImplications).toContain("non-comedogenic");
     });
   });
