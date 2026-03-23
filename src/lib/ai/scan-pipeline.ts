@@ -48,6 +48,7 @@ export type ScanOutput = z.infer<typeof scanSchema>;
 
 export interface ScanPipelineResult {
   scanResult: ScanOutput | null;
+  scanId: string | null;
   comparisonBlock: string;
   cycleContext: string;
 }
@@ -119,8 +120,9 @@ Be precise and clinical. No personality or emotion — just facts.`,
   });
 
   // 4. Save raw scan to DB
+  let scanId: string | null = null;
   if (scanResult.output) {
-    await insertScan({
+    const inserted = await insertScan({
       userId,
       imageUrl,
       scanType: "face",
@@ -128,6 +130,7 @@ Be precise and clinical. No personality or emotion — just facts.`,
       cycleDay,
       cyclePhase,
     });
+    scanId = inserted.id;
   }
 
   // 5. Compare with previous scan
@@ -151,6 +154,7 @@ Be precise and clinical. No personality or emotion — just facts.`,
 
   return {
     scanResult: (scanResult.output as ScanOutput) ?? null,
+    scanId,
     comparisonBlock,
     cycleContext,
   };

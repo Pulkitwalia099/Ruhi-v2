@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { generateText } from "ai";
 
 import { runRuhiAgent } from "@/lib/ai/agent";
+import { analyzeProductPhoto, classifyPhotoIntent } from "@/lib/ai/analyze-product";
 import { runScanPipeline } from "@/lib/ai/scan-pipeline";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
@@ -132,7 +133,7 @@ export async function processTelegramUpdate(
     let imageUrl: string | undefined;
 
     if (msg.photo && msg.photo.length > 0) {
-      // ---- PHOTO PATH: Call Gemini Vision directly ----
+      // ---- PHOTO PATH: Classify intent first, then route ----
       const largestPhoto = msg.photo[msg.photo.length - 1];
       const photoBuffer = await tg.downloadFile(largestPhoto.file_id);
 
@@ -151,17 +152,37 @@ export async function processTelegramUpdate(
       await tg.sendMessage(chatId, thinkingMsg);
       await tg.sendChatAction(chatId);
 
+      // Classify: is this a selfie or a product photo?
+      const intent = await classifyPhotoIntent(photoBuffer);
+      console.log("[Noor] Photo intent:", intent, "for chat", chatId);
+
+      if (intent === "product") {
+        // ---- PRODUCT PATH: Analyze ingredients ----
+        const productMemories = await loadAndFormatMemories(dbUser.id);
+        const analysis = await analyzeProductPhoto(
+          photoBuffer,
+          dbUser.id,
+          productMemories ?? undefined,
+        );
+
+        await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText || "Sent a product photo for analysis" });
+        await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: analysis });
+        await sendSplitMessages(tg, chatId, analysis);
+        return;
+      }
+
+      // ---- SELFIE PATH: Existing scan pipeline ----
       const imageBase64 = photoBuffer.toString("base64");
 
       // Step 1: Shared scan pipeline — Gemini Vision analysis + DB save + comparison
-      const { scanResult, comparisonBlock, cycleContext } =
+      const { scanResult, scanId, comparisonBlock, cycleContext } =
         await runScanPipeline({
           imageData: imageBase64,
           userId: dbUser.id,
           imageUrl: blob.url,
         });
 
-      // Step 2: Ruhi (Claude) interprets the raw scan in her voice
+      // Step 2: Noor (Claude) interprets the raw scan in her voice
       let responseText: string;
       if (scanResult) {
         const scanData = JSON.stringify(scanResult, null, 2);
@@ -190,6 +211,29 @@ export async function processTelegramUpdate(
       await saveTelegramMessage({ telegramChatId: chatId, role: "user", content: userText || "Sent a selfie for skin analysis" });
       await saveTelegramMessage({ telegramChatId: chatId, role: "assistant", content: responseText });
       await sendSplitMessages(tg, chatId, responseText);
+
+      // Step 3: Send report card image if scan succeeded
+      if (scanId && scanResult) {
+        try {
+          const { buildReportCardResponse } = await import(
+            "@/app/api/skin-report/[scanId]/route"
+          );
+          const imageResponse = buildReportCardResponse(
+            scanResult,
+            new Date(),
+          );
+          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          await tg.sendPhoto(
+            chatId,
+            imageBuffer,
+            "Tumhara Skin Report Card 📊 Share karo agar chahti ho!",
+          );
+        } catch (reportErr) {
+          // Non-critical — don't break the flow if report card fails
+          console.error("[Noor] Report card error:", reportErr);
+        }
+      }
+
       return;
     }
 

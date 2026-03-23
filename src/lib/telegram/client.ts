@@ -45,6 +45,25 @@ export class TelegramClient {
   }
 
   /**
+   * Send a photo (as Buffer) to a chat. Uses multipart/form-data
+   * because Telegram requires binary upload for new images.
+   */
+  async sendPhoto(chatId: number, photo: Buffer, caption?: string) {
+    const form = new FormData();
+    form.append("chat_id", String(chatId));
+    form.append("photo", new Blob([photo], { type: "image/png" }), "report.png");
+    if (caption) form.append("caption", caption);
+
+    const res = await fetch(
+      `${TELEGRAM_API}${this.token}/sendPhoto`,
+      { method: "POST", body: form },
+    );
+    if (!res.ok)
+      throw new Error(`Telegram API sendPhoto failed: ${res.status}`);
+    return res.json();
+  }
+
+  /**
    * Splits long messages at natural break points (newlines, sentences)
    * to respect Telegram's 4096 character limit per message.
    */

@@ -602,6 +602,19 @@ export async function insertScan(data: {
   }
 }
 
+export async function getScanById({ id }: { id: string }) {
+  try {
+    const [result] = await db
+      .select()
+      .from(scan)
+      .where(eq(scan.id, id))
+      .limit(1);
+    return result ?? null;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get scan by id");
+  }
+}
+
 // ---- Telegram user queries ----
 
 export async function getUserByTelegramId({
