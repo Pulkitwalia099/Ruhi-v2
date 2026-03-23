@@ -17,6 +17,9 @@ export async function runPostHocSafetyNet(
       checkCity(userId, userText),
       checkGender(userId, userText),
       checkProducts(userId, userText),
+      checkBudget(userId, userText),
+      checkAdviceStyle(userId, userText),
+      checkRemedyPreference(userId, userText),
     ]);
   } catch (error) {
     // Safety net must never affect the conversation
@@ -139,4 +142,65 @@ async function checkProducts(userId: string, text: string) {
     console.log("[SafetyNet] Saved product:", product);
     return; // Only save one product per message to avoid duplicates
   }
+}
+
+async function checkBudget(userId: string, text: string) {
+  const match = text.match(
+    /(?:mera budget|my budget|budget hai|budget tight|budget flexible|tight budget|paise nahi|sasta chahiye|budget mein chahiye|under\s+\d+|\d{3,5}\s*(?:mein|ke andar|tak|rs|rupee))/i,
+  );
+  if (!match) return;
+
+  const existing = await findMemoryByKey({
+    userId,
+    category: "preference",
+    key: "budget",
+  });
+  if (existing) return;
+
+  // Extract a meaningful value from the match context
+  const amountMatch = text.match(/(\d{3,5})\s*(?:mein|ke andar|tak|rs|rupee|under)/i);
+  const value = amountMatch
+    ? `around ${amountMatch[1]}`
+    : /sasta|tight|paise nahi/i.test(text)
+      ? "budget-conscious"
+      : "flexible";
+
+  await upsertMemory({
+    userId,
+    category: "preference",
+    key: "budget",
+    value,
+  });
+  console.log("[SafetyNet] Saved budget:", value);
+}
+
+async function checkAdviceStyle(userId: string, text: string) {
+  const match = text.match(
+    /(?:itne (?:saare )?(?:questions?|qs)|ek baar mein|too many questions|stop asking|short mein batao|collate|seedha bata|direct bata|mat poocho itna)/i,
+  );
+  if (!match) return;
+
+  // Always upsert — user might be reinforcing their preference
+  await upsertMemory({
+    userId,
+    category: "preference",
+    key: "advice_style",
+    value: "prefers concise, fewer questions",
+  });
+  console.log("[SafetyNet] Saved advice_style: prefers concise");
+}
+
+async function checkRemedyPreference(userId: string, text: string) {
+  const match = text.match(
+    /(?:gharelu (?:nuskhe? )?nahi|home remed(?:y|ies) nahi|natural nahi chahiye|gharelu mat batao|nuskhe nahi)/i,
+  );
+  if (!match) return;
+
+  await upsertMemory({
+    userId,
+    category: "preference",
+    key: "remedies",
+    value: "not interested",
+  });
+  console.log("[SafetyNet] Saved remedies: not interested");
 }
