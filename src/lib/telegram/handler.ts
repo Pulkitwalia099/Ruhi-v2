@@ -223,18 +223,25 @@ export async function processTelegramUpdate(
       // Step 3: Send report card image if scan succeeded
       if (scanId && scanResult) {
         try {
+          console.log("[Noor] Generating report card for scan:", scanId);
           const { buildReportCardResponse } = await import("@/lib/report/skin-report");
+          console.log("[Noor] buildReportCardResponse imported successfully");
           const imageResponse = buildReportCardResponse(scanResult, new Date());
+          console.log("[Noor] ImageResponse created, converting to buffer...");
           const reportBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          console.log("[Noor] Report card buffer size:", reportBuffer.length, "bytes");
           await tg.sendPhoto(
             chatId,
             reportBuffer,
             "Tumhara Skin Report Card 📊 Share karo agar chahti ho!",
           );
-        } catch (reportErr) {
-          // Non-critical — don't break the flow if report card fails
-          console.error("[Noor] Report card error:", reportErr);
+          console.log("[Noor] Report card sent successfully to chat:", chatId);
+        } catch (reportErr: any) {
+          console.error("[Noor] Report card FAILED:", reportErr?.message || reportErr);
+          console.error("[Noor] Report card stack:", reportErr?.stack);
         }
+      } else {
+        console.log("[Noor] Skipping report card — scanId:", scanId, "scanResult:", !!scanResult);
       }
 
       return;
