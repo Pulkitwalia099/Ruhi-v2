@@ -30,6 +30,46 @@ export class TelegramClient {
   }
 
   /**
+   * Sends a message with an inline keyboard (tap buttons).
+   * Each button row is an array of { text, callback_data } objects.
+   */
+  async sendMessageWithKeyboard(
+    chatId: number,
+    text: string,
+    inlineKeyboard: Array<Array<{ text: string; callback_data: string }>>,
+  ) {
+    await this.call("sendMessage", {
+      chat_id: chatId,
+      text,
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: inlineKeyboard },
+    });
+  }
+
+  /**
+   * Acknowledges a callback query (dismisses the loading spinner
+   * that Telegram shows after a user taps an inline button).
+   */
+  async answerCallbackQuery(callbackQueryId: string, text?: string) {
+    await this.call("answerCallbackQuery", {
+      callback_query_id: callbackQueryId,
+      ...(text ? { text } : {}),
+    });
+  }
+
+  /**
+   * Removes the inline keyboard from a previously sent message.
+   * Good UX: prevents users from re-tapping old buttons.
+   */
+  async removeInlineKeyboard(chatId: number, messageId: number) {
+    await this.call("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: [] },
+    });
+  }
+
+  /**
    * Downloads a file from Telegram in two steps:
    * 1. getFile to get the file_path
    * 2. Fetch the binary from the file download endpoint

@@ -51,6 +51,8 @@ export const user = pgTable("users", {
   isAnonymous: boolean("isAnonymous").notNull().default(false),
   telegramId: bigint("telegramId", { mode: "bigint" }).unique(),
   telegramUsername: text("telegramUsername"),
+  instagramId: text("instagramId").unique(),
+  instagramUsername: text("instagramUsername"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
@@ -253,6 +255,18 @@ export const telegramMessage = pgTable("telegram_messages", {
 
 export type TelegramMessage = InferSelectModel<typeof telegramMessage>;
 
+// Simple plain-text message table for Instagram conversations.
+// Mirrors telegram_messages but uses string IDs (Instagram IDs are page-scoped strings).
+export const instagramMessage = pgTable("instagram_messages", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  instagramSenderId: text("instagramSenderId").notNull(),
+  role: text("role").notNull(), // "user" or "assistant"
+  content: text("content").notNull(), // plain text, no JSON
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type InstagramMessage = InferSelectModel<typeof instagramMessage>;
+
 // ---- Memory system (Sprint 2) ----
 
 export const memory = pgTable(
@@ -337,6 +351,30 @@ export const linkCode = pgTable("link_codes", {
 });
 
 export type LinkCode = typeof linkCode.$inferSelect;
+
+// ---- Onboarding flow state (Noor Telegram) ----
+
+export const onboarding = pgTable("onboardings", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  state: text("state").notNull().default("awaiting_intent"),
+  answers: jsonb("answers").notNull().default({}),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Onboarding = InferSelectModel<typeof onboarding>;
+
+// ---- Onboarding answer types ----
+
+export interface OnboardingAnswers {
+  name?: string;
+  skinType?: string;
+  routine?: string;
+  concern?: string;
+  allergies?: string[];
+}
 
 export const waitlist = pgTable("waitlist", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -28,9 +28,12 @@ import {
   linkCode,
   memory,
   message,
+  onboarding,
+  type OnboardingAnswers,
   proactiveLog,
   scan,
   stream,
+  instagramMessage,
   telegramMessage,
   user,
   vote,
@@ -805,6 +808,111 @@ export async function clearTelegramHistory({
     .where(eq(telegramMessage.telegramChatId, telegramChatId));
 }
 
+// ---- Instagram user queries ----
+
+export async function getUserByInstagramId({
+  instagramId,
+}: {
+  instagramId: string;
+}) {
+  try {
+    const [found] = await db
+      .select()
+      .from(user)
+      .where(eq(user.instagramId, instagramId))
+      .limit(1);
+    return found ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get user by instagram id"
+    );
+  }
+}
+
+export async function upsertInstagramUser({
+  instagramId,
+  username,
+}: {
+  instagramId: string;
+  username?: string;
+}) {
+  try {
+    const existing = await getUserByInstagramId({ instagramId });
+    if (existing) {
+      if (username && existing.instagramUsername !== username) {
+        await db
+          .update(user)
+          .set({ instagramUsername: username, updatedAt: new Date() })
+          .where(eq(user.id, existing.id));
+      }
+      return existing;
+    }
+
+    const { nanoid } = await import("nanoid");
+    const [created] = await db
+      .insert(user)
+      .values({
+        id: nanoid(),
+        email: `ig_${instagramId}@instagram.local`,
+        instagramId,
+        instagramUsername: username ?? null,
+        isAnonymous: true,
+      })
+      .returning();
+    return created;
+  } catch (error) {
+    if (error instanceof ChatbotError) throw error;
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to upsert instagram user"
+    );
+  }
+}
+
+// ---- Instagram Messages (plain text, no JSON parts) ----
+
+export async function saveInstagramMessage({
+  instagramSenderId,
+  role,
+  content,
+}: {
+  instagramSenderId: string;
+  role: string;
+  content: string;
+}) {
+  const [inserted] = await db
+    .insert(instagramMessage)
+    .values({ instagramSenderId, role, content })
+    .returning();
+  return inserted;
+}
+
+export async function getInstagramHistory({
+  instagramSenderId,
+  limit = 20,
+}: {
+  instagramSenderId: string;
+  limit?: number;
+}) {
+  return db
+    .select()
+    .from(instagramMessage)
+    .where(eq(instagramMessage.instagramSenderId, instagramSenderId))
+    .orderBy(asc(instagramMessage.createdAt))
+    .limit(limit);
+}
+
+export async function clearInstagramHistory({
+  instagramSenderId,
+}: {
+  instagramSenderId: string;
+}) {
+  await db
+    .delete(instagramMessage)
+    .where(eq(instagramMessage.instagramSenderId, instagramSenderId));
+}
+
 // ---- Memory queries (Sprint 2) ----
 
 export async function upsertMemory({
@@ -1263,4 +1371,80 @@ export async function getLinkStatus({ userId }: { userId: string }) {
 
 export async function addToWaitlist(email: string, companion: string) {
   return db.insert(waitlist).values({ email, companion });
+}
+
+// ---- Onboarding queries ----
+
+export async function getOnboarding(userId: string) {
+  try {
+    const [row] = await db
+      .select()
+      .from(onboarding)
+      .where(eq(onboarding.userId, userId));
+    return row ?? null;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get onboarding");
+  }
+}
+
+export async function upsertOnboarding({
+  userId,
+  state,
+  answers,
+}: {
+  userId: string;
+  state: string;
+  answers: OnboardingAnswers;
+}) {
+  try {
+    const [result] = await db
+      .insert(onboarding)
+      .values({ userId, state, answers })
+      .onConflictDoUpdate({
+        target: onboarding.userId,
+        set: { state, answers, updatedAt: new Date() },
+      })
+      .returning();
+    return result;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to upsert onboarding");
+  }
+}
+
+export async function updateOnboardingState({
+  userId,
+  state,
+  answers,
+}: {
+  userId: string;
+  state: string;
+  answers?: OnboardingAnswers;
+}) {
+  try {
+    const set: Record<string, unknown> = { state, updatedAt: new Date() };
+    if (answers !== undefined) set.answers = answers;
+
+    const [result] = await db
+      .update(onboarding)
+      .set(set)
+      .where(eq(onboarding.userId, userId))
+      .returning();
+    return result;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update onboarding state");
+  }
+}
+
+export async function getMemoriesByUserAndCategory(
+  userId: string,
+  category: "identity" | "health" | "preference" | "moment" | "context",
+) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(and(eq(memory.userId, userId), eq(memory.category, category)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get memories by category");
+  }
 }

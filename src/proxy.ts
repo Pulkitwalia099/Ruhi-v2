@@ -19,7 +19,8 @@ export async function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/webhooks") ||
-    pathname.startsWith("/api/discord")
+    pathname.startsWith("/api/discord") ||
+    pathname.startsWith("/privacy")
   ) {
     return NextResponse.next();
   }

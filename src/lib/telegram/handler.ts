@@ -11,8 +11,11 @@ import {
   saveTelegramMessage,
   getTelegramHistory,
   clearTelegramHistory,
+  getOnboarding,
+  upsertOnboarding,
 } from "@/db/queries";
 import { TelegramClient } from "./client";
+import { handleOnboardingStep, resumeOnboarding } from "./onboarding";
 
 // ------------------------------------------------
 // src/lib/telegram/handler.ts
@@ -86,6 +89,20 @@ export interface TelegramUpdate {
     caption?: string;
     entities?: Array<{ type: string; offset: number; length: number }>;
   };
+  callback_query?: {
+    id: string;
+    from: {
+      id: number;
+      is_bot: boolean;
+      first_name: string;
+      username?: string;
+    };
+    message?: {
+      message_id: number;
+      chat: { id: number; type: string };
+    };
+    data?: string;
+  };
 }
 
 /**
@@ -109,10 +126,45 @@ export async function processTelegramUpdate(
     }
   }
 
+  const tg = new TelegramClient(botToken);
+
+  // --- Handle callback queries (inline keyboard taps) ---
+  if (update.callback_query) {
+    const cbq = update.callback_query;
+    await tg.answerCallbackQuery(cbq.id);
+
+    const chatId = cbq.message?.chat.id;
+    const fromUser = cbq.from;
+    if (chatId && fromUser && cbq.data) {
+      try {
+        const dbUser = await upsertTelegramUser({
+          telegramId: BigInt(fromUser.id),
+          username: fromUser.username,
+        });
+        const onboardingRow = await getOnboarding(dbUser.id);
+        if (onboardingRow && !["complete", "skipped"].includes(onboardingRow.state)) {
+          await handleOnboardingStep(tg, chatId, dbUser.id, onboardingRow, {
+            type: "callback",
+            data: cbq.data,
+            messageId: cbq.message?.message_id,
+          });
+        }
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error("[Telegram] Callback query error:", errMsg);
+        try {
+          await tg.sendMessage(chatId, "Sorry yaar, kuch problem ho gayi. Dobara try karo? 🙏");
+        } catch {
+          // Can't reach user — just log
+        }
+      }
+    }
+    return;
+  }
+
   const msg = update.message;
   if (!msg || !msg.from || msg.from.is_bot) return;
 
-  const tg = new TelegramClient(botToken);
   const chatId = msg.chat.id;
 
   try {
@@ -127,6 +179,31 @@ export async function processTelegramUpdate(
       telegramId: BigInt(msg.from.id),
       username: msg.from.username,
     });
+
+    // --- Check mid-onboarding state ---
+    const onboardingRow = await getOnboarding(dbUser.id);
+    if (onboardingRow && !["complete", "skipped"].includes(onboardingRow.state)) {
+      // User is mid-onboarding — delegate to onboarding controller
+      const largestPhoto = msg.photo?.length
+        ? msg.photo[msg.photo.length - 1]
+        : undefined;
+      await handleOnboardingStep(tg, chatId, dbUser.id, onboardingRow, {
+        type: "message",
+        text: msg.text ?? msg.caption ?? "",
+        photo: largestPhoto ? { fileId: largestPhoto.file_id } : undefined,
+      });
+      return;
+    }
+
+    // --- Skipped user requests skin analysis → resume onboarding ---
+    if (onboardingRow?.state === "skipped") {
+      const userText = (msg.text ?? msg.caption ?? "").toLowerCase();
+      const wantsAnalysis = /\b(skin analysis|scan|analyze|selfie|analyse)\b/i.test(userText) || (msg.photo && msg.photo.length > 0);
+      if (wantsAnalysis) {
+        await resumeOnboarding(tg, chatId, dbUser.id);
+        return;
+      }
+    }
 
     // --- Build user content (text + optional photo) ---
     let userText = msg.text ?? msg.caption ?? "";
@@ -369,26 +446,40 @@ async function handleCommand(
   const command = text.split(" ")[0].toLowerCase().replace(/@\w+$/, "");
 
   switch (command) {
-    case "/start":
+    case "/start": {
       // Clear conversation history for a fresh start
       await clearTelegramHistory({ telegramChatId: chatId });
-      await tg.sendMessage(
-        chatId,
-        `Hey ${from.first_name}! Main Noor hoon — your skincare companion.\n\n` +
-          `Kya kar sakti hoon:\n` +
-          `- Skincare questions ka jawab\n` +
-          `- Selfie se skin analysis (bas photo bhejo!)\n` +
-          `- Cycle track karke better skin advice\n\n` +
-          `/scan — photo se skin analysis\n` +
-          `/cycle — cycle info log karo\n\n` +
-          `Bolo kya scene hai!`,
-      );
-      // Also upsert the user so they exist in the DB
-      await upsertTelegramUser({
+      const startUser = await upsertTelegramUser({
         telegramId: BigInt(from.id),
         username: from.username,
       });
+
+      // Check onboarding status
+      const existingOnboarding = await getOnboarding(startUser.id);
+
+      if (existingOnboarding?.state === "complete") {
+        // Already onboarded — send a shorter welcome back
+        await tg.sendMessage(
+          chatId,
+          `Hey ${from.first_name}! Welcome back 💕\n\n` +
+            `Photo bhejo for skin analysis, ya kuch bhi poocho!\n` +
+            `/scan — skin analysis\n` +
+            `/cycle — cycle info`,
+        );
+      } else {
+        // Start (or restart) onboarding
+        await upsertOnboarding({
+          userId: startUser.id,
+          state: "awaiting_intent",
+          answers: {},
+        });
+        await handleOnboardingStep(tg, chatId, startUser.id, {
+          state: "awaiting_intent",
+          answers: {},
+        }, { type: "start" });
+      }
       return true;
+    }
 
     case "/scan":
       await tg.sendMessage(

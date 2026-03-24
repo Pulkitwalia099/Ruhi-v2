@@ -36,6 +36,20 @@
       "when": 1774170751168,
       "tag": "0004_square_romulus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774305904072,
+      "tag": "0005_giant_dakota_north",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774309042826,
+      "tag": "0006_shallow_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

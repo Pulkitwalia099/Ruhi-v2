@@ -14,7 +14,7 @@ export interface ScanResults {
 }
 
 // ---- Sakhiyaan warm brand palette (matches landing page) ----
-const B = {
+export const B = {
   bg: "#FFF8F5",
   cardBg: "#FFFFFF",
   cardBorder: "#F3EAE5",
@@ -34,14 +34,14 @@ const B = {
 };
 
 /** Score → color (warm palette) */
-function scoreColor(s: number): string {
+export function scoreColor(s: number): string {
   if (s >= 8) return B.teal;
   if (s >= 5) return B.amber;
   return B.coral;
 }
 
 /** Score → gradient for the score circle ring */
-function scoreGradient(s: number): string {
+export function scoreGradient(s: number): string {
   if (s >= 8) return "linear-gradient(135deg, #006A65, #4ECDC4)";
   if (s >= 5) return "linear-gradient(135deg, #E8A830, #F0D060)";
   return "linear-gradient(135deg, #AE2F34, #FF6B6B)";
@@ -90,7 +90,7 @@ function getHeadline(s: number): { text: string; highlight: string; emoji: strin
 }
 
 /** Build emoji bar: emoji count = score (1-10), spaced with gaps */
-function emojiBar(score: number, emoji: string): string {
+export function emojiBar(score: number, emoji: string): string {
   const count = Math.max(1, Math.min(10, score));
   return Array(count).fill(emoji).join("  ");
 }
@@ -98,7 +98,7 @@ function emojiBar(score: number, emoji: string): string {
 /**
  * Derive higher-level metrics from zone data.
  */
-function deriveMetrics(results: ScanResults) {
+export function deriveMetrics(results: ScanResults) {
   const zones = Object.values(results.zones);
   const avg = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
