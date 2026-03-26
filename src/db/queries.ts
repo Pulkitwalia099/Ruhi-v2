@@ -903,6 +903,30 @@ export async function getInstagramHistory({
     .limit(limit);
 }
 
+/**
+ * Check if a user message with the same content from the same sender
+ * was saved in the last 60 seconds (DB-based deduplication).
+ */
+export async function checkInstagramMessageExists(
+  instagramSenderId: string,
+  content: string,
+): Promise<boolean> {
+  const sixtySecondsAgo = new Date(Date.now() - 60_000);
+  const rows = await db
+    .select({ id: instagramMessage.id })
+    .from(instagramMessage)
+    .where(
+      and(
+        eq(instagramMessage.instagramSenderId, instagramSenderId),
+        eq(instagramMessage.role, "user"),
+        eq(instagramMessage.content, content),
+        gt(instagramMessage.createdAt, sixtySecondsAgo),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
 export async function clearInstagramHistory({
   instagramSenderId,
 }: {

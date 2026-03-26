@@ -13,15 +13,23 @@ import {
   upsertInstagramUser,
   saveInstagramMessage,
   getInstagramHistory,
+  getOnboarding,
+  checkInstagramMessageExists,
 } from "@/db/queries";
 import { InstagramClient } from "./client";
+import {
+  handleInstagramOnboarding,
+  handleOnboardingReply,
+  handleOnboardingPhotoSkip,
+} from "./onboarding";
+import { sendSplitMessages } from "./utils";
 
 // ------------------------------------------------
 // src/lib/instagram/handler.ts
 //
 // Processes incoming Instagram DM webhooks: text and
-// photo messages. Mirrors the Telegram handler pattern
-// but without slash commands or onboarding (for MVP).
+// photo messages. Includes scan-first onboarding flow
+// for first-time users (progressive personalization).
 // ------------------------------------------------
 
 /** Pool of "thinking" messages sent before scan processing */
@@ -33,33 +41,6 @@ const SCAN_THINKING_MESSAGES = [
   "Okay let me see...",
 ];
 
-/**
- * Split an LLM response on `|||` delimiters and send each chunk
- * with a typing indicator and a natural delay in between.
- */
-async function sendSplitMessages(
-  ig: InstagramClient,
-  recipientId: string,
-  text: string,
-) {
-  const chunks = text
-    .split("|||")
-    .map((c) => c.trim())
-    .filter(Boolean);
-
-  for (let i = 0; i < chunks.length; i++) {
-    await ig.sendTypingIndicator(recipientId);
-    if (i > 0) {
-      const delay = Math.min(Math.max(chunks[i].length * 50, 800), 3000);
-      await new Promise((r) => setTimeout(r, delay));
-    }
-    await ig.sendMessage(recipientId, chunks[i]);
-  }
-}
-
-/** Set of message IDs already processed (in-memory, per instance). */
-const processedMessages = new Set<string>();
-const MAX_PROCESSED = 10_000;
 
 /**
  * Instagram webhook messaging entry shape.
@@ -95,15 +76,12 @@ export async function processInstagramMessage(
   // Skip echo messages (our own bot replies)
   if (msg.is_echo) return;
 
-  // Idempotency: skip duplicate messages
-  if (processedMessages.has(msg.mid)) return;
-  processedMessages.add(msg.mid);
-  if (processedMessages.size > MAX_PROCESSED) {
-    const entries = [...processedMessages];
-    for (let i = 0; i < entries.length / 2; i++) {
-      processedMessages.delete(entries[i]);
-    }
-  }
+  // Idempotency: skip duplicate messages (DB-based)
+  const alreadyProcessed = await checkInstagramMessageExists(
+    entry.sender.id,
+    msg.text ?? "",
+  );
+  if (alreadyProcessed) return;
 
   const senderId = entry.sender.id;
   const ig = new InstagramClient(pageAccessToken, pageId);
@@ -222,6 +200,14 @@ async function handlePhotoMessage(
   }
 
   // ---- SELFIE PATH ----
+
+  // Check onboarding status
+  const onboardingRow = await getOnboarding(dbUser.id);
+  const isFirstScan =
+    !onboardingRow || !["complete", "skipped"].includes(onboardingRow.state);
+  const isMidOnboarding =
+    onboardingRow?.state?.startsWith("ig_") ?? false;
+
   const imageBase64 = photoBuffer.toString("base64");
 
   const { scanResult, scanId, comparisonBlock, cycleContext } =
@@ -231,6 +217,39 @@ async function handlePhotoMessage(
       imageUrl: blob.url,
     });
 
+  // First-time selfie → enter onboarding flow
+  if (isFirstScan && !isMidOnboarding && scanResult && scanId) {
+    await saveInstagramMessage({
+      instagramSenderId: senderId,
+      role: "user",
+      content: userText || "Sent a selfie for skin analysis",
+    });
+    await handleInstagramOnboarding(
+      ig,
+      senderId,
+      dbUser.id,
+      (dbUser as any).instagramUsername ?? undefined,
+      scanResult,
+      scanId,
+      blob.url,
+      cycleContext,
+      comparisonBlock,
+    );
+    return;
+  }
+
+  // Mid-onboarding photo → skip remaining questions, generate card with defaults
+  if (isMidOnboarding && scanResult) {
+    await saveInstagramMessage({
+      instagramSenderId: senderId,
+      role: "user",
+      content: userText || "Sent another selfie during onboarding",
+    });
+    await handleOnboardingPhotoSkip(ig, senderId, dbUser.id);
+    return;
+  }
+
+  // ---- REGULAR SCAN (onboarding already complete) ----
   let responseText: string;
   if (scanResult) {
     const scanData = JSON.stringify(scanResult, null, 2);
@@ -310,6 +329,13 @@ async function handleTextMessage(
   dbUser: { id: string },
   userText: string,
 ) {
+  // Check if mid-onboarding → delegate to onboarding reply handler
+  const onboardingRow = await getOnboarding(dbUser.id);
+  if (onboardingRow && onboardingRow.state.startsWith("ig_")) {
+    await handleOnboardingReply(ig, senderId, dbUser.id, userText);
+    return;
+  }
+
   // Save user message
   await saveInstagramMessage({
     instagramSenderId: senderId,

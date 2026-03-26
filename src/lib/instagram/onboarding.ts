@@ -12,6 +12,7 @@ import {
 } from "@/db/queries";
 import type { OnboardingAnswers } from "@/db/schema";
 import type { InstagramClient } from "./client";
+import { sendSplitMessages } from "./utils";
 
 // ------------------------------------------------
 // src/lib/instagram/onboarding.ts
@@ -508,24 +509,3 @@ async function flushAnswersToMemory(
   }
 }
 
-// ---- Helper: split messages ----
-
-async function sendSplitMessages(
-  ig: InstagramClient,
-  senderId: string,
-  text: string,
-): Promise<void> {
-  const chunks = text
-    .split("|||")
-    .map((c) => c.trim())
-    .filter(Boolean);
-
-  for (let i = 0; i < chunks.length; i++) {
-    await ig.sendTypingIndicator(senderId);
-    if (i > 0) {
-      const delay = Math.min(Math.max(chunks[i].length * 50, 800), 3000);
-      await new Promise((r) => setTimeout(r, delay));
-    }
-    await ig.sendMessage(senderId, chunks[i]);
-  }
-}
