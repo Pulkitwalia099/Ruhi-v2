@@ -7,12 +7,12 @@ import {
   getOnboarding,
   upsertOnboarding,
   updateOnboardingState,
-  upsertMemory,
-  insertMemory,
   getMemoriesByUserAndCategory,
 } from "@/db/queries";
 import type { OnboardingAnswers } from "@/db/schema";
 import type { TelegramClient } from "./client";
+import { SKIN_TYPE_LABELS, ROUTINE_LABELS, CONCERN_LABELS, ALLERGY_LABELS } from "@/lib/onboarding/labels";
+import { flushAnswersToMemory } from "@/lib/onboarding/memory-flush";
 
 // ------------------------------------------------
 // src/lib/telegram/onboarding.ts
@@ -79,30 +79,6 @@ const ALLERGY_KEYBOARD = [
   [{ text: "✅ Done — aage chalo", callback_data: "ob_allergy:done" }],
 ];
 
-// ---- Friendly label maps (for display in card/memory) ----
-
-const SKIN_TYPE_LABELS: Record<string, string> = {
-  oily: "Oily", dry: "Dry", combination: "Combination",
-  sensitive: "Sensitive", unknown: "Not sure",
-};
-
-const ROUTINE_LABELS: Record<string, string> = {
-  basics: "Basics", serious: "Intermediate",
-  full: "Advanced", none: "Minimal",
-};
-
-const CONCERN_LABELS: Record<string, string> = {
-  acne: "Acne / breakouts", pigmentation: "Pigmentation / dark spots",
-  dull_skin: "Dull skin / no glow", dark_circles: "Dark circles",
-  overall: "Overall improvement",
-};
-
-const ALLERGY_LABELS: Record<string, string> = {
-  none: "None", fragrance: "Fragrance sensitivity",
-  ingredients: "Specific ingredients", metals: "Metal sensitivity",
-  unsure: "Not sure",
-};
-
 // ---- Main handler ----
 
 /**
@@ -121,6 +97,17 @@ export async function handleOnboardingStep(
   const state = row.state;
 
   try {
+  // C3: Escape hatch — let users bail out of onboarding at any point
+  if (input.type === "message" && input.text) {
+    const SKIP_PATTERNS = /\b(skip|chhodo|rehne do|bas baat karo|no selfie|nahi bhejungi|just chat)\b/i;
+    if (SKIP_PATTERNS.test(input.text) && state !== "awaiting_intent") {
+      await updateOnboardingState({ userId, state: "skipped", answers });
+      await tg.sendMessage(chatId,
+        "No worries! Jab mann kare tab bhej dena 💕 Batao kya baat karni hai?");
+      return;
+    }
+  }
+
   switch (state) {
     // ---- Step 1: Intent ----
     case "awaiting_intent": {
@@ -282,6 +269,24 @@ export async function handleOnboardingStep(
       if (input.type === "message") {
         await tg.sendMessage(chatId, "Photo bhejo na! 📸 Close-up selfie, natural light, no filter.");
         return;
+      }
+      return;
+    }
+
+    case "generating_profile": {
+      // C1: If stuck in generating state for >90s, it crashed. Let user retry.
+      if (input.type === "message") {
+        const updatedAt = (row as any).updatedAt;
+        if (updatedAt) {
+          const staleMs = Date.now() - new Date(updatedAt).getTime();
+          if (staleMs > 90_000) {
+            await updateOnboardingState({ userId, state: "awaiting_selfie", answers });
+            await tg.sendMessage(chatId,
+              "Sorry yaar, pichli baar kuch issue ho gaya. Ek aur selfie bhej do? 📸");
+            return;
+          }
+        }
+        // If <90s, likely still generating — ignore silently
       }
       return;
     }
@@ -507,7 +512,7 @@ async function handleSelfieStep(
     );
 
     // Save all answers to memory system
-    await flushAnswersToMemory(onboardingUserId, answers, scanResult);
+    await flushAnswersToMemory(onboardingUserId, answers, scanResult, "telegram");
 
     // Mark onboarding complete
     await updateOnboardingState({ userId: onboardingUserId, state: "complete", answers });
@@ -518,61 +523,6 @@ async function handleSelfieStep(
     console.error("[Onboarding] Selfie processing failed:", errMsg);
     await tg.sendMessage(chatId, "Sorry, kuch problem ho gayi analysis mein. Ek aur selfie try karo? 📸");
     await updateOnboardingState({ userId: onboardingUserId, state: "awaiting_selfie" });
-  }
-}
-
-// ---- Memory flush ----
-
-/** Saves all onboarding answers to the structured memory system */
-async function flushAnswersToMemory(
-  userId: string,
-  answers: OnboardingAnswers,
-  scanResult: { overall_score: number; key_concerns: string[]; positives: string[] },
-): Promise<void> {
-  try {
-    if (answers.name) {
-      await upsertMemory({ userId, category: "identity", key: "name", value: answers.name });
-    }
-    if (answers.skinType) {
-      await upsertMemory({
-        userId,
-        category: "identity",
-        key: "skin_type",
-        value: SKIN_TYPE_LABELS[answers.skinType] ?? answers.skinType,
-      });
-    }
-    if (answers.routine) {
-      await upsertMemory({
-        userId,
-        category: "preference",
-        key: "routine_level",
-        value: ROUTINE_LABELS[answers.routine] ?? answers.routine,
-      });
-    }
-    if (answers.concern) {
-      await upsertMemory({
-        userId,
-        category: "preference",
-        key: "primary_concern",
-        value: CONCERN_LABELS[answers.concern] ?? answers.concern,
-      });
-    }
-    if (answers.allergies && answers.allergies.length > 0) {
-      const allergyText = answers.allergies
-        .map((a) => ALLERGY_LABELS[a] ?? a)
-        .join(", ");
-      await upsertMemory({ userId, category: "identity", key: "allergies", value: allergyText });
-    }
-    // Save initial scan summary as health memory
-    await insertMemory({
-      userId,
-      category: "health",
-      value: `Initial skin scan: score ${scanResult.overall_score}/10. Concerns: ${scanResult.key_concerns.join(", ")}. Positives: ${scanResult.positives.join(", ")}.`,
-      metadata: { source: "onboarding", score: scanResult.overall_score },
-    });
-  } catch (err) {
-    console.error("[Onboarding] Memory flush error:", err);
-    // Non-fatal — onboarding still completes
   }
 }
 
