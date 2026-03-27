@@ -92,13 +92,13 @@ export function Companions() {
               {c.live ? (
                 <div className="flex flex-wrap gap-2">
                   <a
-                    href={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL}
+                    href="https://ig.me/m/meetsakhi"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-full px-4 py-2 text-sm font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #AE2F34, #FF6B6B)" }}
+                    style={{ background: "linear-gradient(135deg, #833AB4, #E1306C, #F77737)" }}
                   >
-                    Chat on Telegram
+                    Chat on Instagram
                   </a>
                 </div>
               ) : (

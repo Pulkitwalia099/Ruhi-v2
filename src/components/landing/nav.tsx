@@ -1,7 +1,7 @@
 // src/components/landing/nav.tsx
 "use client";
 
-import { TelegramCtaButton } from "./cta-button";
+import { InstagramCtaButton } from "./instagram-cta-button";
 
 export function LandingNav() {
   return (
@@ -29,7 +29,7 @@ export function LandingNav() {
           <a href="#interconnected" className="text-sm font-medium" style={{ color: "#584140" }}>
             About
           </a>
-          <TelegramCtaButton variant="primary" />
+          <InstagramCtaButton variant="primary" />
         </div>
 
         <button

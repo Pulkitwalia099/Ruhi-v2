@@ -1,7 +1,7 @@
 // src/components/landing/hero.tsx
 "use client";
 
-import { TelegramCtaButton } from "./cta-button";
+import { InstagramCtaButton } from "./instagram-cta-button";
 import { ChatPreview } from "./chat-preview";
 
 export function Hero() {
@@ -52,7 +52,7 @@ export function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <TelegramCtaButton variant="primary" size="large" />
+            <InstagramCtaButton variant="primary" size="large" />
           </div>
         </div>
 

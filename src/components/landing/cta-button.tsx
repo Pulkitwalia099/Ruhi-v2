@@ -36,7 +36,11 @@ export function TelegramCtaButton({ variant, size = "default", className = "" }:
                 color: "#FFFFFF",
                 boxShadow: "0 8px 24px rgba(174,47,52,0.25)",
               }
-            : undefined
+            : {
+                background: "transparent",
+                color: "#2AABEE",
+                border: "2px solid #2AABEE",
+              }
         }
       >
         {size === "large" ? "💬 Chat with Noor on Telegram" : "Chat on Telegram"}

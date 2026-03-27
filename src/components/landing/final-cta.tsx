@@ -1,5 +1,6 @@
 "use client";
 
+import { InstagramCtaButton } from "./instagram-cta-button";
 import { TelegramCtaButton } from "./cta-button";
 
 export function FinalCta() {
@@ -16,7 +17,8 @@ export function FinalCta() {
           Noor is waiting to get to know you. Start a conversation — it only takes a message. 💬
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <TelegramCtaButton variant="primary" size="large" />
+          <InstagramCtaButton variant="primary" size="large" />
+          <TelegramCtaButton variant="secondary" size="large" />
         </div>
       </div>
     </section>
