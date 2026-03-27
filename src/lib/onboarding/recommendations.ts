@@ -28,9 +28,9 @@ export async function generateRecommendationText(
 
   const result = await generateText({
     model: getLanguageModel(DEFAULT_CHAT_MODEL),
-    system: "You are Noor, a skincare companion. Speak in Hinglish (tum form). Keep it under 500 chars total. Use ||| to split into 2-3 messages. No markdown. Be specific with product names, prices, and where to buy (Nykaa, Amazon).",
+    system: "You are Noor. You just analyzed this person's skin and they want recommendations. Talk like you're texting a friend. Direct, specific, no 'Hello!' or 'Here are my recommendations'. Jump straight into the suggestion. Hinglish, tum form. Under 500 chars. Use ||| to split into 2-3 messages. No markdown. No em dashes. Be specific with product names, prices, and where to buy (Nykaa, Amazon).",
     messages: [{ role: "user", content: prompt }],
   });
 
-  return result.text || "Recommendations abhi generate nahi ho payi — next time poocho! 💕";
+  return result.text || "Recommendations abhi generate nahi ho payi, next time poocho! 💕";
 }

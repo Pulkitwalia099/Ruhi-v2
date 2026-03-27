@@ -59,25 +59,23 @@ export function generateFirstImpression(scanResult: ScanResults): string {
 
   if (score >= 8) {
     return (
-      `Okay wow — first thing I notice? Your skin is actually glowing! ✨\n\n` +
-      `I can see ${positive.toLowerCase()}. Love that for you.\n\n` +
-      `Let me do a proper deep-dive so I can give you really specific advice...`
+      `Arre wah, skin toh glow kar rahi hai ✨\n\n` +
+      `${positive} dikh raha hai clearly.\n\n` +
+      `Let me properly analyze...`
     );
   }
 
   if (score >= 5) {
     return (
-      `Interesting! Some really good things happening — ${positive.toLowerCase()} 💕\n\n` +
-      `I also notice ${concern.toLowerCase()}. But nothing we can't work on together!\n\n` +
-      `Let me analyze properly to give you the full picture...`
+      `Achha so ${positive.toLowerCase()}, that's good 💕\n\n` +
+      `${concern} bhi hai but kuch nahi, kaam chalega.\n\n` +
+      `Proper analysis karti hoon...`
     );
   }
 
   return (
-    `Thanks for trusting me with this! 💕\n\n` +
-    `I can see some areas we can work on together — ${concern.toLowerCase()}.\n` +
-    `But also noticing ${positive.toLowerCase()}, so we've got a good starting point!\n\n` +
-    `Let me take a closer look...`
+    `Dekho, ${concern.toLowerCase()} hai thoda, but ${positive.toLowerCase()} bhi hai toh starting point achha hai.\n\n` +
+    `Chalo dekhte hain properly...`
   );
 }
 
@@ -85,20 +83,20 @@ export function generateFirstImpression(scanResult: ScanResults): string {
 
 const FRIENDSHIP_OPENERS: Record<string, string> = {
   acne:
-    "Acne ke baare mein — mujhe batao kya products use kar rahi ho? " +
+    "Acne ke baare mein, mujhe batao kya products use kar rahi ho? " +
     "Photo bhejo, main check karti hoon ingredients 🧴",
   pigmentation:
-    "Pigmentation ke liye ek game-changer hai — niacinamide. " +
+    "Pigmentation ke liye ek game-changer hai niacinamide. " +
     "Use karti ho? Agar nahi toh batao, recommend karungi 💕",
   dull_skin:
-    "Glow chahiye? Ek trick — kal subah face wash ke baad ice cube " +
+    "Glow chahiye? Ek trick, kal subah face wash ke baad ice cube " +
     "rub karo 30 seconds. Thank me later ✨",
   dark_circles:
     "Dark circles mostly hydration + sleep se improve hote hain. " +
-    "But topically bhi help kar sakti hoon — want tips?",
+    "But topically bhi help kar sakti hoon, want tips?",
   overall:
-    "Your skin is a great canvas! Photo bhejo anytime — " +
-    "routine tips, product checks, ya bas chat karne ka mann ho 💕",
+    "Photo bhejo anytime, routine tips, product checks, " +
+    "ya bas chat karne ka mann ho 💕",
 };
 
 export function generateFriendshipOpener(concern: string): string {
@@ -228,7 +226,7 @@ export async function handleOnboardingReply(
         }
         if (text !== "REORIENT_continue") {
           await ig.sendQuickReplies(senderId,
-            "Hey! Pichli baar baat chal rahi thi — continue kare ya fresh start?",
+            "Hey! Pichli baar baat chal rahi thi, continue kare ya fresh start?",
             [
               { title: "Continue", payload: "REORIENT_continue" },
               { title: "Fresh start", payload: "REORIENT_restart" },
@@ -258,18 +256,18 @@ export async function handleOnboardingReply(
         if (intent === "skin_issue") {
           answers.intent = "skin_issue";
           await updateOnboardingState({ userId, state: "ig_awaiting_issue_text", answers: answers as unknown as OnboardingAnswers });
-          await ig.sendMessage(senderId, "Batao kya ho raha hai — acne, pigmentation, dryness, kuch bhi. Apne words mein batao!");
+          await ig.sendMessage(senderId, "Batao kya ho raha hai, acne, pigmentation, dryness, kuch bhi. Apne words mein batao!");
           return;
         }
 
         // skin_analysis
         answers.intent = "skin_analysis";
         await updateOnboardingState({ userId, state: "ig_awaiting_skin_type", answers: answers as unknown as OnboardingAnswers });
-        await ig.sendMessage(senderId, "Nice! Kuch quick cheezein pooch lungi taaki advice actually kaam aaye 💕");
+        await ig.sendMessage(senderId, "Chal, 2-3 cheezein poochti hoon taaki sahi advice de sakoon");
         await new Promise((r) => setTimeout(r, 800));
         const stOpts = formatOptionsText(SKIN_TYPE_OPTIONS);
         await ig.sendQuickReplies(senderId,
-          `Tumhara skin type kya lagta hai? (${stOpts})`,
+          `Tumhari skin usually kaisi rehti hai? (${stOpts})`,
           toQuickReplies(SKIN_TYPE_OPTIONS, "TYPE"));
         return;
       }
@@ -281,7 +279,7 @@ export async function handleOnboardingReply(
         await updateOnboardingState({ userId, state: "ig_awaiting_selfie", answers: answers as unknown as OnboardingAnswers });
         const label = CONCERN_LABELS[detectedConcern] ?? "skin issue";
         await sendSplitMessages(ig, senderId,
-          `Got it — ${label} pe help karungi.|||Ek selfie bhejo — properly dekh ke specific advice de sakti hoon. Natural light, no filter! 📸`);
+          `${label} pe help karungi.|||Ek selfie bhej do, properly dekh ke specific advice de sakti hoon. Natural light, no filter 📸`);
         return;
       }
 
@@ -303,8 +301,8 @@ export async function handleOnboardingReply(
             answers[retryKey] = retryCount + 1;
             await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
             const guidance = retryCount === 0
-              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
-              : `Koi baat nahi! Bas type karo: ${formatOptionsText(SKIN_TYPE_OPTIONS)}`;
+              ? "Woh samajh nahi aaya, type kardo option mein se"
+              : `Ek option choose karo: ${formatOptionsText(SKIN_TYPE_OPTIONS)}`;
             await ig.sendMessage(senderId, guidance);
             return;
           }
@@ -313,15 +311,19 @@ export async function handleOnboardingReply(
         answers.skinType = skinType;
         await updateOnboardingState({ userId, state: "ig_awaiting_concern", answers: answers as unknown as OnboardingAnswers });
 
-        const label = SKIN_TYPE_LABELS[skinType] ?? skinType;
-        const ack = skinType === "unknown"
-          ? "No worries, we'll figure it out together 😊"
-          : `Got it — ${label} skin!`;
+        const ackMap: Record<string, string> = {
+          oily: "Oh oily skin, toh lightweight cheezein suit karengi tumhe",
+          dry: "Dry skin, toh hydration pe focus rakhenge",
+          combination: "Combination, tricky hota hai but manageable",
+          sensitive: "Sensitive skin, toh gentle products important hain",
+          unknown: "Koi nahi, scan se pata chal jayega",
+        };
+        const ack = ackMap[skinType] ?? ackMap.unknown;
         await ig.sendMessage(senderId, ack);
         await new Promise((r) => setTimeout(r, 800));
         const cOpts = formatOptionsText(CONCERN_OPTIONS);
         await ig.sendQuickReplies(senderId,
-          `Skin mein sabse zyada kya bother karta hai? (${cOpts})`,
+          `Aur sabse bada concern kya hai? (${cOpts})`,
           toQuickReplies(CONCERN_OPTIONS, "CONCERN"));
         return;
       }
@@ -344,8 +346,8 @@ export async function handleOnboardingReply(
             answers[retryKey] = retryCount + 1;
             await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
             const guidance = retryCount === 0
-              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
-              : `Koi baat nahi! Bas type karo: ${formatOptionsText(CONCERN_OPTIONS)}`;
+              ? "Woh samajh nahi aaya, type kardo option mein se"
+              : `Ek option choose karo: ${formatOptionsText(CONCERN_OPTIONS)}`;
             await ig.sendMessage(senderId, guidance);
             return;
           }
@@ -354,14 +356,19 @@ export async function handleOnboardingReply(
         answers.concern = concern;
         await updateOnboardingState({ userId, state: "ig_awaiting_routine", answers: answers as unknown as OnboardingAnswers });
 
-        const ack = concern === "overall"
-          ? "Overall improvement — great starting point!"
-          : `${CONCERN_LABELS[concern]} — noted 💕`;
+        const concernAckMap: Record<string, string> = {
+          acne: "Oh damn acne. Isme definitely help kar sakti hoon",
+          pigmentation: "Pigmentation, haan yeh common hai but fixable",
+          dull_skin: "Glow nahi aa raha? Chal dekhte hain kya ho raha hai",
+          dark_circles: "Dark circles, mostly hydration + sleep but topically bhi help hoti hai",
+          overall: "Overall improvement, solid. Dekhte hain kahan se start karein",
+        };
+        const ack = concernAckMap[concern] ?? concernAckMap.overall;
         await ig.sendMessage(senderId, ack);
         await new Promise((r) => setTimeout(r, 800));
         const rOpts = formatOptionsText(ROUTINE_OPTIONS);
         await ig.sendQuickReplies(senderId,
-          `Ek last cheez — skincare routine kitna follow karti ho? (${rOpts})`,
+          `Aur skincare routine kaisi hai abhi? (${rOpts})`,
           toQuickReplies(ROUTINE_OPTIONS, "ROUTINE"));
         return;
       }
@@ -383,8 +390,8 @@ export async function handleOnboardingReply(
             answers[retryKey] = retryCount + 1;
             await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
             const guidance = retryCount === 0
-              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
-              : `Koi baat nahi! Bas type karo: ${formatOptionsText(ROUTINE_OPTIONS)}`;
+              ? "Woh samajh nahi aaya, type kardo option mein se"
+              : `Ek option choose karo: ${formatOptionsText(ROUTINE_OPTIONS)}`;
             await ig.sendMessage(senderId, guidance);
             return;
           }
@@ -393,7 +400,7 @@ export async function handleOnboardingReply(
         answers.routine = routine;
         await updateOnboardingState({ userId, state: "ig_awaiting_selfie", answers: answers as unknown as OnboardingAnswers });
         await ig.sendMessage(senderId,
-          "Perfect! Ab ek selfie bhejo — no filter, close-up, natural light mein 📸\nMain properly dekh ke bataungi kya ho raha hai!");
+          "Samajh gayi. Ab ek selfie bhej do toh proper analysis karke batati hoon 📸 Natural light mein, no filter");
         return;
       }
 
@@ -429,7 +436,7 @@ export async function handleOnboardingReply(
         if (choice === "skip") {
           await updateOnboardingState({ userId, state: "complete", answers: answers as unknown as OnboardingAnswers });
           await ig.sendMessage(senderId,
-            "No worries! Jab chahiye ho toh bolo — photo bhejo, product check karo, ya bas baat karo 💕");
+            "No worries! Jab chahiye ho toh bolo, photo bhejo, product check karo, ya bas baat karo 💕");
           return;
         }
 
@@ -439,7 +446,7 @@ export async function handleOnboardingReply(
         const scanResult = answers._scanResultJson ? JSON.parse(answers._scanResultJson) : null;
         if (!scanResult) {
           await updateOnboardingState({ userId, state: "complete", answers: answers as unknown as OnboardingAnswers });
-          await ig.sendMessage(senderId, "Scan data nahi mila — next time selfie bhejo toh recommendations de dungi! 💕");
+          await ig.sendMessage(senderId, "Scan data nahi mila, next time selfie bhejo toh recommendations de dungi! 💕");
           return;
         }
 
@@ -509,7 +516,7 @@ export async function handleOnboardingPhotoSkip(
 
   await ig.sendMessage(
     senderId,
-    "Ek second — pehli photo se tumhari profile bana rahi hoon! ✨",
+    "Ek second, pehli photo se tumhari profile bana rahi hoon! ✨",
   );
 
   await generateProfileAndCard(ig, senderId, userId, answers);
@@ -596,7 +603,7 @@ async function generateProfileAndCard(
     const memoriesBlock = await loadAndFormatMemories(userId);
 
     const scanData = JSON.stringify(scanResult, null, 2);
-    const name = answers.name ?? "Bestie";
+    const name = answers.name ?? "";
     const onboardingContext = [
       `Name: ${name}`,
       `Skin type: ${SKIN_TYPE_LABELS[answers.skinType ?? "unknown"] ?? "Unknown"}`,
@@ -669,7 +676,7 @@ async function generateProfileAndCard(
     const recsOpts = formatOptionsText(RECS_OPTIONS);
     await ig.sendQuickReplies(
       senderId,
-      `Ye tumhari Skin Profile hai ${name} 💕 Save karlo!\n\nRecommendations bhi chahiye? (${recsOpts})`,
+      `Ye tumhari Skin Profile hai${name ? " " + name : ""}, save karlo! Ab jab tumhari skin samajh gayi, kuch suggest karoon? Mere paas kuch options hain (${recsOpts})`,
       toQuickReplies(RECS_OPTIONS, "RECS"),
     );
 

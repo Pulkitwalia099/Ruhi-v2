@@ -244,7 +244,7 @@ async function handlePhotoMessage(
     ]);
   } catch (err: any) {
     if (err?.message === "SCAN_TIMEOUT") {
-      await ig.sendMessage(senderId, "Yaar processing mein thoda time lag raha hai — ek aur baar try karo? 📸");
+      await ig.sendMessage(senderId, "Yaar processing mein thoda time lag raha hai, ek aur baar try karo? 📸");
       return;
     }
     throw err;
@@ -381,7 +381,7 @@ async function startInstagramOnboarding(
   const optionsText = formatOptionsText(INTENT_OPTIONS);
   await ig.sendQuickReplies(
     senderId,
-    `Heyy! 💕 Main Noor hoon — tumhari skincare bestie.\n\nBatao, what's on your mind? (${optionsText})`,
+    `Heyy! 💕 Main Noor hoon, tumhari skincare bestie.\n\nBatao, what's on your mind? (${optionsText})`,
     toQuickReplies(INTENT_OPTIONS, "INTENT"),
   );
 }
@@ -414,7 +414,7 @@ async function handleTextMessage(
   if (OPT_OUT_PATTERNS.test(userText)) {
     await saveInstagramMessage({ instagramSenderId: senderId, role: "user", content: userText });
     await ig.sendMessage(senderId,
-      "Theek hai — main messages nahi bhejungi 💙 Kabhi baat karni ho toh wapas aa jana.");
+      "Theek hai, main messages nahi bhejungi 💙 Kabhi baat karni ho toh wapas aa jana.");
     const { upsertMemory } = await import("@/db/queries");
     await upsertMemory({ userId: dbUser.id, category: "preference", key: "opted_out", value: "true" });
     return;
@@ -428,7 +428,7 @@ async function handleTextMessage(
       role: "assistant",
       content: "[CONVERSATION RESET BY USER]",
     });
-    await ig.sendMessage(senderId, "Fresh start! 💕 Pichli baatein yaad nahi — batao kya chahiye.");
+    await ig.sendMessage(senderId, "Fresh start! 💕 Pichli baatein yaad nahi, batao kya chahiye.");
     return;
   }
 
@@ -550,7 +550,7 @@ export async function handleInstagramPostback(
   if (payload === "ICE_about") {
     await upsertOnboarding({ userId: dbUser.id, state: "ig_awaiting_intent", answers: {} as any });
     await sendSplitMessages(ig, senderId,
-      "Main Noor hoon 💕|||Tumhari personal skin companion — scan, product check, routine rating. Doctor nahi, friend hoon.");
+      "Main Noor hoon 💕|||Tumhari personal skin companion, scan, product check, routine rating. Doctor nahi, friend hoon.");
     const optionsText = formatOptionsText(INTENT_OPTIONS);
     await ig.sendQuickReplies(senderId,
       `Kahan se shuru karein? (${optionsText})`,
