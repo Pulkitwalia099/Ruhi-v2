@@ -1,82 +1,48 @@
 import { put } from "@vercel/blob";
 import { generateText } from "ai";
 
-import { runScanPipeline } from "@/lib/ai/scan-pipeline";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import {
   getOnboarding,
   upsertOnboarding,
   updateOnboardingState,
-  upsertMemory,
-  insertMemory,
 } from "@/db/queries";
 import type { OnboardingAnswers } from "@/db/schema";
 import type { InstagramClient } from "./client";
 import { sendSplitMessages } from "./utils";
+import { SKIN_TYPE_LABELS, CONCERN_LABELS } from "@/lib/onboarding/labels";
+import { parseSkinType, parseConcern, parseRoutine } from "@/lib/onboarding/parsers";
+import {
+  INTENT_OPTIONS,
+  SKIN_TYPE_OPTIONS,
+  CONCERN_OPTIONS,
+  ROUTINE_OPTIONS,
+  RECS_OPTIONS,
+  formatOptionsText,
+  toQuickReplies,
+} from "@/lib/onboarding/questions";
+import { flushAnswersToMemory } from "@/lib/onboarding/memory-flush";
 
 // ------------------------------------------------
 // src/lib/instagram/onboarding.ts
 //
-// "Scan-First Progressive Personalization" flow
-// for Instagram DMs. Unlike Telegram's 7-step form,
-// this gives value FIRST (immediate scan feedback),
-// then asks just 2 questions conversationally.
+// 3-Path Intent Onboarding for Instagram DMs.
+// Matches Telegram's intent-first structure with
+// Quick Replies + freeform text fallback.
 //
-// Flow: selfie → first impression → skin type Q →
-//       concern Q → full analysis + profile card →
-//       friendship opener
+// States:
+//   ig_awaiting_intent        — 3 Quick Reply options
+//   ig_awaiting_issue_text    — Path 2: free text issue
+//   ig_awaiting_skin_type     — Quick Replies + freeform
+//   ig_awaiting_concern       — Quick Replies + freeform
+//   ig_awaiting_routine       — Quick Replies + freeform
+//   ig_awaiting_selfie        — re-prompt if text received
+//   ig_generating_profile     — C1: dead-end recovery >90s
+//   ig_awaiting_recommendations — post-analysis offer
 // ------------------------------------------------
-
-// ---- Fuzzy text matchers ----
-
-const SKIN_TYPE_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
-  { pattern: /\b(oily|oil|greasy|tel|तैलीय|chikni|chipchip)\b/i, value: "oily" },
-  { pattern: /\b(dry|sukhi|ruk?hi|सूखी|tight|flaky)\b/i, value: "dry" },
-  { pattern: /\b(combin|combo|mixed|dono|both|t-?zone)\b/i, value: "combination" },
-  { pattern: /\b(sensitive|sens|react|irritat|lal|redness)\b/i, value: "sensitive" },
-  { pattern: /\b(not sure|pata nahi|nahi pata|idk|dunno|no idea|🤷)\b/i, value: "unknown" },
-];
-
-const CONCERN_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
-  { pattern: /\b(acne|pimple|breakout|muhase|dane|zit)\b/i, value: "acne" },
-  { pattern: /\b(pigment|dark spot|daag|dhab|hyperpig|melasma|uneven)\b/i, value: "pigmentation" },
-  { pattern: /\b(dull|glow nahi|no glow|lifeless|tired look|radiance)\b/i, value: "dull_skin" },
-  { pattern: /\b(dark circle|aankh|under eye|puffy eye|panda)\b/i, value: "dark_circles" },
-  { pattern: /\b(every|sab|overall|general|all|improve)\b/i, value: "overall" },
-];
-
-/** Parse skin type from freeform text. Returns null if no match. */
-export function parseSkinType(text: string): string | null {
-  for (const { pattern, value } of SKIN_TYPE_PATTERNS) {
-    if (pattern.test(text)) return value;
-  }
-  return null;
-}
-
-/** Parse skin concern from freeform text. Returns null if no match. */
-export function parseConcern(text: string): string | null {
-  for (const { pattern, value } of CONCERN_PATTERNS) {
-    if (pattern.test(text)) return value;
-  }
-  return null;
-}
-
-// ---- Friendly label maps ----
-
-const SKIN_TYPE_LABELS: Record<string, string> = {
-  oily: "Oily", dry: "Dry", combination: "Combination",
-  sensitive: "Sensitive", unknown: "Not sure",
-};
-
-const CONCERN_LABELS: Record<string, string> = {
-  acne: "Acne / breakouts", pigmentation: "Pigmentation / dark spots",
-  dull_skin: "Dull skin / no glow", dark_circles: "Dark circles",
-  overall: "Overall improvement",
-};
 
 // ---- First impression generator (template-based, fast) ----
 
-// Import the canonical ScanResults type from skin-report
 import type { ScanResults } from "@/lib/report/skin-report";
 
 /**
@@ -139,12 +105,32 @@ export function generateFriendshipOpener(concern: string): string {
   return FRIENDSHIP_OPENERS[concern] ?? FRIENDSHIP_OPENERS.overall;
 }
 
+// ---- Intent guessing from freeform text ----
+
+function guessIntent(text: string): string {
+  if (/\b(scan|analysis|analyze|selfie|skin check|dekh)\b/i.test(text)) return "skin_analysis";
+  if (/\b(issue|problem|acne|pimple|concern|help|fix|solve)\b/i.test(text)) return "skin_issue";
+  return "just_chat";
+}
+
+// ---- Extended answers type used throughout onboarding ----
+
+type ExtendedAnswers = OnboardingAnswers & {
+  intent?: string;
+  issueDescription?: string;
+  _scanResultJson?: string;
+  _scanId?: string;
+  _blobUrl?: string;
+  _cycleContext?: string;
+  _comparisonBlock?: string;
+  [key: string]: unknown; // for retry counters like _retry_ig_awaiting_skin_type
+};
+
 // ---- Main onboarding handlers ----
 
 /**
  * Called when a first-time user sends their first selfie.
- * Runs the scan, sends the first impression, and asks the first question.
- *
+ * Sends the first impression and asks the first question (skin type).
  * The scan has already been run by the caller — we receive the results.
  */
 export async function handleInstagramOnboarding(
@@ -159,13 +145,7 @@ export async function handleInstagramOnboarding(
   comparisonBlock: string,
 ): Promise<void> {
   // Store the scan data in onboarding answers for later use
-  const answers: OnboardingAnswers & {
-    _scanResultJson?: string;
-    _scanId?: string;
-    _blobUrl?: string;
-    _cycleContext?: string;
-    _comparisonBlock?: string;
-  } = {
+  const answers: ExtendedAnswers = {
     name: instagramUsername ?? undefined,
     _scanResultJson: JSON.stringify(scanResult),
     _scanId: scanId,
@@ -174,7 +154,7 @@ export async function handleInstagramOnboarding(
     _comparisonBlock: comparisonBlock,
   };
 
-  // Create onboarding record
+  // Create onboarding record — jump to skin type since selfie is already done
   await upsertOnboarding({
     userId,
     state: "ig_awaiting_skin_type",
@@ -188,11 +168,12 @@ export async function handleInstagramOnboarding(
   // Small pause for natural pacing
   await new Promise((r) => setTimeout(r, 1500));
 
-  // Ask skin type question
-  await ig.sendMessage(
+  // Ask skin type question with Quick Replies
+  const stOpts = formatOptionsText(SKIN_TYPE_OPTIONS);
+  await ig.sendQuickReplies(
     senderId,
-    "Btw, tumhari skin usually oily hoti hai ya dry? Ya combination/sensitive?\n\n" +
-      "Just want my advice to be spot-on 💕",
+    `Btw, tumhari skin usually kaisi hoti hai? (${stOpts})\n\nJust want my advice to be spot-on 💕`,
+    toQuickReplies(SKIN_TYPE_OPTIONS, "TYPE"),
   );
 }
 
@@ -200,6 +181,16 @@ export async function handleInstagramOnboarding(
  * Called when a user who is mid-onboarding sends a text reply.
  * Parses their answer, advances state, and either asks the next
  * question or generates the full profile card.
+ *
+ * States:
+ *   ig_awaiting_intent -> ig_awaiting_skin_type | ig_awaiting_issue_text | skipped
+ *   ig_awaiting_issue_text -> ig_awaiting_selfie
+ *   ig_awaiting_skin_type -> ig_awaiting_concern
+ *   ig_awaiting_concern -> ig_awaiting_routine
+ *   ig_awaiting_routine -> ig_awaiting_selfie
+ *   ig_awaiting_selfie -> (re-prompt, expects photo not text)
+ *   ig_generating_profile -> (C1 dead-end recovery)
+ *   ig_awaiting_recommendations -> complete
  */
 export async function handleOnboardingReply(
   ig: InstagramClient,
@@ -212,58 +203,262 @@ export async function handleOnboardingReply(
 
   const answers = (row.answers && typeof row.answers === "object"
     ? row.answers
-    : {}) as OnboardingAnswers & {
-    _scanResultJson?: string;
-    _scanId?: string;
-    _blobUrl?: string;
-    _cycleContext?: string;
-    _comparisonBlock?: string;
-  };
+    : {}) as ExtendedAnswers;
 
   try {
+    // ---- C3: Escape hatch — user wants to skip onboarding ----
+    const SKIP_PATTERNS = /\b(skip|chhodo|rehne do|bas baat karo|no selfie|nahi bhejungi|just chat)\b/i;
+    if (SKIP_PATTERNS.test(text) && row.state !== "ig_awaiting_intent") {
+      await updateOnboardingState({ userId, state: "skipped", answers: answers as unknown as OnboardingAnswers });
+      await ig.sendMessage(senderId, "No worries! Jab mann kare tab bhej dena 💕 Batao kya baat karni hai?");
+      return;
+    }
+
+    // ---- H2: Stale re-orientation (>24h since last interaction) ----
+    if (row.updatedAt) {
+      const hoursSince = (Date.now() - new Date(row.updatedAt).getTime()) / (1000 * 60 * 60);
+      if (hoursSince > 24 && row.state.startsWith("ig_awaiting")) {
+        if (text === "REORIENT_restart") {
+          await updateOnboardingState({ userId, state: "ig_awaiting_intent", answers: {} as unknown as OnboardingAnswers });
+          const optionsText = formatOptionsText(INTENT_OPTIONS);
+          await ig.sendQuickReplies(senderId,
+            `Fresh start! Batao, what's on your mind? (${optionsText})`,
+            toQuickReplies(INTENT_OPTIONS, "INTENT"));
+          return;
+        }
+        if (text !== "REORIENT_continue") {
+          await ig.sendQuickReplies(senderId,
+            "Hey! Pichli baar baat chal rahi thi — continue kare ya fresh start?",
+            [
+              { title: "Continue", payload: "REORIENT_continue" },
+              { title: "Fresh start", payload: "REORIENT_restart" },
+            ]);
+          return;
+        }
+        // "Continue" falls through to normal state handling
+      }
+    }
+
+    // ---- State machine ----
     switch (row.state) {
+      case "ig_awaiting_intent": {
+        const intentMap: Record<string, string> = {
+          INTENT_skin_analysis: "skin_analysis",
+          INTENT_skin_issue: "skin_issue",
+          INTENT_just_chat: "just_chat",
+        };
+        const intent = intentMap[text.trim()] ?? guessIntent(text);
+
+        if (intent === "just_chat") {
+          await updateOnboardingState({ userId, state: "skipped", answers: answers as unknown as OnboardingAnswers });
+          await ig.sendMessage(senderId, "Cool! Jab chaaho baat karo 💬\n\nSkin analysis chahiye ho toh bas bol dena!");
+          return;
+        }
+
+        if (intent === "skin_issue") {
+          answers.intent = "skin_issue";
+          await updateOnboardingState({ userId, state: "ig_awaiting_issue_text", answers: answers as unknown as OnboardingAnswers });
+          await ig.sendMessage(senderId, "Batao kya ho raha hai — acne, pigmentation, dryness, kuch bhi. Apne words mein batao!");
+          return;
+        }
+
+        // skin_analysis
+        answers.intent = "skin_analysis";
+        await updateOnboardingState({ userId, state: "ig_awaiting_skin_type", answers: answers as unknown as OnboardingAnswers });
+        await ig.sendMessage(senderId, "Nice! Kuch quick cheezein pooch lungi taaki advice actually kaam aaye 💕");
+        await new Promise((r) => setTimeout(r, 800));
+        const stOpts = formatOptionsText(SKIN_TYPE_OPTIONS);
+        await ig.sendQuickReplies(senderId,
+          `Tumhara skin type kya lagta hai? (${stOpts})`,
+          toQuickReplies(SKIN_TYPE_OPTIONS, "TYPE"));
+        return;
+      }
+
+      case "ig_awaiting_issue_text": {
+        const detectedConcern = parseConcern(text) ?? "overall";
+        answers.concern = detectedConcern;
+        answers.issueDescription = text;
+        await updateOnboardingState({ userId, state: "ig_awaiting_selfie", answers: answers as unknown as OnboardingAnswers });
+        const label = CONCERN_LABELS[detectedConcern] ?? "skin issue";
+        await sendSplitMessages(ig, senderId,
+          `Got it — ${label} pe help karungi.|||Ek selfie bhejo — properly dekh ke specific advice de sakti hoon. Natural light, no filter! 📸`);
+        return;
+      }
+
       case "ig_awaiting_skin_type": {
-        const skinType = parseSkinType(text) ?? "unknown";
+        // Accept Quick Reply payloads OR freeform text
+        const payloadMap: Record<string, string> = {
+          TYPE_oily: "oily", TYPE_dry: "dry", TYPE_combination: "combination",
+          TYPE_sensitive: "sensitive", TYPE_unknown: "unknown",
+        };
+        let skinType = payloadMap[text.trim()] ?? parseSkinType(text);
+
+        // H5: Retry counter for failed parses
+        const retryKey = "_retry_ig_awaiting_skin_type";
+        const retryCount = (answers[retryKey] as number) ?? 0;
+        if (!skinType) {
+          if (retryCount >= 2) {
+            skinType = "unknown"; // auto-default after 3 tries
+          } else {
+            answers[retryKey] = retryCount + 1;
+            await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
+            const guidance = retryCount === 0
+              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
+              : `Koi baat nahi! Bas type karo: ${formatOptionsText(SKIN_TYPE_OPTIONS)}`;
+            await ig.sendMessage(senderId, guidance);
+            return;
+          }
+        }
+        skinType = skinType ?? "unknown";
         answers.skinType = skinType;
+        await updateOnboardingState({ userId, state: "ig_awaiting_concern", answers: answers as unknown as OnboardingAnswers });
 
-        await updateOnboardingState({
-          userId,
-          state: "ig_awaiting_concern",
-          answers: answers as unknown as OnboardingAnswers,
-        });
-
-        // Acknowledge + ask concern
         const label = SKIN_TYPE_LABELS[skinType] ?? skinType;
-        const ack =
-          skinType === "unknown"
-            ? "No worries, that's totally fine! We'll figure it out together 😊"
-            : `Got it — ${label} skin! That helps a lot.`;
-
+        const ack = skinType === "unknown"
+          ? "No worries, we'll figure it out together 😊"
+          : `Got it — ${label} skin!`;
         await ig.sendMessage(senderId, ack);
         await new Promise((r) => setTimeout(r, 800));
-        await ig.sendMessage(
-          senderId,
-          "And koi specific concern hai? Acne, pigmentation, dullness, dark circles?\n\n" +
-            "Ya bas overall improve karna hai? 🌟",
-        );
+        const cOpts = formatOptionsText(CONCERN_OPTIONS);
+        await ig.sendQuickReplies(senderId,
+          `Skin mein sabse zyada kya bother karta hai? (${cOpts})`,
+          toQuickReplies(CONCERN_OPTIONS, "CONCERN"));
         return;
       }
 
       case "ig_awaiting_concern": {
-        const concern = parseConcern(text) ?? "overall";
-        answers.concern = concern;
+        const payloadMap: Record<string, string> = {
+          CONCERN_acne: "acne", CONCERN_pigmentation: "pigmentation",
+          CONCERN_dull_skin: "dull_skin", CONCERN_dark_circles: "dark_circles",
+          CONCERN_overall: "overall",
+        };
+        let concern = payloadMap[text.trim()] ?? parseConcern(text);
 
-        // Mark as generating
-        await updateOnboardingState({
-          userId,
-          state: "ig_generating_profile",
-          answers: answers as unknown as OnboardingAnswers,
-        });
+        // H5: Retry counter
+        const retryKey = "_retry_ig_awaiting_concern";
+        const retryCount = (answers[retryKey] as number) ?? 0;
+        if (!concern) {
+          if (retryCount >= 2) {
+            concern = "overall"; // auto-default
+          } else {
+            answers[retryKey] = retryCount + 1;
+            await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
+            const guidance = retryCount === 0
+              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
+              : `Koi baat nahi! Bas type karo: ${formatOptionsText(CONCERN_OPTIONS)}`;
+            await ig.sendMessage(senderId, guidance);
+            return;
+          }
+        }
+        concern = concern ?? "overall";
+        answers.concern = concern;
+        await updateOnboardingState({ userId, state: "ig_awaiting_routine", answers: answers as unknown as OnboardingAnswers });
+
+        const ack = concern === "overall"
+          ? "Overall improvement — great starting point!"
+          : `${CONCERN_LABELS[concern]} — noted 💕`;
+        await ig.sendMessage(senderId, ack);
+        await new Promise((r) => setTimeout(r, 800));
+        const rOpts = formatOptionsText(ROUTINE_OPTIONS);
+        await ig.sendQuickReplies(senderId,
+          `Ek last cheez — skincare routine kitna follow karti ho? (${rOpts})`,
+          toQuickReplies(ROUTINE_OPTIONS, "ROUTINE"));
+        return;
+      }
+
+      case "ig_awaiting_routine": {
+        const payloadMap: Record<string, string> = {
+          ROUTINE_basics: "basics", ROUTINE_serious: "serious",
+          ROUTINE_full: "full", ROUTINE_none: "none",
+        };
+        let routine = payloadMap[text.trim()] ?? parseRoutine(text);
+
+        // H5: Retry counter
+        const retryKey = "_retry_ig_awaiting_routine";
+        const retryCount = (answers[retryKey] as number) ?? 0;
+        if (!routine) {
+          if (retryCount >= 2) {
+            routine = "none"; // auto-default
+          } else {
+            answers[retryKey] = retryCount + 1;
+            await updateOnboardingState({ userId, state: row.state, answers: answers as unknown as OnboardingAnswers });
+            const guidance = retryCount === 0
+              ? "Hmm samajh nahi aaya — ek aur baar try karo?"
+              : `Koi baat nahi! Bas type karo: ${formatOptionsText(ROUTINE_OPTIONS)}`;
+            await ig.sendMessage(senderId, guidance);
+            return;
+          }
+        }
+        routine = routine ?? "none";
+        answers.routine = routine;
+        await updateOnboardingState({ userId, state: "ig_awaiting_selfie", answers: answers as unknown as OnboardingAnswers });
+        await ig.sendMessage(senderId,
+          "Perfect! Ab ek selfie bhejo — no filter, close-up, natural light mein 📸\nMain properly dekh ke bataungi kya ho raha hai!");
+        return;
+      }
+
+      case "ig_awaiting_selfie": {
+        // User sent text instead of selfie — re-prompt
+        await ig.sendMessage(senderId, "Selfie bhejo na! 📸 Close-up, natural light, no filter.");
+        return;
+      }
+
+      case "ig_generating_profile": {
+        // C1: Dead-end recovery — if stuck >90s, it crashed
+        const updatedAt = row.updatedAt;
+        if (updatedAt) {
+          const staleMs = Date.now() - new Date(updatedAt).getTime();
+          if (staleMs > 90_000) {
+            await updateOnboardingState({ userId, state: "ig_awaiting_selfie", answers: answers as unknown as OnboardingAnswers });
+            await ig.sendMessage(senderId, "Sorry yaar, pichli baar kuch issue ho gaya. Ek aur selfie bhej do? 📸");
+            return;
+          }
+        }
+        // If <90s, likely still generating — ignore
+        return;
+      }
+
+      case "ig_awaiting_recommendations": {
+        const recsMap: Record<string, string> = {
+          RECS_products: "products", RECS_both: "both", RECS_skip: "skip",
+        };
+        const choice = recsMap[text.trim()] ??
+          (/product|haan|yes|batao/i.test(text) ? "products" :
+           /home|remedy|dono|both|gharelu/i.test(text) ? "both" : "skip");
+
+        if (choice === "skip") {
+          await updateOnboardingState({ userId, state: "complete", answers: answers as unknown as OnboardingAnswers });
+          await ig.sendMessage(senderId,
+            "No worries! Jab chahiye ho toh bolo — photo bhejo, product check karo, ya bas baat karo 💕");
+          return;
+        }
 
         await ig.sendTypingIndicator(senderId);
 
-        // Generate the full personalized analysis + profile card
-        await generateProfileAndCard(ig, senderId, userId, answers);
+        // Recover scan data from answers
+        const scanResult = answers._scanResultJson ? JSON.parse(answers._scanResultJson) : null;
+        if (!scanResult) {
+          await updateOnboardingState({ userId, state: "complete", answers: answers as unknown as OnboardingAnswers });
+          await ig.sendMessage(senderId, "Scan data nahi mila — next time selfie bhejo toh recommendations de dungi! 💕");
+          return;
+        }
+
+        const { generateRecommendationText } = await import("@/lib/onboarding/recommendations");
+        const recsText = await generateRecommendationText(
+          scanResult,
+          { skinType: answers.skinType, concern: answers.concern, routine: answers.routine },
+          choice === "both",
+        );
+
+        await updateOnboardingState({ userId, state: "complete", answers: answers as unknown as OnboardingAnswers });
+        await sendSplitMessages(ig, senderId, recsText);
+
+        // Friendship opener after recommendations
+        await new Promise((r) => setTimeout(r, 1500));
+        const opener = generateFriendshipOpener(answers.concern ?? "overall");
+        await ig.sendMessage(senderId, opener);
+
+        console.log("[IG Onboarding] Complete with recommendations for user:", userId);
         return;
       }
 
@@ -299,17 +494,12 @@ export async function handleOnboardingPhotoSkip(
 
   const answers = (row.answers && typeof row.answers === "object"
     ? row.answers
-    : {}) as OnboardingAnswers & {
-    _scanResultJson?: string;
-    _scanId?: string;
-    _blobUrl?: string;
-    _cycleContext?: string;
-    _comparisonBlock?: string;
-  };
+    : {}) as ExtendedAnswers;
 
   // Fill in defaults for missing answers
   if (!answers.skinType) answers.skinType = "unknown";
   if (!answers.concern) answers.concern = "overall";
+  if (!answers.routine) answers.routine = "none";
 
   await updateOnboardingState({
     userId,
@@ -325,19 +515,13 @@ export async function handleOnboardingPhotoSkip(
   await generateProfileAndCard(ig, senderId, userId, answers);
 }
 
-// ---- Profile card generation (Steps 7-11) ----
+// ---- Profile card generation ----
 
 async function generateProfileAndCard(
   ig: InstagramClient,
   senderId: string,
   userId: string,
-  answers: OnboardingAnswers & {
-    _scanResultJson?: string;
-    _scanId?: string;
-    _blobUrl?: string;
-    _cycleContext?: string;
-    _comparisonBlock?: string;
-  },
+  answers: ExtendedAnswers,
 ): Promise<void> {
   try {
     // Recover scan results from onboarding answers
@@ -355,7 +539,7 @@ async function generateProfileAndCard(
       return;
     }
 
-    // Step 7: Generate Noor's personalized analysis
+    // Generate Noor's personalized analysis
     const { buildRuhiSystemPrompt } = await import("@/lib/ai/prompts");
     const { getLanguageModel } = await import("@/lib/ai/providers");
     const { DEFAULT_CHAT_MODEL } = await import("@/lib/ai/models");
@@ -396,7 +580,7 @@ async function generateProfileAndCard(
     await sendSplitMessages(ig, senderId, analysisText);
     await ig.sendTypingIndicator(senderId);
 
-    // Step 8: Generate and send Skin Profile Card
+    // Generate and send Skin Profile Card
     const { getPersonalityLabel } = await import(
       "@/lib/report/personality-labels"
     );
@@ -408,7 +592,7 @@ async function generateProfileAndCard(
       score: scanResult.overall_score,
       concern: answers.concern ?? "overall",
       skinType: answers.skinType ?? "unknown",
-      routineLevel: "none", // Not collected in IG onboarding
+      routineLevel: answers.routine ?? "none", // Part D fix: use actual routine, not hardcoded "none"
     });
 
     const imageResponse = buildProfileCardResponse(
@@ -428,28 +612,24 @@ async function generateProfileAndCard(
 
     await ig.sendImage(senderId, cardBlob.url);
 
-    // Step 9: Flush answers to memory system
-    await flushAnswersToMemory(userId, answers, scanResult);
+    // Flush answers to memory system
+    await flushAnswersToMemory(userId, answers, scanResult, "instagram");
 
-    // Step 10: Mark onboarding complete
+    // Part C: Offer recommendations via Quick Replies instead of friendship opener
+    const recsOpts = formatOptionsText(RECS_OPTIONS);
+    await ig.sendQuickReplies(
+      senderId,
+      `Ye tumhari Skin Profile hai ${name} 💕 Save karlo!\n\nRecommendations bhi chahiye? (${recsOpts})`,
+      toQuickReplies(RECS_OPTIONS, "RECS"),
+    );
+
     await updateOnboardingState({
       userId,
-      state: "complete",
+      state: "ig_awaiting_recommendations",
       answers: answers as unknown as OnboardingAnswers,
     });
 
-    // Step 11: Friendship opener
-    await new Promise((r) => setTimeout(r, 2000));
-
-    const cardMessage = `Ye tumhari Skin Profile hai ${name} 💕 Save karlo!`;
-    await ig.sendMessage(senderId, cardMessage);
-
-    await new Promise((r) => setTimeout(r, 1500));
-
-    const opener = generateFriendshipOpener(answers.concern ?? "overall");
-    await ig.sendMessage(senderId, opener);
-
-    console.log("[IG Onboarding] Complete for user:", userId);
+    console.log("[IG Onboarding] Profile card sent, awaiting recommendations choice for user:", userId);
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error("[IG Onboarding] Profile generation failed:", errMsg);
@@ -461,51 +641,3 @@ async function generateProfileAndCard(
     await updateOnboardingState({ userId, state: "complete" });
   }
 }
-
-// ---- Memory flush ----
-
-async function flushAnswersToMemory(
-  userId: string,
-  answers: OnboardingAnswers & { _scanResultJson?: string },
-  scanResult: ScanResults,
-): Promise<void> {
-  try {
-    if (answers.name) {
-      await upsertMemory({
-        userId,
-        category: "identity",
-        key: "name",
-        value: answers.name,
-      });
-    }
-    if (answers.skinType) {
-      await upsertMemory({
-        userId,
-        category: "identity",
-        key: "skin_type",
-        value: SKIN_TYPE_LABELS[answers.skinType] ?? answers.skinType,
-      });
-    }
-    if (answers.concern) {
-      await upsertMemory({
-        userId,
-        category: "preference",
-        key: "primary_concern",
-        value: CONCERN_LABELS[answers.concern] ?? answers.concern,
-      });
-    }
-    // Save initial scan summary
-    await insertMemory({
-      userId,
-      category: "health",
-      value: `Initial skin scan (Instagram): score ${scanResult.overall_score}/10. ` +
-        `Concerns: ${scanResult.key_concerns.join(", ")}. ` +
-        `Positives: ${scanResult.positives.join(", ")}.`,
-      metadata: { source: "ig_onboarding", score: scanResult.overall_score },
-    });
-  } catch (err) {
-    console.error("[IG Onboarding] Memory flush error:", err);
-    // Non-fatal — onboarding still completes
-  }
-}
-

@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { bot } from "@/lib/bot";
 import {
   processInstagramMessage,
+  handleInstagramPostback,
   type InstagramMessagingEntry,
 } from "@/lib/instagram/handler";
 import {
@@ -213,20 +214,36 @@ async function handleInstagramPost(request: Request) {
     for (const entry of body.entry) {
       if (entry.messaging) {
         for (const messagingEvent of entry.messaging) {
-          after(async () => {
-            try {
-              await processInstagramMessage(
-                messagingEvent,
-                pageAccessToken,
-                pageId,
-              );
-            } catch (error) {
-              console.error(
-                "[Webhook] Instagram message processing failed:",
-                error,
-              );
-            }
-          });
+          if ((messagingEvent as any).postback) {
+            // Handle postback (Ice Breakers, button taps)
+            after(async () => {
+              try {
+                await handleInstagramPostback(
+                  messagingEvent as any,
+                  pageAccessToken,
+                  pageId,
+                );
+              } catch (error) {
+                console.error("[Webhook] Instagram postback processing failed:", error);
+              }
+            });
+          } else {
+            // Handle regular messages (existing code)
+            after(async () => {
+              try {
+                await processInstagramMessage(
+                  messagingEvent,
+                  pageAccessToken,
+                  pageId,
+                );
+              } catch (error) {
+                console.error(
+                  "[Webhook] Instagram message processing failed:",
+                  error,
+                );
+              }
+            });
+          }
         }
       }
     }

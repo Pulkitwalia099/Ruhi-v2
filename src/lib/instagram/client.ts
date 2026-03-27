@@ -104,13 +104,13 @@ export class InstagramClient {
         sender_action: "react",
         payload: { message_id: messageId, reaction: emoji },
       }),
-    }).catch(() => {});
+    }).catch((err) => console.warn("[IG] sendReaction failed:", err?.message));
   }
 
   async sendHeartSticker(recipientId: string) {
     await this.callSendAPI(recipientId, {
       attachment: { type: "like_heart" },
-    }).catch(() => {});
+    }).catch((err) => console.warn("[IG] sendHeartSticker failed:", err?.message));
   }
 
   /**
@@ -172,6 +172,7 @@ export class InstagramClient {
       if (splitAt < maxLength / 2)
         splitAt = remaining.lastIndexOf(". ", maxLength);
       if (splitAt < maxLength / 2) splitAt = maxLength;
+      if (splitAt <= 0) splitAt = maxLength;
       chunks.push(remaining.slice(0, splitAt));
       remaining = remaining.slice(splitAt).trimStart();
     }

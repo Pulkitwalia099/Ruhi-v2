@@ -14,6 +14,7 @@ import {
   saveInstagramMessage,
   getInstagramHistory,
   getOnboarding,
+  upsertOnboarding,
   checkInstagramMessageExists,
 } from "@/db/queries";
 import { InstagramClient } from "./client";
@@ -23,6 +24,7 @@ import {
   handleOnboardingPhotoSkip,
 } from "./onboarding";
 import { sendSplitMessages } from "./utils";
+import { INTENT_OPTIONS, formatOptionsText, toQuickReplies } from "@/lib/onboarding/questions";
 
 // ------------------------------------------------
 // src/lib/instagram/handler.ts
@@ -76,11 +78,8 @@ export async function processInstagramMessage(
   // Skip echo messages (our own bot replies)
   if (msg.is_echo) return;
 
-  // Idempotency: skip duplicate messages (DB-based)
-  const alreadyProcessed = await checkInstagramMessageExists(
-    entry.sender.id,
-    msg.text ?? "",
-  );
+  // Idempotency: skip duplicate messages (DB-based, works across instances)
+  const alreadyProcessed = await checkInstagramMessageExists(entry.sender.id);
   if (alreadyProcessed) return;
 
   const senderId = entry.sender.id;
@@ -153,6 +152,10 @@ async function handlePhotoMessage(
   await ig.sendMessage(senderId, thinkingMsg);
   await ig.sendTypingIndicator(senderId);
 
+  // Check onboarding status early (needed by both product and selfie paths)
+  const onboardingRow = await getOnboarding(dbUser.id);
+  const onboardingState = onboardingRow?.state ?? null;
+
   // Classify: selfie or product?
   const recentMsgs = await getInstagramHistory({
     instagramSenderId: senderId,
@@ -196,26 +199,62 @@ async function handlePhotoMessage(
       content: analysis,
     });
     await sendSplitMessages(ig, senderId, analysis);
+
+    // H3: If mid-onboarding awaiting selfie, re-prompt after product check
+    if (onboardingState === "ig_awaiting_selfie") {
+      await new Promise((r) => setTimeout(r, 1000));
+      await ig.sendMessage(senderId, "Product check done! Ab selfie bhi bhej do for skin analysis 📸");
+    }
     return;
   }
 
   // ---- SELFIE PATH ----
 
-  // Check onboarding status
-  const onboardingRow = await getOnboarding(dbUser.id);
-  const isFirstScan =
-    !onboardingRow || !["complete", "skipped"].includes(onboardingRow.state);
-  const isMidOnboarding =
-    onboardingRow?.state?.startsWith("ig_") ?? false;
+  // Explicit, mutually exclusive onboarding checks
+  const isMidOnboarding = onboardingState !== null && onboardingState.startsWith("ig_awaiting");
+  const isGenerating = onboardingState === "ig_generating_profile";
+  const isComplete = onboardingState === "complete" || onboardingState === "skipped";
+  const isFirstScan = !isComplete && !isMidOnboarding && !isGenerating;
 
   const imageBase64 = photoBuffer.toString("base64");
 
-  const { scanResult, scanId, comparisonBlock, cycleContext } =
-    await runScanPipeline({
-      imageData: imageBase64,
-      userId: dbUser.id,
-      imageUrl: blob.url,
+  // A6: Scan pipeline with timeout
+  const SCAN_TIMEOUT_MS = 50_000;
+  let scanPipelineResult;
+  try {
+    scanPipelineResult = await Promise.race([
+      runScanPipeline({
+        imageData: imageBase64,
+        userId: dbUser.id,
+        imageUrl: blob.url,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("SCAN_TIMEOUT")), SCAN_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (err: any) {
+    if (err?.message === "SCAN_TIMEOUT") {
+      await ig.sendMessage(senderId, "Yaar processing mein thoda time lag raha hai — ek aur baar try karo? 📸");
+      return;
+    }
+    throw err;
+  }
+  const { scanResult, scanId, comparisonBlock, cycleContext } = scanPipelineResult;
+
+  // A4: User sent selfie while in awaiting_selfie -> enter scan-first onboarding
+  if (onboardingState === "ig_awaiting_selfie" && scanResult && scanId) {
+    await saveInstagramMessage({
+      instagramSenderId: senderId,
+      role: "user",
+      content: userText || "Sent a selfie for skin analysis",
     });
+    await handleInstagramOnboarding(
+      ig, senderId, dbUser.id,
+      (dbUser as any).instagramUsername ?? undefined,
+      scanResult, scanId, blob.url, cycleContext, comparisonBlock,
+    );
+    return;
+  }
 
   // First-time selfie → enter onboarding flow
   if (isFirstScan && !isMidOnboarding && scanResult && scanId) {
@@ -321,6 +360,22 @@ async function handlePhotoMessage(
   }
 }
 
+// ---- Intent-based onboarding start ----
+
+async function startInstagramOnboarding(
+  ig: InstagramClient,
+  senderId: string,
+  userId: string,
+): Promise<void> {
+  await upsertOnboarding({ userId, state: "ig_awaiting_intent", answers: {} as any });
+  const optionsText = formatOptionsText(INTENT_OPTIONS);
+  await ig.sendQuickReplies(
+    senderId,
+    `Heyy! 💕 Main Noor hoon — tumhari skincare bestie.\n\nBatao, what's on your mind? (${optionsText})`,
+    toQuickReplies(INTENT_OPTIONS, "INTENT"),
+  );
+}
+
 // ---- Text handling ----
 
 async function handleTextMessage(
@@ -329,10 +384,41 @@ async function handleTextMessage(
   dbUser: { id: string },
   userText: string,
 ) {
-  // Check if mid-onboarding → delegate to onboarding reply handler
+  // Check onboarding status
   const onboardingRow = await getOnboarding(dbUser.id);
-  if (onboardingRow && onboardingRow.state.startsWith("ig_")) {
+
+  // First-ever text from new user -> start intent-based onboarding
+  if (!onboardingRow) {
+    await startInstagramOnboarding(ig, senderId, dbUser.id);
+    return;
+  }
+
+  // Mid-onboarding -> delegate to state machine
+  if (onboardingRow.state.startsWith("ig_")) {
     await handleOnboardingReply(ig, senderId, dbUser.id, userText);
+    return;
+  }
+
+  // Opt-out detection
+  const OPT_OUT_PATTERNS = /\b(stop|unsubscribe|opt.?out|band karo|mat bhejo|nahi chahiye)\b/i;
+  if (OPT_OUT_PATTERNS.test(userText)) {
+    await saveInstagramMessage({ instagramSenderId: senderId, role: "user", content: userText });
+    await ig.sendMessage(senderId,
+      "Theek hai — main messages nahi bhejungi 💙 Kabhi baat karni ho toh wapas aa jana.");
+    const { upsertMemory } = await import("@/db/queries");
+    await upsertMemory({ userId: dbUser.id, category: "preference", key: "opted_out", value: "true" });
+    return;
+  }
+
+  // Soft history reset
+  const RESET_PATTERNS = /\b(reset|clear|naya shuru|fresh start|sab bhool jao|forget everything)\b/i;
+  if (RESET_PATTERNS.test(userText)) {
+    await saveInstagramMessage({
+      instagramSenderId: senderId,
+      role: "assistant",
+      content: "[CONVERSATION RESET BY USER]",
+    });
+    await ig.sendMessage(senderId, "Fresh start! 💕 Pichli baatein yaad nahi — batao kya chahiye.");
     return;
   }
 
@@ -352,12 +438,17 @@ async function handleTextMessage(
     limit: 40,
   });
 
+  // Respect conversation reset boundaries
+  const resetIdx = history.map(m => m.content).lastIndexOf("[CONVERSATION RESET BY USER]");
+  const effectiveHistory = resetIdx >= 0 ? history.slice(resetIdx + 1) : history;
+
   // Filter and clean messages for the AI
-  const aiMessages = history
+  const aiMessages = effectiveHistory
     .filter(
       (m) =>
         !m.content.includes("problem ho rahi hai") &&
-        !m.content.includes("Something went wrong"),
+        !m.content.includes("Something went wrong") &&
+        !m.content.includes("[CONVERSATION RESET BY USER]"),
     )
     .map((m) => ({
       role: m.role as "user" | "assistant",
@@ -431,4 +522,40 @@ async function handleTextMessage(
 
   // Send response
   await sendSplitMessages(ig, senderId, responseText);
+}
+
+// ---- Postback handling (Ice Breakers / Quick Replies) ----
+
+export async function handleInstagramPostback(
+  entry: { sender: { id: string }; postback: { payload: string } },
+  pageAccessToken: string,
+  pageId: string,
+): Promise<void> {
+  const senderId = entry.sender.id;
+  const ig = new InstagramClient(pageAccessToken, pageId);
+  const dbUser = await upsertInstagramUser({ instagramId: senderId });
+
+  const payload = entry.postback.payload;
+
+  if (payload === "ICE_about") {
+    await upsertOnboarding({ userId: dbUser.id, state: "ig_awaiting_intent", answers: {} as any });
+    await sendSplitMessages(ig, senderId,
+      "Main Noor hoon 💕|||Tumhari personal skin companion — scan, product check, routine rating. Doctor nahi, friend hoon.");
+    const optionsText = formatOptionsText(INTENT_OPTIONS);
+    await ig.sendQuickReplies(senderId,
+      `Kahan se shuru karein? (${optionsText})`,
+      toQuickReplies(INTENT_OPTIONS, "INTENT"));
+    return;
+  }
+
+  const iceToIntent: Record<string, string> = {
+    ICE_skin_analysis: "INTENT_skin_analysis",
+    ICE_skin_issue: "INTENT_skin_issue",
+    ICE_just_chat: "INTENT_just_chat",
+  };
+  const intentPayload = iceToIntent[payload];
+  if (!intentPayload) return;
+
+  await upsertOnboarding({ userId: dbUser.id, state: "ig_awaiting_intent", answers: {} as any });
+  await handleOnboardingReply(ig, senderId, dbUser.id, intentPayload);
 }

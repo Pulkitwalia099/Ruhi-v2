@@ -904,14 +904,14 @@ export async function getInstagramHistory({
 }
 
 /**
- * Check if a user message with the same content from the same sender
- * was saved in the last 60 seconds (DB-based deduplication).
+ * Check if ANY user message from this sender was saved in the last 10 seconds.
+ * DB-based deduplication — catches Instagram webhook retries without relying
+ * on content matching (which fails for photo-only messages).
  */
 export async function checkInstagramMessageExists(
   instagramSenderId: string,
-  content: string,
 ): Promise<boolean> {
-  const sixtySecondsAgo = new Date(Date.now() - 60_000);
+  const tenSecondsAgo = new Date(Date.now() - 10_000);
   const rows = await db
     .select({ id: instagramMessage.id })
     .from(instagramMessage)
@@ -919,8 +919,7 @@ export async function checkInstagramMessageExists(
       and(
         eq(instagramMessage.instagramSenderId, instagramSenderId),
         eq(instagramMessage.role, "user"),
-        eq(instagramMessage.content, content),
-        gt(instagramMessage.createdAt, sixtySecondsAgo),
+        gt(instagramMessage.createdAt, tenSecondsAgo),
       ),
     )
     .limit(1);
