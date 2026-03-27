@@ -263,7 +263,7 @@ export async function handleOnboardingReply(
         // skin_analysis
         answers.intent = "skin_analysis";
         await updateOnboardingState({ userId, state: "ig_awaiting_skin_type", answers: answers as unknown as OnboardingAnswers });
-        await ig.sendMessage(senderId, "Chal, 2-3 cheezein poochti hoon taaki sahi advice de sakoon");
+        await ig.sendMessage(senderId, "Chalo, 2-3 cheezein poochti hoon taaki sahi advice de sakoon");
         await new Promise((r) => setTimeout(r, 800));
         const stOpts = formatOptionsText(SKIN_TYPE_OPTIONS);
         await ig.sendQuickReplies(senderId,
@@ -359,7 +359,7 @@ export async function handleOnboardingReply(
         const concernAckMap: Record<string, string> = {
           acne: "Oh damn acne. Isme definitely help kar sakti hoon",
           pigmentation: "Pigmentation, haan yeh common hai but fixable",
-          dull_skin: "Glow nahi aa raha? Chal dekhte hain kya ho raha hai",
+          dull_skin: "Glow nahi aa raha? Chalo dekhte hain kya ho raha hai",
           dark_circles: "Dark circles, mostly hydration + sleep but topically bhi help hoti hai",
           overall: "Overall improvement, solid. Dekhte hain kahan se start karein",
         };
