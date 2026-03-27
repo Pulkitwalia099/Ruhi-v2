@@ -56,6 +56,7 @@ export interface InstagramMessagingEntry {
     mid: string;
     text?: string;
     is_echo?: boolean;
+    quick_reply?: { payload: string };
     attachments?: Array<{
       type: string; // "image", "video", "audio", "file"
       payload: { url: string };
@@ -100,7 +101,10 @@ export async function processInstagramMessage(
 
     if (msg.text) {
       // ---- TEXT PATH ----
-      await handleTextMessage(ig, senderId, dbUser, msg.text);
+      // Quick Reply taps send both text (button title with emoji) and payload.
+      // Use payload preferentially since parsers expect it (e.g., "TYPE_combination").
+      const userText = msg.quick_reply?.payload ?? msg.text;
+      await handleTextMessage(ig, senderId, dbUser, userText);
       return;
     }
 
@@ -155,6 +159,12 @@ async function handlePhotoMessage(
   // Check onboarding status early (needed by both product and selfie paths)
   const onboardingRow = await getOnboarding(dbUser.id);
   const onboardingState = onboardingRow?.state ?? null;
+
+  // Prevent double processing: if already generating a profile, skip this photo
+  if (onboardingState === "ig_generating_profile") {
+    console.log("[Noor/IG] Skipping photo — already generating profile for user:", senderId);
+    return;
+  }
 
   // Classify: selfie or product?
   const recentMsgs = await getInstagramHistory({
@@ -241,17 +251,17 @@ async function handlePhotoMessage(
   }
   const { scanResult, scanId, comparisonBlock, cycleContext } = scanPipelineResult;
 
-  // A4: User sent selfie while in awaiting_selfie -> enter scan-first onboarding
+  // A4: User sent selfie while in awaiting_selfie -> skip straight to card generation
+  // (questions were already answered during text-based onboarding)
   if (onboardingState === "ig_awaiting_selfie" && scanResult && scanId) {
     await saveInstagramMessage({
       instagramSenderId: senderId,
       role: "user",
       content: userText || "Sent a selfie for skin analysis",
     });
-    await handleInstagramOnboarding(
-      ig, senderId, dbUser.id,
-      (dbUser as any).instagramUsername ?? undefined,
-      scanResult, scanId, blob.url, cycleContext, comparisonBlock,
+    const { handleSelfieAfterQuestions } = await import("./onboarding");
+    await handleSelfieAfterQuestions(
+      ig, senderId, dbUser.id, scanResult, scanId, blob.url, cycleContext, comparisonBlock,
     );
     return;
   }

@@ -515,6 +515,56 @@ export async function handleOnboardingPhotoSkip(
   await generateProfileAndCard(ig, senderId, userId, answers);
 }
 
+/**
+ * Called when a user who already answered questions (skin type, concern, routine)
+ * sends their selfie. Skips straight to profile card generation using existing answers
+ * + the new scan data. Does NOT re-ask questions.
+ */
+export async function handleSelfieAfterQuestions(
+  ig: InstagramClient,
+  senderId: string,
+  userId: string,
+  scanResult: ScanResults,
+  scanId: string,
+  blobUrl: string,
+  cycleContext: string | null,
+  comparisonBlock: string,
+): Promise<void> {
+  const row = await getOnboarding(userId);
+  if (!row) return;
+
+  const answers = (row.answers && typeof row.answers === "object"
+    ? row.answers
+    : {}) as ExtendedAnswers;
+
+  // Store scan data in answers for generateProfileAndCard
+  answers._scanResultJson = JSON.stringify(scanResult);
+  answers._scanId = scanId;
+  answers._blobUrl = blobUrl;
+  answers._cycleContext = cycleContext ?? undefined;
+  answers._comparisonBlock = comparisonBlock;
+
+  // Fill defaults for any unanswered questions
+  if (!answers.skinType) answers.skinType = "unknown";
+  if (!answers.concern) answers.concern = "overall";
+  if (!answers.routine) answers.routine = "none";
+
+  await updateOnboardingState({
+    userId,
+    state: "ig_generating_profile",
+    answers: answers as unknown as OnboardingAnswers,
+  });
+
+  // Send first impression (instant, template-based)
+  const firstImpression = generateFirstImpression(scanResult);
+  await ig.sendMessage(senderId, firstImpression);
+
+  await new Promise((r) => setTimeout(r, 1500));
+
+  // Go straight to profile card — questions already answered
+  await generateProfileAndCard(ig, senderId, userId, answers);
+}
+
 // ---- Profile card generation ----
 
 async function generateProfileAndCard(
