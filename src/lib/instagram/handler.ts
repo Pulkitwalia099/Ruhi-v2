@@ -1,30 +1,34 @@
 import { put } from "@vercel/blob";
 import { generateText } from "ai";
-
+import {
+  checkInstagramMessageExists,
+  getInstagramHistory,
+  getOnboarding,
+  saveInstagramMessage,
+  upsertInstagramUser,
+  upsertOnboarding,
+} from "@/db/queries";
 import { runRuhiAgent } from "@/lib/ai/agent";
 import {
   analyzeProductPhoto,
   classifyPhotoIntent,
 } from "@/lib/ai/analyze-product";
 import { runScanPipeline } from "@/lib/ai/scan-pipeline";
+import { transcribeAudio } from "@/lib/ai/transcribe";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
 import {
-  upsertInstagramUser,
-  saveInstagramMessage,
-  getInstagramHistory,
-  getOnboarding,
-  upsertOnboarding,
-  checkInstagramMessageExists,
-} from "@/db/queries";
+  formatOptionsText,
+  INTENT_OPTIONS,
+  toQuickReplies,
+} from "@/lib/onboarding/questions";
 import { InstagramClient } from "./client";
 import {
   handleInstagramOnboarding,
-  handleOnboardingReply,
   handleOnboardingPhotoSkip,
+  handleOnboardingReply,
 } from "./onboarding";
 import { sendSplitMessages } from "./utils";
-import { INTENT_OPTIONS, formatOptionsText, toQuickReplies } from "@/lib/onboarding/questions";
 
 // ------------------------------------------------
 // src/lib/instagram/handler.ts
@@ -42,7 +46,6 @@ const SCAN_THINKING_MESSAGES = [
   "Ruk, analyze karti hoon...",
   "Okay let me see...",
 ];
-
 
 /**
  * Instagram webhook messaging entry shape.
@@ -71,7 +74,7 @@ export interface InstagramMessagingEntry {
 export async function processInstagramMessage(
   entry: InstagramMessagingEntry,
   pageAccessToken: string,
-  pageId: string,
+  pageId: string
 ) {
   const msg = entry.message;
   if (!msg) return;
@@ -95,7 +98,54 @@ export async function processInstagramMessage(
 
     if (imageAttachment) {
       // ---- PHOTO PATH ----
-      await handlePhotoMessage(ig, senderId, dbUser, imageAttachment.payload.url, msg.text);
+      await handlePhotoMessage(
+        ig,
+        senderId,
+        dbUser,
+        imageAttachment.payload.url,
+        msg.text
+      );
+      return;
+    }
+
+    // Check for audio attachments (voice notes)
+    const audioAttachment = msg.attachments?.find((a) => a.type === "audio");
+    if (audioAttachment) {
+      // ---- VOICE NOTE PATH ----
+      try {
+        console.log(
+          "[Noor/IG] Voice note received from:",
+          senderId,
+          "url:",
+          audioAttachment.payload.url.substring(0, 60)
+        );
+        const audioBuffer = await ig.downloadImage(audioAttachment.payload.url);
+        console.log(
+          "[Noor/IG] Voice note downloaded, size:",
+          audioBuffer.length,
+          "bytes"
+        );
+        const transcribedText = await transcribeAudio(audioBuffer, "audio/mp4");
+        if (transcribedText) {
+          console.log(
+            "[Noor/IG] Transcription result:",
+            transcribedText.length,
+            "chars"
+          );
+          await handleTextMessage(ig, senderId, dbUser, transcribedText);
+          return;
+        }
+      } catch (err: any) {
+        console.error(
+          "[Noor/IG] Voice transcription error:",
+          err?.message || err
+        );
+      }
+      // Transcription failed or returned null
+      await ig.sendMessage(
+        senderId,
+        "Yaar, voice note sun nahi payi. Dobara bhejo ya type kar do? 🎤"
+      );
       return;
     }
 
@@ -108,10 +158,10 @@ export async function processInstagramMessage(
       return;
     }
 
-    // Unsupported message type (video, audio, sticker, etc.)
+    // Unsupported message type (video, sticker, etc.)
     await ig.sendMessage(
       senderId,
-      "Hey! Abhi mein sirf text aur photos handle kar sakti hoon. Photo bhejo for skin analysis ya text mein kuch bhi poocho!",
+      "Hey! Abhi mein sirf text, photos aur voice notes handle kar sakti hoon. Photo bhejo for skin analysis ya text mein kuch bhi poocho!"
     );
   } catch (error: any) {
     const errDetail = error?.message || String(error);
@@ -119,7 +169,7 @@ export async function processInstagramMessage(
     try {
       await ig.sendMessage(
         senderId,
-        "Sorry yaar, kuch problem ho gayi. Thodi der mein try karo? 🙏",
+        "Sorry yaar, kuch problem ho gayi. Thodi der mein try karo? 🙏"
       );
     } catch {
       console.error("[Instagram] Failed to send error message to user");
@@ -134,7 +184,7 @@ async function handlePhotoMessage(
   senderId: string,
   dbUser: { id: string },
   imageUrl: string,
-  caption?: string,
+  caption?: string
 ) {
   const userText = caption ?? "";
 
@@ -145,7 +195,7 @@ async function handlePhotoMessage(
   const blob = await put(
     `instagram-photos/${dbUser.id}/${Date.now()}.jpg`,
     photoBuffer,
-    { access: "public", contentType: "image/jpeg" },
+    { access: "public", contentType: "image/jpeg" }
   );
 
   // Send "thinking" message
@@ -162,7 +212,10 @@ async function handlePhotoMessage(
 
   // Prevent double processing: if already generating a profile, skip this photo
   if (onboardingState === "ig_generating_profile") {
-    console.log("[Noor/IG] Skipping photo — already generating profile for user:", senderId);
+    console.log(
+      "[Noor/IG] Skipping photo — already generating profile for user:",
+      senderId
+    );
     return;
   }
 
@@ -186,7 +239,7 @@ async function handlePhotoMessage(
     "for user",
     senderId,
     "caption:",
-    userText?.substring(0, 30),
+    userText?.substring(0, 30)
   );
 
   if (intent === "product") {
@@ -195,7 +248,7 @@ async function handlePhotoMessage(
     const analysis = await analyzeProductPhoto(
       photoBuffer,
       dbUser.id,
-      productMemories ?? undefined,
+      productMemories ?? undefined
     );
 
     await saveInstagramMessage({
@@ -213,7 +266,10 @@ async function handlePhotoMessage(
     // H3: If mid-onboarding awaiting selfie, re-prompt after product check
     if (onboardingState === "ig_awaiting_selfie") {
       await new Promise((r) => setTimeout(r, 1000));
-      await ig.sendMessage(senderId, "Product check done! Ab selfie bhi bhej do for skin analysis 📸");
+      await ig.sendMessage(
+        senderId,
+        "Product check done! Ab selfie bhi bhej do for skin analysis 📸"
+      );
     }
     return;
   }
@@ -221,9 +277,11 @@ async function handlePhotoMessage(
   // ---- SELFIE PATH ----
 
   // Explicit, mutually exclusive onboarding checks
-  const isMidOnboarding = onboardingState !== null && onboardingState.startsWith("ig_awaiting");
+  const isMidOnboarding =
+    onboardingState !== null && onboardingState.startsWith("ig_awaiting");
   const isGenerating = onboardingState === "ig_generating_profile";
-  const isComplete = onboardingState === "complete" || onboardingState === "skipped";
+  const isComplete =
+    onboardingState === "complete" || onboardingState === "skipped";
   const isFirstScan = !isComplete && !isMidOnboarding && !isGenerating;
 
   const imageBase64 = photoBuffer.toString("base64");
@@ -244,12 +302,16 @@ async function handlePhotoMessage(
     ]);
   } catch (err: any) {
     if (err?.message === "SCAN_TIMEOUT") {
-      await ig.sendMessage(senderId, "Yaar processing mein thoda time lag raha hai, ek aur baar try karo? 📸");
+      await ig.sendMessage(
+        senderId,
+        "Yaar processing mein thoda time lag raha hai, ek aur baar try karo? 📸"
+      );
       return;
     }
     throw err;
   }
-  const { scanResult, scanId, comparisonBlock, cycleContext } = scanPipelineResult;
+  const { scanResult, scanId, comparisonBlock, cycleContext } =
+    scanPipelineResult;
 
   // A4: User sent selfie while in awaiting_selfie -> skip straight to card generation
   // (questions were already answered during text-based onboarding)
@@ -261,7 +323,14 @@ async function handlePhotoMessage(
     });
     const { handleSelfieAfterQuestions } = await import("./onboarding");
     await handleSelfieAfterQuestions(
-      ig, senderId, dbUser.id, scanResult, scanId, blob.url, cycleContext, comparisonBlock,
+      ig,
+      senderId,
+      dbUser.id,
+      scanResult,
+      scanId,
+      blob.url,
+      cycleContext,
+      comparisonBlock
     );
     return;
   }
@@ -282,7 +351,7 @@ async function handlePhotoMessage(
       scanId,
       blob.url,
       cycleContext,
-      comparisonBlock,
+      comparisonBlock
     );
     return;
   }
@@ -295,7 +364,14 @@ async function handlePhotoMessage(
       content: userText || "Sent another selfie during onboarding",
     });
     await handleOnboardingPhotoSkip(
-      ig, senderId, dbUser.id, scanResult, scanId, blob.url, cycleContext, comparisonBlock,
+      ig,
+      senderId,
+      dbUser.id,
+      scanResult,
+      scanId,
+      blob.url,
+      cycleContext,
+      comparisonBlock
     );
     return;
   }
@@ -314,7 +390,7 @@ async function handlePhotoMessage(
       model: getLanguageModel(DEFAULT_CHAT_MODEL),
       system: buildRuhiSystemPrompt(
         cycleContext,
-        photoMemoriesBlock ?? undefined,
+        photoMemoriesBlock ?? undefined
       ),
       messages: [
         {
@@ -358,7 +434,7 @@ async function handlePhotoMessage(
       const reportBlob = await put(
         `instagram-reports/${dbUser.id}/${scanId}.png`,
         reportBuffer,
-        { access: "public", contentType: "image/png" },
+        { access: "public", contentType: "image/png" }
       );
 
       await ig.sendImage(senderId, reportBlob.url);
@@ -366,7 +442,7 @@ async function handlePhotoMessage(
     } catch (reportErr: any) {
       console.error(
         "[Noor/IG] Report card FAILED:",
-        reportErr?.message || reportErr,
+        reportErr?.message || reportErr
       );
     }
   }
@@ -377,14 +453,18 @@ async function handlePhotoMessage(
 async function startInstagramOnboarding(
   ig: InstagramClient,
   senderId: string,
-  userId: string,
+  userId: string
 ): Promise<void> {
-  await upsertOnboarding({ userId, state: "ig_awaiting_intent", answers: {} as any });
+  await upsertOnboarding({
+    userId,
+    state: "ig_awaiting_intent",
+    answers: {} as any,
+  });
   const optionsText = formatOptionsText(INTENT_OPTIONS);
   await ig.sendQuickReplies(
     senderId,
     `Heyy! 💕 Main Noor hoon, tumhari skincare bestie.\n\nBatao, what's on your mind? (${optionsText})`,
-    toQuickReplies(INTENT_OPTIONS, "INTENT"),
+    toQuickReplies(INTENT_OPTIONS, "INTENT")
   );
 }
 
@@ -394,7 +474,7 @@ async function handleTextMessage(
   ig: InstagramClient,
   senderId: string,
   dbUser: { id: string },
-  userText: string,
+  userText: string
 ) {
   // Check onboarding status
   const onboardingRow = await getOnboarding(dbUser.id);
@@ -412,25 +492,41 @@ async function handleTextMessage(
   }
 
   // Opt-out detection
-  const OPT_OUT_PATTERNS = /\b(stop|unsubscribe|opt.?out|band karo|mat bhejo|nahi chahiye)\b/i;
+  const OPT_OUT_PATTERNS =
+    /\b(stop|unsubscribe|opt.?out|band karo|mat bhejo|nahi chahiye)\b/i;
   if (OPT_OUT_PATTERNS.test(userText)) {
-    await saveInstagramMessage({ instagramSenderId: senderId, role: "user", content: userText });
-    await ig.sendMessage(senderId,
-      "Theek hai, main messages nahi bhejungi 💙 Kabhi baat karni ho toh wapas aa jana.");
+    await saveInstagramMessage({
+      instagramSenderId: senderId,
+      role: "user",
+      content: userText,
+    });
+    await ig.sendMessage(
+      senderId,
+      "Theek hai, main messages nahi bhejungi 💙 Kabhi baat karni ho toh wapas aa jana."
+    );
     const { upsertMemory } = await import("@/db/queries");
-    await upsertMemory({ userId: dbUser.id, category: "preference", key: "opted_out", value: "true" });
+    await upsertMemory({
+      userId: dbUser.id,
+      category: "preference",
+      key: "opted_out",
+      value: "true",
+    });
     return;
   }
 
   // Soft history reset
-  const RESET_PATTERNS = /\b(reset|clear|naya shuru|fresh start|sab bhool jao|forget everything)\b/i;
+  const RESET_PATTERNS =
+    /\b(reset|clear|naya shuru|fresh start|sab bhool jao|forget everything)\b/i;
   if (RESET_PATTERNS.test(userText)) {
     await saveInstagramMessage({
       instagramSenderId: senderId,
       role: "assistant",
       content: "[CONVERSATION RESET BY USER]",
     });
-    await ig.sendMessage(senderId, "Fresh start! 💕 Pichli baatein yaad nahi, batao kya chahiye.");
+    await ig.sendMessage(
+      senderId,
+      "Fresh start! 💕 Pichli baatein yaad nahi, batao kya chahiye."
+    );
     return;
   }
 
@@ -451,8 +547,11 @@ async function handleTextMessage(
   });
 
   // Respect conversation reset boundaries
-  const resetIdx = history.map(m => m.content).lastIndexOf("[CONVERSATION RESET BY USER]");
-  const effectiveHistory = resetIdx >= 0 ? history.slice(resetIdx + 1) : history;
+  const resetIdx = history
+    .map((m) => m.content)
+    .lastIndexOf("[CONVERSATION RESET BY USER]");
+  const effectiveHistory =
+    resetIdx >= 0 ? history.slice(resetIdx + 1) : history;
 
   // Filter and clean messages for the AI
   const aiMessages = effectiveHistory
@@ -460,7 +559,7 @@ async function handleTextMessage(
       (m) =>
         !m.content.includes("problem ho rahi hai") &&
         !m.content.includes("Something went wrong") &&
-        !m.content.includes("[CONVERSATION RESET BY USER]"),
+        !m.content.includes("[CONVERSATION RESET BY USER]")
     )
     .map((m) => ({
       role: m.role as "user" | "assistant",
@@ -469,7 +568,7 @@ async function handleTextMessage(
 
   // Validate: ensure proper alternation (Anthropic requirement)
   const validMessages = aiMessages.filter(
-    (m) => m.content && m.content.trim().length > 0,
+    (m) => m.content && m.content.trim().length > 0
   );
 
   // Ensure first message is from user
@@ -529,7 +628,7 @@ async function handleTextMessage(
 
   // Post-hoc safety net
   runPostHocSafetyNet(dbUser.id, userText).catch((err) =>
-    console.error("[SafetyNet/IG] Unhandled:", err),
+    console.error("[SafetyNet/IG] Unhandled:", err)
   );
 
   // Send response
@@ -541,7 +640,7 @@ async function handleTextMessage(
 export async function handleInstagramPostback(
   entry: { sender: { id: string }; postback: { payload: string } },
   pageAccessToken: string,
-  pageId: string,
+  pageId: string
 ): Promise<void> {
   const senderId = entry.sender.id;
   const ig = new InstagramClient(pageAccessToken, pageId);
@@ -550,13 +649,22 @@ export async function handleInstagramPostback(
   const payload = entry.postback.payload;
 
   if (payload === "ICE_about") {
-    await upsertOnboarding({ userId: dbUser.id, state: "ig_awaiting_intent", answers: {} as any });
-    await sendSplitMessages(ig, senderId,
-      "Main Noor hoon 💕|||Tumhari personal skin companion, scan, product check, routine rating. Doctor nahi, friend hoon.");
+    await upsertOnboarding({
+      userId: dbUser.id,
+      state: "ig_awaiting_intent",
+      answers: {} as any,
+    });
+    await sendSplitMessages(
+      ig,
+      senderId,
+      "Main Noor hoon 💕|||Tumhari personal skin companion, scan, product check, routine rating. Doctor nahi, friend hoon."
+    );
     const optionsText = formatOptionsText(INTENT_OPTIONS);
-    await ig.sendQuickReplies(senderId,
+    await ig.sendQuickReplies(
+      senderId,
       `Kahan se shuru karein? (${optionsText})`,
-      toQuickReplies(INTENT_OPTIONS, "INTENT"));
+      toQuickReplies(INTENT_OPTIONS, "INTENT")
+    );
     return;
   }
 
@@ -568,6 +676,10 @@ export async function handleInstagramPostback(
   const intentPayload = iceToIntent[payload];
   if (!intentPayload) return;
 
-  await upsertOnboarding({ userId: dbUser.id, state: "ig_awaiting_intent", answers: {} as any });
+  await upsertOnboarding({
+    userId: dbUser.id,
+    state: "ig_awaiting_intent",
+    answers: {} as any,
+  });
   await handleOnboardingReply(ig, senderId, dbUser.id, intentPayload);
 }
