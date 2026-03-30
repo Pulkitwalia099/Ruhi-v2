@@ -2,6 +2,7 @@ import {
   getAllProactiveEligibleUsers,
   getUserLastMessageTime,
   getProactiveCountSince,
+  findMemoryByKey,
 } from "@/db/queries";
 import { checkProductFollowups } from "./product-followup";
 import { checkScanNudge } from "./scan-nudge";
@@ -58,6 +59,12 @@ async function processUser(
   telegramChatId: number,
   botToken: string,
 ): Promise<number> {
+  // Respect opt-out preference
+  const optedOut = await findMemoryByKey({ userId, category: "preference", key: "opted_out" });
+  if (optedOut?.value === "true") {
+    return 0;
+  }
+
   // Check activity status
   const lastMessageTime = await getUserLastMessageTime({ userId });
   const isInactive = !lastMessageTime ||

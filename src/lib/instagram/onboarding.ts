@@ -83,20 +83,20 @@ export function generateFirstImpression(scanResult: ScanResults): string {
 
 const FRIENDSHIP_OPENERS: Record<string, string> = {
   acne:
-    "Acne ke baare mein, mujhe batao kya products use kar rahi ho? " +
-    "Photo bhejo, main check karti hoon ingredients 🧴",
+    "Waise kya products use kar rahi ho abhi acne pe? " +
+    "Photo bhej do product ki, ingredients check karti hoon 🧴",
   pigmentation:
-    "Pigmentation ke liye ek game-changer hai niacinamide. " +
-    "Use karti ho? Agar nahi toh batao, recommend karungi 💕",
+    "Niacinamide try kiya hai kabhi? Pigmentation pe " +
+    "legit kaam karta hai. Batao, recommend karun?",
   dull_skin:
-    "Glow chahiye? Ek trick, kal subah face wash ke baad ice cube " +
+    "Ek quick trick — kal subah face wash ke baad ice cube " +
     "rub karo 30 seconds. Thank me later ✨",
   dark_circles:
-    "Dark circles mostly hydration + sleep se improve hote hain. " +
-    "But topically bhi help kar sakti hoon, want tips?",
+    "Dark circles pe hydration + sleep sabse zyada help karta hai. " +
+    "Topically bhi kuch kar sakte hain, batao tips chahiye?",
   overall:
-    "Photo bhejo anytime, routine tips, product checks, " +
-    "ya bas chat karne ka mann ho 💕",
+    "Photo bhejo kabhi bhi, routine tips ho ya product check, " +
+    "ya bas baat karne ka mann ho 💕",
 };
 
 export function generateFriendshipOpener(concern: string): string {
@@ -495,6 +495,11 @@ export async function handleOnboardingPhotoSkip(
   ig: InstagramClient,
   senderId: string,
   userId: string,
+  scanResult: ScanResults,
+  scanId: string,
+  blobUrl: string,
+  cycleContext: string | null,
+  comparisonBlock: string,
 ): Promise<void> {
   const row = await getOnboarding(userId);
   if (!row) return;
@@ -502,6 +507,13 @@ export async function handleOnboardingPhotoSkip(
   const answers = (row.answers && typeof row.answers === "object"
     ? row.answers
     : {}) as ExtendedAnswers;
+
+  // Store scan data in answers for generateProfileAndCard
+  answers._scanResultJson = JSON.stringify(scanResult);
+  answers._scanId = scanId;
+  answers._blobUrl = blobUrl;
+  answers._cycleContext = cycleContext ?? undefined;
+  answers._comparisonBlock = comparisonBlock;
 
   // Fill in defaults for missing answers
   if (!answers.skinType) answers.skinType = "unknown";
@@ -514,10 +526,11 @@ export async function handleOnboardingPhotoSkip(
     answers: answers as unknown as OnboardingAnswers,
   });
 
-  await ig.sendMessage(
-    senderId,
-    "Ek second, pehli photo se tumhari profile bana rahi hoon! ✨",
-  );
+  // Send first impression (instant, template-based)
+  const firstImpression = generateFirstImpression(scanResult);
+  await ig.sendMessage(senderId, firstImpression);
+
+  await new Promise((r) => setTimeout(r, 1500));
 
   await generateProfileAndCard(ig, senderId, userId, answers);
 }
@@ -638,6 +651,7 @@ async function generateProfileAndCard(
     await ig.sendTypingIndicator(senderId);
 
     // Generate and send Skin Profile Card
+    console.log("[IG Onboarding] Step 1: Importing profile card modules...");
     const { getPersonalityLabel } = await import(
       "@/lib/report/personality-labels"
     );
@@ -645,29 +659,38 @@ async function generateProfileAndCard(
       "@/lib/report/skin-profile"
     );
 
+    console.log("[IG Onboarding] Step 2: Generating personality label...");
     const label = getPersonalityLabel({
       score: scanResult.overall_score,
       concern: answers.concern ?? "overall",
       skinType: answers.skinType ?? "unknown",
-      routineLevel: answers.routine ?? "none", // Part D fix: use actual routine, not hardcoded "none"
+      routineLevel: answers.routine ?? "none",
     });
 
+    console.log("[IG Onboarding] Step 3: Building profile card image (Satori)...");
     const imageResponse = buildProfileCardResponse(
       scanResult,
       name,
       label,
       new Date(),
     );
+
+    console.log("[IG Onboarding] Step 4: Converting to buffer...");
     const cardBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    console.log("[IG Onboarding] Step 4 done: buffer size =", cardBuffer.length, "bytes");
 
     // Upload to Vercel Blob (Instagram needs a public URL)
+    console.log("[IG Onboarding] Step 5: Uploading to Vercel Blob...");
     const cardBlob = await put(
       `instagram-profiles/${userId}/${scanId ?? Date.now()}.png`,
       cardBuffer,
       { access: "public", contentType: "image/png" },
     );
+    console.log("[IG Onboarding] Step 5 done: blob URL =", cardBlob.url);
 
+    console.log("[IG Onboarding] Step 6: Sending image via Instagram API...");
     await ig.sendImage(senderId, cardBlob.url);
+    console.log("[IG Onboarding] Step 6 done: image sent successfully");
 
     // Flush answers to memory system
     await flushAnswersToMemory(userId, answers, scanResult, "instagram");
@@ -688,8 +711,7 @@ async function generateProfileAndCard(
 
     console.log("[IG Onboarding] Profile card sent, awaiting recommendations choice for user:", userId);
   } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    console.error("[IG Onboarding] Profile generation failed:", errMsg);
+    console.error("[IG Onboarding] Profile generation failed:", error);
     await ig.sendMessage(
       senderId,
       "Sorry, profile banane mein kuch issue aaya. But your scan is saved! " +

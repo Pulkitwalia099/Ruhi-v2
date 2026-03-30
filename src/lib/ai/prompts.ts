@@ -54,6 +54,7 @@ export function buildRuhiSystemPrompt(
   // Inject memories after persona, before tool instructions
   if (memoriesBlock) {
     prompt += `\n\n${memoriesBlock}`;
+    prompt += `\n\n**IMPORTANT: You have memories about this user. Your FIRST message MUST reference something you remember — use "tumne bataya tha" / "last time bola tha" framing. This is what makes you feel like a friend, not a chatbot.**`;
   }
 
   prompt += `\n\n## Tool Usage

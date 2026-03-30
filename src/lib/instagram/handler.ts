@@ -119,7 +119,7 @@ export async function processInstagramMessage(
     try {
       await ig.sendMessage(
         senderId,
-        "Oops! Something went wrong. Please try again in a moment.",
+        "Sorry yaar, kuch problem ho gayi. Thodi der mein try karo? 🙏",
       );
     } catch {
       console.error("[Instagram] Failed to send error message to user");
@@ -288,13 +288,15 @@ async function handlePhotoMessage(
   }
 
   // Mid-onboarding photo → skip remaining questions, generate card with defaults
-  if (isMidOnboarding && scanResult) {
+  if (isMidOnboarding && scanResult && scanId) {
     await saveInstagramMessage({
       instagramSenderId: senderId,
       role: "user",
       content: userText || "Sent another selfie during onboarding",
     });
-    await handleOnboardingPhotoSkip(ig, senderId, dbUser.id);
+    await handleOnboardingPhotoSkip(
+      ig, senderId, dbUser.id, scanResult, scanId, blob.url, cycleContext, comparisonBlock,
+    );
     return;
   }
 
