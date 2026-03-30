@@ -237,11 +237,9 @@ export async function processTelegramUpdate(
           );
           return;
         }
-      } catch (err: any) {
-        console.error(
-          "[Noor/TG] Voice transcription error:",
-          err?.message || err
-        );
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("[Noor/TG] Voice transcription error:", errMsg);
         await tg.sendMessage(
           chatId,
           "Yaar, voice note sun nahi payi. Dobara bhejo ya type kar do? 🎤"
