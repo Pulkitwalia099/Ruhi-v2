@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({
@@ -45,7 +45,7 @@ describe("transcribeAudio", () => {
         headers: expect.objectContaining({
           Authorization: "Bearer test-key-123",
         }),
-      }),
+      })
     );
   });
 

@@ -11,7 +11,7 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB — Whisper API limit
  */
 export async function transcribeAudio(
   audioBuffer: Buffer,
-  mimeType = "audio/ogg",
+  mimeType = "audio/ogg"
 ): Promise<string | null> {
   if (audioBuffer.length > MAX_FILE_SIZE) {
     console.warn("[Transcribe] File too large:", audioBuffer.length, "bytes");
@@ -25,12 +25,20 @@ export async function transcribeAudio(
   }
 
   try {
-    const ext = mimeType === "audio/mp4" ? "m4a" : "ogg";
+    const EXT_MAP: Record<string, string> = {
+      "audio/ogg": "ogg",
+      "audio/mp4": "m4a",
+      "audio/x-m4a": "m4a",
+      "audio/mpeg": "mp3",
+      "audio/webm": "webm",
+      "audio/wav": "wav",
+    };
+    const ext = EXT_MAP[mimeType] ?? "ogg";
     const form = new FormData();
     form.append(
       "file",
       new Blob([audioBuffer], { type: mimeType }),
-      `voice.${ext}`,
+      `voice.${ext}`
     );
     form.append("model", "whisper-1");
 
