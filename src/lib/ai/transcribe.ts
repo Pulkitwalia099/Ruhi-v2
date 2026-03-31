@@ -2,11 +2,12 @@ import "server-only";
 
 import { env } from "@/lib/env";
 
-const WHISPER_URL = "https://api.openai.com/v1/audio/transcriptions";
+const GROQ_WHISPER_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB — Whisper API limit
 
 /**
- * Transcribe an audio buffer to text using OpenAI Whisper.
+ * Transcribe an audio buffer to text using Groq's Whisper endpoint.
+ * Uses whisper-large-v3-turbo — same quality as OpenAI, ~5-10x faster.
  * Returns the transcribed text, or null on failure.
  */
 export async function transcribeAudio(
@@ -18,11 +19,17 @@ export async function transcribeAudio(
     return null;
   }
 
-  const apiKey = env.OPENAI_API_KEY;
+  const apiKey = env.GROQ_API_KEY ?? env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.warn("[Transcribe] OPENAI_API_KEY not set, skipping transcription");
+    console.warn("[Transcribe] GROQ_API_KEY (or OPENAI_API_KEY) not set, skipping transcription");
     return null;
   }
+
+  const useGroq = !!env.GROQ_API_KEY;
+  const whisperUrl = useGroq
+    ? GROQ_WHISPER_URL
+    : "https://api.openai.com/v1/audio/transcriptions";
+  const modelName = useGroq ? "whisper-large-v3-turbo" : "whisper-1";
 
   try {
     const EXT_MAP: Record<string, string> = {
@@ -40,9 +47,9 @@ export async function transcribeAudio(
       new Blob([audioBuffer], { type: mimeType }),
       `voice.${ext}`
     );
-    form.append("model", "whisper-1");
+    form.append("model", modelName);
 
-    const res = await fetch(WHISPER_URL, {
+    const res = await fetch(whisperUrl, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}` },
       body: form,

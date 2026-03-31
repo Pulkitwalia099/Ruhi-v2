@@ -21,6 +21,7 @@ const envSchema = z.object({
 
   // --- AI Providers (set the ones you use) ---
   OPENAI_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
 

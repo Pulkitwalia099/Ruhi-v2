@@ -205,6 +205,7 @@ export async function processTelegramUpdate(
     // --- Transcribe voice notes to text ---
     let voiceTranscribedText: string | undefined;
     if (msg.voice) {
+      await tg.sendChatAction(chatId);
       try {
         console.log(
           "[Noor/TG] Voice note received, chat:",

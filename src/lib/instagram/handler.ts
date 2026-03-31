@@ -112,6 +112,7 @@ export async function processInstagramMessage(
     const audioAttachment = msg.attachments?.find((a) => a.type === "audio");
     if (audioAttachment) {
       // ---- VOICE NOTE PATH ----
+      await ig.sendTypingIndicator(senderId);
       try {
         console.log(
           "[Noor/IG] Voice note received from:",

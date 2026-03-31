@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({
-  env: { OPENAI_API_KEY: "test-key-123" },
+  env: { GROQ_API_KEY: "test-groq-key-123" },
 }));
 
 import { transcribeAudio } from "@/lib/ai/transcribe";
@@ -39,11 +39,11 @@ describe("transcribeAudio", () => {
     await transcribeAudio(Buffer.from("audio-data"), "audio/ogg");
 
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://api.openai.com/v1/audio/transcriptions",
+      "https://api.groq.com/openai/v1/audio/transcriptions",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
-          Authorization: "Bearer test-key-123",
+          Authorization: "Bearer test-groq-key-123",
         }),
       })
     );
