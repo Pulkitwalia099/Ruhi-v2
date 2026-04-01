@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -6,13 +7,12 @@ import { auth } from "@/lib/auth";
 import { getStreakCard, getUserProducts, db } from "@/db/queries";
 import { user as userTable } from "@/db/schema";
 
-export default async function ProfilePage() {
+async function ProfileContent() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
 
-  // Query full user row (session type doesn't include telegramId/instagramId)
   const [fullUser] = await db
     .select()
     .from(userTable)
@@ -27,7 +27,7 @@ export default async function ProfilePage() {
   ]);
 
   return (
-    <div className="min-h-dvh font-[family-name:var(--font-dm-sans)]" style={{ backgroundColor: "#1A1815", color: "#FAFAF9" }}>
+    <>
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(250, 250, 249, 0.08)" }}>
         <Link href="/home" className="text-sm" style={{ color: "#A8A29E" }}>
@@ -131,7 +131,7 @@ export default async function ProfilePage() {
               {products.slice(0, 10).map((p) => (
                 <Link
                   key={p.id}
-                  href={`/chat/new?prompt=${encodeURIComponent(`Tell me more about ${p.name}`)}`}
+                  href={`/chat?prompt=${encodeURIComponent(`Tell me more about ${p.name}`)}`}
                   className="flex items-center gap-3 py-2"
                 >
                   <div
@@ -158,6 +158,22 @@ export default async function ProfilePage() {
           )}
         </section>
       </div>
+    </>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <div className="min-h-dvh font-[family-name:var(--font-dm-sans)]" style={{ backgroundColor: "#1A1815", color: "#FAFAF9" }}>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center py-20" style={{ color: "#A8A29E" }}>
+            Loading...
+          </div>
+        }
+      >
+        <ProfileContent />
+      </Suspense>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getHomescreenData } from "@/db/queries";
@@ -8,7 +9,7 @@ import { SuggestionChips } from "@/components/pwa/suggestion-chips";
 import { HomeInputBar } from "@/components/pwa/home-input-bar";
 import { HomeHeader } from "@/components/pwa/home-header";
 
-export default async function HomescreenPage() {
+async function HomescreenContent() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return null;
 
@@ -19,7 +20,7 @@ export default async function HomescreenPage() {
   ]);
 
   return (
-    <div className="flex flex-col min-h-dvh">
+    <>
       <HomeHeader userName={session.user.name ?? undefined} />
 
       <main className="flex-1 px-4 pb-24">
@@ -40,6 +41,22 @@ export default async function HomescreenPage() {
       </main>
 
       <HomeInputBar />
+    </>
+  );
+}
+
+export default function HomescreenPage() {
+  return (
+    <div className="flex flex-col min-h-dvh">
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center" style={{ color: "#A8A29E" }}>
+            Loading...
+          </div>
+        }
+      >
+        <HomescreenContent />
+      </Suspense>
     </div>
   );
 }

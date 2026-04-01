@@ -1,20 +1,15 @@
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 
 export const metadata = {
   title: "Sakhiyaan — Noor's Space",
   manifest: "/manifest.json",
+};
+
+export const viewport = {
   themeColor: "#1A1815",
 };
 
-export default async function PWALayout({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    redirect("/login");
-  }
-
+export default function PWALayout({ children }: { children: ReactNode }) {
   return (
     <div
       className="min-h-dvh font-[family-name:var(--font-dm-sans)]"
