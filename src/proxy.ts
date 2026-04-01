@@ -20,6 +20,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/api/discord") ||
+    pathname.startsWith("/api/cron") ||
     pathname.startsWith("/privacy")
   ) {
     return NextResponse.next();
