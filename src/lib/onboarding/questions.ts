@@ -23,6 +23,7 @@ export const CONCERN_OPTIONS: QuickReplyOption[] = [
   { label: "Pigmentation", value: "pigmentation", emoji: "🌑" },
   { label: "Dull skin", value: "dull_skin", emoji: "😶" },
   { label: "Dark circles", value: "dark_circles", emoji: "👀" },
+  { label: "Anti-aging", value: "aging", emoji: "🧴" },
   { label: "Overall", value: "overall", emoji: "✨" },
 ];
 

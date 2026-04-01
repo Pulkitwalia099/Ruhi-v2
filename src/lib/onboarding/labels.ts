@@ -11,7 +11,7 @@ export const ROUTINE_LABELS: Record<string, string> = {
 export const CONCERN_LABELS: Record<string, string> = {
   acne: "Acne / breakouts", pigmentation: "Pigmentation / dark spots",
   dull_skin: "Dull skin / no glow", dark_circles: "Dark circles",
-  overall: "Overall improvement",
+  aging: "Anti-aging / fine lines", overall: "Overall improvement",
 };
 
 export const ALLERGY_LABELS: Record<string, string> = {

@@ -94,6 +94,9 @@ const FRIENDSHIP_OPENERS: Record<string, string> = {
   dark_circles:
     "Dark circles pe hydration + sleep sabse zyada help karta hai. " +
     "Topically bhi kuch kar sakte hain, batao tips chahiye?",
+  aging:
+    "Retinol abhi se start karo toh long term mein bahut fark padega. " +
+    "Routine batao, sahi wala suggest karti hoon 💕",
   overall:
     "Photo bhejo kabhi bhi, routine tips ho ya product check, " +
     "ya bas baat karne ka mann ho 💕",
@@ -332,7 +335,7 @@ export async function handleOnboardingReply(
         const payloadMap: Record<string, string> = {
           CONCERN_acne: "acne", CONCERN_pigmentation: "pigmentation",
           CONCERN_dull_skin: "dull_skin", CONCERN_dark_circles: "dark_circles",
-          CONCERN_overall: "overall",
+          CONCERN_aging: "aging", CONCERN_overall: "overall",
         };
         let concern = payloadMap[text.trim()] ?? parseConcern(text);
 
@@ -361,6 +364,7 @@ export async function handleOnboardingReply(
           pigmentation: "Pigmentation, haan yeh common hai but fixable",
           dull_skin: "Glow nahi aa raha? Chalo dekhte hain kya ho raha hai",
           dark_circles: "Dark circles, mostly hydration + sleep but topically bhi help hoti hai",
+          aging: "Anti-aging, retinol + SPF combo se bahut fark padta hai",
           overall: "Overall improvement, solid. Dekhte hain kahan se start karein",
         };
         const ack = concernAckMap[concern] ?? concernAckMap.overall;

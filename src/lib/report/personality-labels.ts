@@ -41,6 +41,10 @@ const LABELS = {
     { text: "Soft Girl Skin", emoji: "🌸" },
     { text: "Gentle Glow", emoji: "🦋" },
   ],
+  aging: [
+    { text: "Aging Like Fine Wine", emoji: "🍷" },
+    { text: "Timeless Skin Energy", emoji: "⏳" },
+  ],
   justStarting: [
     { text: "Day One Energy", emoji: "🚀" },
     { text: "Fresh Start, Fresh Face", emoji: "🌱" },
@@ -92,7 +96,12 @@ export function getPersonalityLabel({
     return pick(LABELS.minimalist, score);
   }
 
-  // 5. Sensitive skin (score 5+)
+  // 5. Anti-aging (score 5+)
+  if (score >= 5 && concern === "aging") {
+    return pick(LABELS.aging, score);
+  }
+
+  // 6. Sensitive skin (score 5+)
   if (score >= 5 && skinType === "sensitive") {
     return pick(LABELS.sensitive, score);
   }

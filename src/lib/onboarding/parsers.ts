@@ -12,7 +12,7 @@ const CONCERN_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\b(pigment\w*|dark spots?|daag|dhab\w*|hyperpig\w*|melasma|uneven)\b/i, value: "pigmentation" },
   { pattern: /\b(dull|glow nahi|no glow|lifeless|tired look|radiance)\b/i, value: "dull_skin" },
   { pattern: /\b(dark circles?|aankh|under eye|puffy eye|panda)\b/i, value: "dark_circles" },
-  { pattern: /\b(aging|anti.?aging|wrinkles?|fine lines?|old|budh?apa)\b/i, value: "pigmentation" },
+  { pattern: /\b(aging|anti.?aging|wrinkles?|fine lines?|old|budh?apa)\b/i, value: "aging" },
   { pattern: /\b(every|sab|overall|general|all|improve)\b/i, value: "overall" },
 ];
 

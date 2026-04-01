@@ -67,6 +67,7 @@ const CONCERN_KEYBOARD = [
   [{ text: "🌑 Pigmentation / dark spots", callback_data: "ob_concern:pigmentation" }],
   [{ text: "😶‍🌫️ Dull skin / no glow", callback_data: "ob_concern:dull_skin" }],
   [{ text: "👀 Dark circles", callback_data: "ob_concern:dark_circles" }],
+  [{ text: "🧴 Anti-aging / fine lines", callback_data: "ob_concern:aging" }],
   [{ text: "✨ Bas overall improve karna hai", callback_data: "ob_concern:overall" }],
 ];
 
