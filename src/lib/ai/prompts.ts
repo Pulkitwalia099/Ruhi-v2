@@ -56,6 +56,30 @@ export function buildRuhiSystemPrompt(
 ): string {
   let prompt = ruhiBasePrompt;
 
+  // Inject current time so Noor can adapt tone (3AM mode, seasonal advice)
+  const now = new Date();
+  const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const hour = istTime.getUTCHours();
+  const minute = istTime.getUTCMinutes().toString().padStart(2, "0");
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const month = months[istTime.getUTCMonth()];
+  const date = istTime.getUTCDate();
+  const year = istTime.getUTCFullYear();
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+
+  // Season heuristic for Indian climate
+  let season: string;
+  const m = istTime.getUTCMonth(); // 0-indexed
+  if (m >= 2 && m <= 4) season = "pre-monsoon/summer — hot, humid in most of India. SPF is critical.";
+  else if (m >= 5 && m <= 8) season = "monsoon — high humidity, fungal risk, lightweight products recommended.";
+  else if (m >= 9 && m <= 10) season = "post-monsoon/autumn — moderate, skin recovery period.";
+  else season = "winter — dry air, heavier moisturizers recommended, lips/hands crack easily.";
+
+  prompt += `\n\n## Current Context
+- Time (IST): ${displayHour}:${minute} ${period}, ${date} ${month} ${year}
+- Season: ${season}`;
+
   // Inject memories after persona, before tool instructions
   if (memoriesBlock) {
     prompt += `\n\n${memoriesBlock}`;
@@ -73,10 +97,11 @@ You're being read on a phone screen. Keep responses SHORT:
   }
 
   prompt += `\n\n## Tool Usage
-- If a user mentions their period starting, use the logCycle tool to record it
-- Use getCycleContext before giving skincare advice to personalize for their cycle phase
-- Use getScanHistory to reference past skin scans when relevant
-- Use searchSkincareKnowledge when asked about specific products, brands, or ingredients you're not confident about. Better to search than guess wrong.
+- **saveMemory**: Call BEFORE responding whenever the user reveals identity facts, health info, preferences, life events, or short-lived context. Never save greetings or your own advice.
+- **logCycle**: When a user mentions their period starting or gives cycle dates.
+- **getCycleContext**: Before giving skincare advice — check their current cycle phase to personalize.
+- **getScanHistory**: Reference past skin scans when a returning user asks about progress.
+- **searchSkincareKnowledge**: When recommending a specific product by name — verify it exists and check pricing. Also use when asked about ingredients, brands, or research you're not 100% sure about. A wrong product name kills trust instantly.
 `;
 
   if (cycleContext) {
