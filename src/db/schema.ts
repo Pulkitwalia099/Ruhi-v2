@@ -384,3 +384,48 @@ export const waitlist = pgTable("waitlist", {
 });
 
 export type Waitlist = InferSelectModel<typeof waitlist>;
+
+// ---- Products library (PWA Phase 1) ----
+export const product = pgTable("products", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  imageUrl: text("imageUrl"),
+  noorAssessment: jsonb("noorAssessment").default({}),
+  scannedAt: timestamp("scannedAt").notNull().defaultNow(),
+  source: text("source", { enum: ["chat", "scan", "manual"] })
+    .notNull()
+    .default("chat"),
+});
+
+export type Product = InferSelectModel<typeof product>;
+
+// ---- Streak tracking (PWA Phase 1) ----
+export const streak = pgTable("streaks", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" })
+    .unique(),
+  currentStreak: integer("currentStreak").notNull().default(0),
+  longestStreak: integer("longestStreak").notNull().default(0),
+  lastActiveDate: timestamp("lastActiveDate"),
+});
+
+export type Streak = InferSelectModel<typeof streak>;
+
+// ---- Push subscriptions (PWA Phase 2 — schema only) ----
+export const pushSubscription = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull(),
+  p256dhKey: text("p256dhKey").notNull(),
+  authKey: text("authKey").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type PushSubscription = InferSelectModel<typeof pushSubscription>;

@@ -30,8 +30,10 @@ import {
   message,
   onboarding,
   type OnboardingAnswers,
+  product,
   proactiveLog,
   scan,
+  streak,
   stream,
   instagramMessage,
   telegramMessage,
@@ -1470,4 +1472,123 @@ export async function getMemoriesByUserAndCategory(
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get memories by category");
   }
+}
+
+// ---- PWA Homescreen Queries ----
+
+export async function getHomescreenData({ userId }: { userId: string }) {
+  const latestScans = await db
+    .select()
+    .from(scan)
+    .where(eq(scan.userId, userId))
+    .orderBy(desc(scan.createdAt))
+    .limit(5);
+
+  const userStreak = await db
+    .select()
+    .from(streak)
+    .where(eq(streak.userId, userId))
+    .limit(1);
+
+  const latestCycle = await db
+    .select()
+    .from(cycle)
+    .where(eq(cycle.userId, userId))
+    .orderBy(desc(cycle.createdAt))
+    .limit(1);
+
+  return {
+    scans: latestScans,
+    streak: userStreak[0] ?? null,
+    cycle: latestCycle[0] ?? null,
+  };
+}
+
+export async function getStreakCard({ userId }: { userId: string }) {
+  const result = await db
+    .select()
+    .from(streak)
+    .where(eq(streak.userId, userId))
+    .limit(1);
+
+  return result[0] ?? null;
+}
+
+export async function updateStreak({ userId }: { userId: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const existing = await db
+    .select()
+    .from(streak)
+    .where(eq(streak.userId, userId))
+    .limit(1);
+
+  if (!existing[0]) {
+    return db
+      .insert(streak)
+      .values({
+        userId,
+        currentStreak: 1,
+        longestStreak: 1,
+        lastActiveDate: today,
+      })
+      .returning();
+  }
+
+  const lastActive = existing[0].lastActiveDate;
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  let newStreak = 1;
+  if (lastActive && lastActive.getTime() === yesterday.getTime()) {
+    newStreak = existing[0].currentStreak + 1;
+  } else if (lastActive && lastActive.getTime() === today.getTime()) {
+    return existing; // Already counted today
+  }
+
+  const newLongest = Math.max(newStreak, existing[0].longestStreak);
+
+  return db
+    .update(streak)
+    .set({
+      currentStreak: newStreak,
+      longestStreak: newLongest,
+      lastActiveDate: today,
+    })
+    .where(eq(streak.userId, userId))
+    .returning();
+}
+
+export async function getUserProducts({ userId }: { userId: string }) {
+  return db
+    .select()
+    .from(product)
+    .where(eq(product.userId, userId))
+    .orderBy(desc(product.scannedAt));
+}
+
+export async function saveProduct({
+  userId,
+  name,
+  imageUrl,
+  noorAssessment,
+  source,
+}: {
+  userId: string;
+  name: string;
+  imageUrl?: string;
+  noorAssessment?: Record<string, unknown>;
+  source?: "chat" | "scan" | "manual";
+}) {
+  return db
+    .insert(product)
+    .values({
+      userId,
+      name,
+      imageUrl,
+      noorAssessment: noorAssessment ?? {},
+      source: source ?? "chat",
+    })
+    .returning();
 }
