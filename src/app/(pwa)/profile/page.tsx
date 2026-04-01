@@ -131,7 +131,7 @@ async function ProfileContent() {
               {products.slice(0, 10).map((p) => (
                 <Link
                   key={p.id}
-                  href={`/?prompt=${encodeURIComponent(`Tell me more about ${p.name}`)}`}
+                  href={`/chat/${crypto.randomUUID()}?prompt=${encodeURIComponent(`Tell me more about ${p.name}`)}`}
                   className="flex items-center gap-3 py-2"
                 >
                   <div

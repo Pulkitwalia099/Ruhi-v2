@@ -6,6 +6,12 @@ interface SuggestionChipsProps {
   hasScans: boolean;
 }
 
+function newChatUrl(prompt?: string): string {
+  const id = crypto.randomUUID();
+  const params = prompt ? `?prompt=${encodeURIComponent(prompt)}` : "";
+  return `/chat/${id}${params}`;
+}
+
 const CHIPS = [
   { id: "scan", icon: "📸", label: "Scan my face", prompt: "Scan my face" },
   { id: "progress", icon: "📈", label: "My progress", prompt: "My progress" },
@@ -29,12 +35,7 @@ export function SuggestionChips({ hasScans }: SuggestionChipsProps) {
         <button
           key={chip.id}
           type="button"
-          onClick={() => {
-            const params = chip.prompt
-              ? `?prompt=${encodeURIComponent(chip.prompt)}`
-              : "";
-            router.push(`/${params}`);
-          }}
+          onClick={() => router.push(newChatUrl(chip.prompt || undefined))}
           className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-colors active:scale-[0.98]"
           style={{
             backgroundColor: "#252220",
