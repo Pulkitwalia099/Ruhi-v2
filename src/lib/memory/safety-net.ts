@@ -1,8 +1,14 @@
-import { findMemoryByKey, upsertMemory, insertMemory } from "@/db/queries";
+import {
+  findMemoryByKey,
+  upsertMemory,
+  insertMemory,
+  insertMomentMemory,
+} from "@/db/queries";
 
 /**
  * Post-hoc regex safety net.
- * Catches critical identity facts and product mentions the LLM might have missed saving.
+ * Catches critical identity facts, product mentions, and life events
+ * the LLM might have missed saving.
  * Runs after every message — costs zero LLM tokens.
  * Never throws — failures are logged and swallowed.
  */
@@ -20,6 +26,7 @@ export async function runPostHocSafetyNet(
       checkBudget(userId, userText),
       checkAdviceStyle(userId, userText),
       checkRemedyPreference(userId, userText),
+      checkLifeEvents(userId, userText),
     ]);
   } catch (error) {
     // Safety net must never affect the conversation
@@ -203,4 +210,63 @@ async function checkRemedyPreference(userId: string, text: string) {
     value: "not interested",
   });
   console.log("[SafetyNet] Saved remedies: not interested");
+}
+
+/**
+ * Catches major life events the LLM might have failed to save.
+ * These are the highest-priority memories — a friend who forgets
+ * you lost your job is not a friend.
+ */
+async function checkLifeEvents(userId: string, text: string) {
+  const lifeEvents: Array<{ pattern: RegExp; value: string }> = [
+    // Job loss (English + Hinglish)
+    {
+      pattern:
+        /(?:lost my job|got fired|fired from|job se nikal|nikal diya|job chhod|job chali gayi|job gayi|laid off|let go from)/i,
+      value: "lost job / got fired",
+    },
+    // Breakup
+    {
+      pattern:
+        /(?:break ?up|broke up|rishta toot|toot gaya|relation(?:ship)? khatam|separated)/i,
+      value: "went through a breakup",
+    },
+    // Moving / relocation
+    {
+      pattern:
+        /(?:moving to|shifted to|relocat|shift ho rahi|move kar rahi|nayi jagah|new city)/i,
+      value: "relocating / moved to new place",
+    },
+    // Wedding / engagement
+    {
+      pattern:
+        /(?:getting married|shaadi ho|engaged|engagement|sagai|shaadi fix)/i,
+      value: "wedding / engagement coming up",
+    },
+    // Pregnancy
+    {
+      pattern: /(?:I'm pregnant|pregnant hoon|baby aa raha|expecting a baby)/i,
+      value: "expecting a baby",
+    },
+    // Starting business
+    {
+      pattern:
+        /(?:start(?:ing)? (?:a |my )?business|apna business|business shuru|entrepreneur)/i,
+      value: "planning to start a business",
+    },
+    // Health crisis (non-skin)
+    {
+      pattern:
+        /(?:diagnosed with|hospital mein|surgery ho|operation ho|bimar|hospitali[sz]ed)/i,
+      value: "health issue / medical situation",
+    },
+  ];
+
+  for (const { pattern, value } of lifeEvents) {
+    if (!pattern.test(text)) continue;
+
+    await insertMomentMemory({ userId, value });
+    console.log("[SafetyNet] Saved life event:", value);
+    return; // One event per message
+  }
 }
