@@ -11,7 +11,7 @@ export function HomeInputBar() {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed) return;
-    router.push(`/chat?message=${encodeURIComponent(trimmed)}`);
+    router.push(`/?message=${encodeURIComponent(trimmed)}`);
   };
 
   return (
