@@ -48,6 +48,9 @@ export async function transcribeAudio(
       `voice.${ext}`
     );
     form.append("model", modelName);
+    // Force Hindi (Devanagari) output — without this, Whisper sometimes
+    // outputs Urdu script for Hindi speech, confusing the downstream LLM
+    form.append("language", "hi");
 
     const res = await fetch(whisperUrl, {
       method: "POST",
