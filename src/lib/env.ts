@@ -28,6 +28,9 @@ const envSchema = z.object({
   // --- Storage ---
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
+  // --- Search (optional — skincare knowledge web search) ---
+  SERPER_API_KEY: z.string().optional(),
+
   // --- Redis (optional — resumable streams + rate limiting) ---
   REDIS_URL: z.string().optional(),
 

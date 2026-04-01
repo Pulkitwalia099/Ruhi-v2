@@ -28,6 +28,122 @@ import { handleOnboardingStep, resumeOnboarding } from "./onboarding";
 // and runs the Ruhi agent for responses.
 // ------------------------------------------------
 
+// ---- Voice note buffering ----
+
+/**
+ * Buffers voice note transcriptions per chat.
+ * When users send multiple voice notes in quick succession (common on Telegram),
+ * each is transcribed immediately but held for 12 seconds. If another voice note
+ * arrives within that window, the timer resets. When the timer fires, all buffered
+ * transcriptions are concatenated and processed as a single message.
+ *
+ * In-memory Map is fine here — Telegram bot runs as a single instance.
+ */
+const voiceBuffer = new Map<
+  number,
+  {
+    texts: string[];
+    timer: ReturnType<typeof setTimeout>;
+    dbUserId: string;
+    botToken: string;
+  }
+>();
+
+/** Buffer window in ms — concatenate after 12s of silence */
+const VOICE_BUFFER_WINDOW_MS = 12_000;
+
+/**
+ * Add a transcribed voice note to the buffer. Returns true if the text
+ * was buffered (caller should NOT process it now). Returns false if
+ * buffering is not needed (single note, no pending buffer).
+ *
+ * When the buffer timer fires, it calls processBufferedVoice() which
+ * re-enters the normal text processing path.
+ */
+function bufferVoiceNote(
+  chatId: number,
+  transcribedText: string,
+  dbUserId: string,
+  botToken: string,
+): boolean {
+  const existing = voiceBuffer.get(chatId);
+
+  if (existing) {
+    // Another voice note in the buffer — append and reset timer
+    existing.texts.push(transcribedText);
+    clearTimeout(existing.timer);
+    existing.timer = setTimeout(
+      () => processBufferedVoice(chatId),
+      VOICE_BUFFER_WINDOW_MS,
+    );
+    console.log(
+      "[Noor/TG] Voice buffered for chat",
+      chatId,
+      "— now",
+      existing.texts.length,
+      "notes",
+    );
+    return true;
+  }
+
+  // First voice note — start a new buffer
+  const timer = setTimeout(
+    () => processBufferedVoice(chatId),
+    VOICE_BUFFER_WINDOW_MS,
+  );
+  voiceBuffer.set(chatId, {
+    texts: [transcribedText],
+    timer,
+    dbUserId,
+    botToken,
+  });
+  console.log("[Noor/TG] Voice buffer started for chat", chatId);
+  // Return true — the caller should wait for the buffer to flush
+  return true;
+}
+
+/**
+ * Called when the buffer timer fires. Concatenates all buffered
+ * transcriptions and processes them as a single user message.
+ */
+async function processBufferedVoice(chatId: number) {
+  const entry = voiceBuffer.get(chatId);
+  if (!entry) return;
+  voiceBuffer.delete(chatId);
+
+  const combinedText = entry.texts.join(" ");
+  console.log(
+    "[Noor/TG] Flushing voice buffer for chat",
+    chatId,
+    "—",
+    entry.texts.length,
+    "notes,",
+    combinedText.length,
+    "chars",
+  );
+
+  // Process the combined text through the normal text path
+  try {
+    await processTextMessage(
+      chatId,
+      combinedText,
+      entry.dbUserId,
+      entry.botToken,
+    );
+  } catch (err) {
+    console.error("[Noor/TG] Buffered voice processing failed:", err);
+    const tg = new TelegramClient(entry.botToken);
+    try {
+      await tg.sendMessage(
+        chatId,
+        "Sorry yaar, voice notes process nahi ho paye. Dobara try karo?",
+      );
+    } catch {
+      // Can't reach user
+    }
+  }
+}
+
 // ---- Message splitting helpers ----
 
 /** Pool of "thinking" messages sent before scan processing */
@@ -202,7 +318,7 @@ export async function processTelegramUpdate(
       username: msg.from.username,
     });
 
-    // --- Transcribe voice notes to text ---
+    // --- Transcribe voice notes to text (with buffering) ---
     let voiceTranscribedText: string | undefined;
     if (msg.voice) {
       await tg.sendChatAction(chatId);
@@ -214,14 +330,14 @@ export async function processTelegramUpdate(
           msg.voice.duration,
           "s"
         );
-        const voiceBuffer = await tg.downloadFile(msg.voice.file_id);
+        const voiceAudioBuffer = await tg.downloadFile(msg.voice.file_id);
         console.log(
           "[Noor/TG] Voice note downloaded, size:",
-          voiceBuffer.length,
+          voiceAudioBuffer.length,
           "bytes"
         );
         const transcribed = await transcribeAudio(
-          voiceBuffer,
+          voiceAudioBuffer,
           msg.voice.mime_type ?? "audio/ogg"
         );
         if (transcribed) {
@@ -230,6 +346,17 @@ export async function processTelegramUpdate(
             transcribed.length,
             "chars"
           );
+          // Buffer the transcription — if there's already a pending buffer
+          // or this starts one, we return and let the timer handle processing
+          const buffered = bufferVoiceNote(
+            chatId,
+            transcribed,
+            dbUser.id,
+            botToken,
+          );
+          if (buffered) {
+            return;
+          }
           voiceTranscribedText = transcribed;
         } else {
           await tg.sendMessage(
@@ -595,6 +722,118 @@ export async function processTelegramUpdate(
       console.error("[Telegram] Failed to send error message to user");
     }
   }
+}
+
+/**
+ * Process a text message through the Ruhi agent pipeline.
+ * Extracted so it can be called both from the main handler and
+ * from the voice note buffer flush.
+ */
+async function processTextMessage(
+  chatId: number,
+  userText: string,
+  dbUserId: string,
+  botToken: string,
+) {
+  const tg = new TelegramClient(botToken);
+
+  // Save user message
+  await saveTelegramMessage({
+    telegramChatId: chatId,
+    role: "user",
+    content: userText,
+  });
+
+  // Load user memories for system prompt injection
+  const memoriesBlock = await loadAndFormatMemories(dbUserId);
+
+  // Load conversation history
+  const history = await getTelegramHistory({
+    telegramChatId: chatId,
+    limit: 40,
+  });
+
+  const aiMessages = history
+    .filter(
+      (m) =>
+        !m.content.includes("problem ho rahi hai") &&
+        !m.content.includes("Something went wrong"),
+    )
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+  // Validate messages — ensure proper alternation
+  const validMessages: typeof aiMessages = [];
+  for (const m of aiMessages) {
+    if (m.content && m.content.trim().length > 0) {
+      validMessages.push(m);
+    }
+  }
+  if (validMessages.length > 0 && validMessages[0].role !== "user") {
+    validMessages.shift();
+  }
+  const cleanMessages: typeof aiMessages = [];
+  for (const m of validMessages) {
+    const last = cleanMessages[cleanMessages.length - 1];
+    if (last && last.role === m.role) {
+      last.content += "\n" + m.content;
+    } else {
+      cleanMessages.push({ ...m });
+    }
+  }
+  if (
+    cleanMessages.length > 0 &&
+    cleanMessages[cleanMessages.length - 1].role !== "user"
+  ) {
+    cleanMessages.push({ role: "user", content: userText });
+  }
+
+  // Send typing indicator
+  await tg.sendChatAction(chatId);
+
+  // Run Ruhi agent
+  let responseText: string;
+  let agentSucceeded = false;
+  try {
+    const result = await runRuhiAgent(cleanMessages, {
+      userId: dbUserId,
+      memoriesBlock: memoriesBlock ?? undefined,
+    });
+    responseText = result.text || "";
+    if (responseText) agentSucceeded = true;
+  } catch (agentError: unknown) {
+    const errMsg =
+      agentError instanceof Error ? agentError.message : String(agentError);
+    console.error("[Ruhi] Buffered voice agent FAILED:", errMsg);
+    responseText = "";
+  }
+
+  if (!responseText) {
+    responseText =
+      "Sorry yaar, abhi kuch problem ho rahi hai. Thodi der mein dobara try karo?";
+  }
+
+  if (agentSucceeded) {
+    await saveTelegramMessage({
+      telegramChatId: chatId,
+      role: "assistant",
+      content: responseText,
+    });
+  }
+
+  // Post-hoc safety net
+  runPostHocSafetyNet(dbUserId, userText).catch((err) =>
+    console.error("[SafetyNet] Unhandled:", err),
+  );
+
+  // Natural language opt-out detection
+  detectProactiveOptOut(dbUserId, userText).catch((err) =>
+    console.error("[OptOut] Unhandled:", err),
+  );
+
+  await sendSplitMessages(tg, chatId, responseText);
 }
 
 // ---- Command handlers ----

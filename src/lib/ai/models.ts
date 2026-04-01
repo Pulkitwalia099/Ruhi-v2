@@ -8,6 +8,9 @@
 export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-pro";
 export const VISION_MODEL = "google/gemini-2.5-flash";
 
+// Target: <3s time-to-first-token, use for simple Q&A
+export const FAST_CHAT_MODEL = "google/gemini-2.5-flash";
+
 export const titleModel = {
   id: "anthropic/claude-haiku-4.5",
   name: "Claude Haiku 4.5",

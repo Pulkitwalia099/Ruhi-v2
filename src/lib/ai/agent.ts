@@ -4,7 +4,13 @@ import { generateText, stepCountIs, ToolLoopAgent } from "ai";
 import { buildRuhiSystemPrompt } from "./prompts";
 import { getLanguageModel } from "./providers";
 import { DEFAULT_CHAT_MODEL } from "./models";
-import { getCycleContext, logCycle, getScanHistory, saveMemory } from "./tools";
+import {
+  getCycleContext,
+  logCycle,
+  getScanHistory,
+  saveMemory,
+  searchSkincareKnowledge,
+} from "./tools";
 
 // ----------------------------------------
 // src/lib/ai/agent.ts
@@ -41,18 +47,29 @@ export function createChatAgent({
 }
 
 /**
- * Runs the Ruhi agent for Telegram.
+ * Runs the Ruhi agent for Telegram (or other non-web channels).
  * Uses generateText with cycle tools (getCycleContext, logCycle, getScanHistory).
  * Face scan is handled directly in the handler (needs image binary).
  * userId is injected into the system prompt so the LLM knows what to pass to tools.
+ *
+ * @param messages — conversation history
+ * @param options.channel — 'telegram' (default) | 'web' | 'instagram'
  */
 export async function runRuhiAgent(
   messages: Array<{ role: "user" | "assistant"; content: any }>,
-  options?: { userId?: string; cycleContext?: string; memoriesBlock?: string },
+  options?: {
+    userId?: string;
+    cycleContext?: string;
+    memoriesBlock?: string;
+    channel?: "web" | "telegram" | "instagram";
+  },
 ) {
+  const channel = options?.channel ?? "telegram";
+
   let systemPrompt = buildRuhiSystemPrompt(
     options?.cycleContext,
     options?.memoriesBlock ?? undefined,
+    channel,
   );
 
   // Inject userId so the LLM can pass it to tools
@@ -64,7 +81,13 @@ export async function runRuhiAgent(
     model: getLanguageModel(DEFAULT_CHAT_MODEL),
     system: systemPrompt,
     messages,
-    tools: { getCycleContext, logCycle, getScanHistory, saveMemory },
+    tools: {
+      getCycleContext,
+      logCycle,
+      getScanHistory,
+      saveMemory,
+      searchSkincareKnowledge,
+    },
     stopWhen: stepCountIs(5),
   });
 

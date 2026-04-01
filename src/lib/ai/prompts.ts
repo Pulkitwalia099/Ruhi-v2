@@ -44,10 +44,15 @@ Response rules:
 /**
  * Builds the full Ruhi system prompt with response guidelines,
  * tool usage instructions, and optional cycle context.
+ *
+ * @param cycleContext — pre-fetched cycle phase context string
+ * @param memoriesBlock — formatted user memories block
+ * @param channel — which chat channel is active ('web' | 'telegram' | 'instagram')
  */
 export function buildRuhiSystemPrompt(
   cycleContext?: string,
   memoriesBlock?: string,
+  channel: "web" | "telegram" | "instagram" = "telegram",
 ): string {
   let prompt = ruhiBasePrompt;
 
@@ -57,10 +62,21 @@ export function buildRuhiSystemPrompt(
     prompt += `\n\n**IMPORTANT: You have memories about this user. Your FIRST message MUST reference something you remember — use "tumne bataya tha" / "last time bola tha" framing. This is what makes you feel like a friend, not a chatbot.**`;
   }
 
+  // Channel-specific length guidelines
+  if (channel === "web") {
+    prompt += `\n\n## Web Chat Response Length
+You're being read on a phone screen. Keep responses SHORT:
+- Default: 2-3 sentences max. Like a WhatsApp text.
+- Only go longer for: scan analysis, routine breakdown, or ingredient deep-dive the user asked for.
+- Split with ||| after every 2 sentences.
+- If you catch yourself writing more than 4 sentences, STOP and ask if they want more detail.`;
+  }
+
   prompt += `\n\n## Tool Usage
 - If a user mentions their period starting, use the logCycle tool to record it
 - Use getCycleContext before giving skincare advice to personalize for their cycle phase
 - Use getScanHistory to reference past skin scans when relevant
+- Use searchSkincareKnowledge when asked about specific products, brands, or ingredients you're not confident about. Better to search than guess wrong.
 `;
 
   if (cycleContext) {
@@ -94,7 +110,7 @@ export const systemPrompt = ({
   supportsTools?: boolean;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  const basePrompt = buildRuhiSystemPrompt();
+  const basePrompt = buildRuhiSystemPrompt(undefined, undefined, "web");
   return `${basePrompt}\n\n${requestPrompt}`;
 };
 
