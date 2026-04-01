@@ -100,6 +100,7 @@ import {
   slashCommands,
 } from "./slash-commands";
 import { SuggestedActions } from "./suggested-actions";
+import { VoiceRecorder } from "./voice-recorder";
 import { resizeImageFile } from "@/lib/image-utils";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -624,6 +625,10 @@ function PureMultimodalInput({
               fileInputRef={fileInputRef}
               selectedModelId={selectedModelId}
               status={status}
+            />
+            <VoiceRecorder
+              onTranscription={(text) => setInput((prev) => prev ? `${prev} ${text}` : text)}
+              disabled={status !== "ready" && status !== "error"}
             />
             <ModelSelectorCompact
               onModelChange={onModelChange}

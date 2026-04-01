@@ -673,6 +673,7 @@ export async function processTelegramUpdate(
       const result = await runRuhiAgent(cleanMessages, {
         userId: dbUser.id,
         memoriesBlock: memoriesBlock ?? undefined,
+        fast: true,
       });
       responseText = result.text || "";
       console.log("[Ruhi] Agent response length:", responseText.length);
@@ -800,6 +801,7 @@ async function processTextMessage(
     const result = await runRuhiAgent(cleanMessages, {
       userId: dbUserId,
       memoriesBlock: memoriesBlock ?? undefined,
+      fast: true,
     });
     responseText = result.text || "";
     if (responseText) agentSucceeded = true;

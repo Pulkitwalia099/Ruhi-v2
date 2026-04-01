@@ -35,7 +35,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   createContext,
   type Dispatch,
@@ -111,7 +111,10 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
-  const [input, setInput] = useState("");
+  // Pre-fill input from ?prompt= or ?message= query params (PWA homescreen)
+  const searchParams = useSearchParams();
+  const prefill = searchParams.get("prompt") ?? searchParams.get("message") ?? "";
+  const [input, setInput] = useState(prefill);
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
 
   const { data: chatData, isLoading } = useSWR(

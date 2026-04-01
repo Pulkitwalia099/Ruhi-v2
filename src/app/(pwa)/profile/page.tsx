@@ -30,7 +30,7 @@ export default async function ProfilePage() {
     <div className="min-h-dvh font-[family-name:var(--font-dm-sans)]" style={{ backgroundColor: "#1A1815", color: "#FAFAF9" }}>
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(250, 250, 249, 0.08)" }}>
-        <Link href="/" className="text-sm" style={{ color: "#A8A29E" }}>
+        <Link href="/home" className="text-sm" style={{ color: "#A8A29E" }}>
           ← Back
         </Link>
         <h1

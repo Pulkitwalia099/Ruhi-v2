@@ -3,7 +3,7 @@ import type { LanguageModel, ToolSet } from "ai";
 import { generateText, stepCountIs, ToolLoopAgent } from "ai";
 import { buildRuhiSystemPrompt } from "./prompts";
 import { getLanguageModel } from "./providers";
-import { DEFAULT_CHAT_MODEL } from "./models";
+import { DEFAULT_CHAT_MODEL, FAST_CHAT_MODEL } from "./models";
 import {
   getCycleContext,
   logCycle,
@@ -62,6 +62,7 @@ export async function runRuhiAgent(
     cycleContext?: string;
     memoriesBlock?: string;
     channel?: "web" | "telegram" | "instagram";
+    fast?: boolean;
   },
 ) {
   const channel = options?.channel ?? "telegram";
@@ -77,8 +78,10 @@ export async function runRuhiAgent(
     systemPrompt += `\n\n## Internal Context\nThe current user's database ID is: ${options.userId}\nAlways use this exact ID when calling tools like getCycleContext, logCycle, getScanHistory, or saveMemory.`;
   }
 
+  const modelId = options?.fast ? FAST_CHAT_MODEL : DEFAULT_CHAT_MODEL;
+
   const result = await generateText({
-    model: getLanguageModel(DEFAULT_CHAT_MODEL),
+    model: getLanguageModel(modelId),
     system: systemPrompt,
     messages,
     tools: {

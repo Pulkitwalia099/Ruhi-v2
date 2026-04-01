@@ -31,7 +31,7 @@ import {
 } from "@/lib/ai/models";
 import { type RequestHints, getRequestPromptFromHints, buildRuhiSystemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { getCycleContext, logCycle, getScanHistory, saveMemory } from "@/lib/ai/tools";
+import { getCycleContext, logCycle, getScanHistory, saveMemory, searchSkincareKnowledge } from "@/lib/ai/tools";
 import { loadAndFormatMemories } from "@/lib/memory/loader";
 import { runPostHocSafetyNet } from "@/lib/memory/safety-net";
 import { auth } from "@/lib/auth";
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
-    const ruhiTools = { getCycleContext, logCycle, getScanHistory, saveMemory };
+    const ruhiTools = { getCycleContext, logCycle, getScanHistory, saveMemory, searchSkincareKnowledge };
 
     const cfg = {
       model: getLanguageModel(chatModel),

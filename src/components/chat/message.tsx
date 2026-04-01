@@ -22,6 +22,7 @@
 
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { isToolUIPart } from "ai";
 import type { Vote } from "@/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -233,6 +234,79 @@ const PurePreviewMessage = ({
                 </div>
               )}
             </ToolContent>
+          </Tool>
+        </div>
+      );
+    }
+
+    // Noor's skincare tools + generic tool fallback
+    if (isToolUIPart(part)) {
+      const { toolCallId, state, toolName } = part;
+      const output = state === "output-available" ? (part.output as Record<string, unknown>) : null;
+      const widthClass = "w-[min(100%,400px)]";
+
+      // Scan history card
+      if (toolName === "getScanHistory" && output && !output.noScanData) {
+        const scans = output.scans as Array<{ date: string; overallScore: number | null; cyclePhase?: string | null }> | undefined;
+        return (
+          <div key={toolCallId} className={`${widthClass} rounded-xl border border-border/30 bg-card/50 p-3 text-sm`}>
+            <p className="font-medium text-foreground mb-2">Scan History</p>
+            <div className="space-y-1.5">
+              {scans?.map((s, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{s.date}</span>
+                  <span className="font-mono font-medium">{s.overallScore ?? "—"}/10</span>
+                  {s.cyclePhase && <span className="text-muted-foreground text-[10px]">{s.cyclePhase}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // Cycle context card
+      if (toolName === "getCycleContext" && output && !output.noCycleData) {
+        return (
+          <div key={toolCallId} className={`${widthClass} rounded-xl border border-border/30 bg-card/50 p-3 text-sm`}>
+            <p className="font-medium text-foreground mb-1">Cycle Phase</p>
+            <p className="text-muted-foreground text-xs">{output.phase as string} · Day {output.cycleDay as number}</p>
+            {typeof output.skinImplications === "string" && (
+              <p className="text-muted-foreground text-xs mt-1.5">{output.skinImplications}</p>
+            )}
+          </div>
+        );
+      }
+
+      // Search results card
+      if (toolName === "searchSkincareKnowledge" && output) {
+        const results = output.results as Array<{ title: string; snippet: string; link: string }> | undefined;
+        if (results?.length) {
+          return (
+            <div key={toolCallId} className={`${widthClass} rounded-xl border border-border/30 bg-card/50 p-3 text-sm`}>
+              <p className="font-medium text-foreground mb-2">Research</p>
+              <div className="space-y-2">
+                {results.slice(0, 3).map((r, i) => (
+                  <a key={i} href={r.link} target="_blank" rel="noopener noreferrer" className="block text-xs hover:bg-muted/50 rounded p-1.5 -mx-1.5 transition-colors">
+                    <p className="font-medium text-foreground truncate">{r.title}</p>
+                    <p className="text-muted-foreground line-clamp-2 mt-0.5">{r.snippet}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        }
+      }
+
+      // Tools with output already rendered as cards above — hide redundant generic card
+      if (output && (toolName === "getScanHistory" || toolName === "getCycleContext" || toolName === "searchSkincareKnowledge" || toolName === "saveMemory" || toolName === "logCycle")) {
+        return null;
+      }
+
+      // Generic tool card (in-progress or unhandled tools)
+      return (
+        <div key={toolCallId} className={widthClass}>
+          <Tool className="w-full" defaultOpen>
+            <ToolHeader state={state} type={`tool-${toolName}`} />
           </Tool>
         </div>
       );

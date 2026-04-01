@@ -116,7 +116,7 @@ export function StoryRings({ scans, streak, cycle }: StoryRingsProps) {
           borderColor="transparent"
           hasNew={false}
           onClick={() => {
-            window.location.href = "/chat/new?prompt=Scan%20my%20face";
+            window.location.href = "/chat?prompt=Scan%20my%20face";
           }}
         />
       </div>
@@ -164,7 +164,7 @@ export function StoryRings({ scans, streak, cycle }: StoryRingsProps) {
             )}
             <button
               type="button"
-              onClick={() => { setActiveSheet(null); window.location.href = "/chat/new?prompt=My%20progress"; }}
+              onClick={() => { setActiveSheet(null); window.location.href = "/chat?prompt=My%20progress"; }}
               className="w-full text-center text-sm py-2"
               style={{ color: "#3DB9A8" }}
             >
@@ -196,7 +196,7 @@ export function StoryRings({ scans, streak, cycle }: StoryRingsProps) {
             )}
             <button
               type="button"
-              onClick={() => { setActiveSheet(null); window.location.href = "/chat/new?prompt=Scan%20my%20face"; }}
+              onClick={() => { setActiveSheet(null); window.location.href = "/chat?prompt=Scan%20my%20face"; }}
               className="w-full text-center text-sm py-2"
               style={{ color: "#3DB9A8" }}
             >
@@ -253,7 +253,7 @@ export function StoryRings({ scans, streak, cycle }: StoryRingsProps) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setActiveSheet(null); window.location.href = "/chat/new?prompt=What%20should%20I%20adjust%20for%20my%20cycle%20phase"; }}
+                  onClick={() => { setActiveSheet(null); window.location.href = "/chat?prompt=What%20should%20I%20adjust%20for%20my%20cycle%20phase"; }}
                   className="w-full text-center text-sm py-2"
                   style={{ color: "#3DB9A8" }}
                 >

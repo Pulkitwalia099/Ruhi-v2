@@ -33,7 +33,7 @@ export function SuggestionChips({ hasScans }: SuggestionChipsProps) {
             const params = chip.prompt
               ? `?prompt=${encodeURIComponent(chip.prompt)}`
               : "";
-            router.push(`/chat/new${params}`);
+            router.push(`/chat${params}`);
           }}
           className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-colors active:scale-[0.98]"
           style={{
