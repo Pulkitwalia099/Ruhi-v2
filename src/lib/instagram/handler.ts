@@ -262,6 +262,7 @@ async function handlePhotoMessage(
       role: "assistant",
       content: analysis,
     });
+    await ig.sendTypingIndicator(senderId);
     await sendSplitMessages(ig, senderId, analysis);
 
     // H3: If mid-onboarding awaiting selfie, re-prompt after product check
@@ -419,6 +420,8 @@ async function handlePhotoMessage(
     role: "assistant",
     content: responseText,
   });
+  // Re-send typing right before response so there's no gap
+  await ig.sendTypingIndicator(senderId);
   await sendSplitMessages(ig, senderId, responseText);
 
   // Send report card if scan succeeded
@@ -596,22 +599,29 @@ async function handleTextMessage(
     cleanMessages.push({ role: "user", content: userText });
   }
 
-  // Send typing indicator
+  // Send typing indicator — re-send every 15s to keep it visible
   await ig.sendTypingIndicator(senderId);
+  const typingInterval = setInterval(() => {
+    ig.sendTypingIndicator(senderId).catch(() => {});
+  }, 15_000);
 
-  // Run Ruhi agent
+  // Run Ruhi agent (fast model for IG speed)
   let responseText: string;
   let agentSucceeded = false;
   try {
     const result = await runRuhiAgent(cleanMessages, {
       userId: dbUser.id,
       memoriesBlock: memoriesBlock ?? undefined,
+      channel: "instagram",
+      fast: true,
     });
     responseText = result.text || "";
     if (responseText) agentSucceeded = true;
   } catch (agentError: any) {
     console.error("[Ruhi/IG] Agent FAILED:", agentError?.message);
     responseText = "";
+  } finally {
+    clearInterval(typingInterval);
   }
 
   if (!responseText) {
