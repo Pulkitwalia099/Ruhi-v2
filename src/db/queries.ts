@@ -792,12 +792,13 @@ export async function getTelegramHistory({
   telegramChatId: number;
   limit?: number;
 }) {
-  return db
+  const rows = await db
     .select()
     .from(telegramMessage)
     .where(eq(telegramMessage.telegramChatId, telegramChatId))
-    .orderBy(asc(telegramMessage.createdAt))
+    .orderBy(desc(telegramMessage.createdAt))
     .limit(limit);
+  return rows.reverse();
 }
 
 export async function clearTelegramHistory({
@@ -897,12 +898,13 @@ export async function getInstagramHistory({
   instagramSenderId: string;
   limit?: number;
 }) {
-  return db
+  const rows = await db
     .select()
     .from(instagramMessage)
     .where(eq(instagramMessage.instagramSenderId, instagramSenderId))
-    .orderBy(asc(instagramMessage.createdAt))
+    .orderBy(desc(instagramMessage.createdAt))
     .limit(limit);
+  return rows.reverse();
 }
 
 /**
